@@ -11,6 +11,7 @@ import {
   useSensor,
   useSensors,
   type CollisionDetection,
+  type Modifier,
   type DragEndEvent,
   type DragOverEvent,
   type DragStartEvent,
@@ -20,6 +21,7 @@ import {
   horizontalListSortingStrategy,
   sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
+import { getEventCoordinates } from '@dnd-kit/utilities';
 import { PROFILE_FEATURES, findCard, moveCard, type Board } from '@devbord/shared';
 import { useBoardController } from '../../controllers/boardController';
 import { useCursorController } from '../../controllers/cursorController';
@@ -27,6 +29,7 @@ import { useCollab } from '../../controllers/collabController';
 import { animateLand, animateOut, flip } from '../../design';
 import { RemoteCursors } from '../team/RemoteCursors';
 import { useNow } from './useNow';
+import './drag.css';
 import { CardDetailModal } from './CardDetailModal';
 import { CardFace } from './CardView';
 import { ColumnView } from './ColumnView';
@@ -67,6 +70,24 @@ const collisionDetection: CollisionDetection = (args) => {
  */
 /** Actions are stable; reading them via getState() avoids subscribing this view to the whole store. */
 const ctrl = () => useBoardController.getState();
+/** Where the pixel hand holds a lifted card: near its top-left corner (px). */
+const GRIP = { x: 8, y: 6 };
+
+/**
+ * Drag overlay modifier: wherever the card was grabbed, the lifted card is
+ * placed so the hand sits on its top-left corner, like holding a paper card.
+ * Keyboard drags have no pointer coordinates and are left untouched.
+ */
+const holdByCorner: Modifier = ({ activatorEvent, draggingNodeRect, transform }) => {
+  const point = activatorEvent && getEventCoordinates(activatorEvent);
+  if (!point || !draggingNodeRect) return transform;
+  return {
+    ...transform,
+    x: transform.x + point.x - draggingNodeRect.left - GRIP.x,
+    y: transform.y + point.y - draggingNodeRect.top - GRIP.y,
+  };
+};
+
 /** Finds a card or column element on the canvas by its FLIP id. */
 const flipNode = (id: string) => document.querySelector(`[data-flip-id="${CSS.escape(id)}"]`);
 
@@ -267,9 +288,17 @@ export function BoardCanvas({ board, team = false }: { board: Board; team?: bool
           </div>
         </div>
 
-        <DragOverlay>
+        <DragOverlay modifiers={[holdByCorner]}>
           {activeCard && (
-            <CardFace card={activeCard} labels={board.labels} features={features} overlay />
+            <div
+              className="drag-jitter"
+              style={{
+                ['--grip-x' as string]: `${GRIP.x}px`,
+                ['--grip-y' as string]: `${GRIP.y}px`,
+              }}
+            >
+              <CardFace card={activeCard} labels={board.labels} features={features} overlay />
+            </div>
           )}
         </DragOverlay>
       </DndContext>
