@@ -53,3 +53,46 @@ describe('boardController', () => {
     expect(first.getState().boards).toHaveLength(0);
   });
 });
+
+describe('boardController.importCards', () => {
+  const twoBoards = async () => {
+    const { store } = setup();
+    const source = await store
+      .getState()
+      .createBoard({ name: 'Scrum', profile: 'technical', columnTitles: ['Backlog'] });
+    const target = await store
+      .getState()
+      .createBoard({ name: 'Casa', profile: 'simple', columnTitles: ['Por hacer'] });
+    store.getState().addCard(source.id, source.columns[0]!.id, 'Historia');
+    const cardId = store.getState().boards.find((b) => b.id === source.id)!.columns[0]!.cards[0]!
+      .id;
+    const board = (id: string) => store.getState().boards.find((b) => b.id === id)!;
+    return { store, source, target, cardId, board };
+  };
+
+  it('copies cards and keeps the originals', async () => {
+    const { store, source, target, cardId, board } = await twoBoards();
+    store.getState().importCards({
+      boardId: target.id,
+      columnId: target.columns[0]!.id,
+      sourceBoardId: source.id,
+      cardIds: [cardId],
+      move: false,
+    });
+    expect(board(target.id).columns[0]!.cards.map((c) => c.title)).toEqual(['Historia']);
+    expect(board(source.id).columns[0]!.cards).toHaveLength(1);
+  });
+
+  it('moves cards when asked', async () => {
+    const { store, source, target, cardId, board } = await twoBoards();
+    store.getState().importCards({
+      boardId: target.id,
+      columnId: target.columns[0]!.id,
+      sourceBoardId: source.id,
+      cardIds: [cardId],
+      move: true,
+    });
+    expect(board(target.id).columns[0]!.cards).toHaveLength(1);
+    expect(board(source.id).columns[0]!.cards).toHaveLength(0);
+  });
+});

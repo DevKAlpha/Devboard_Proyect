@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router';
 import { PROFILE_INFO, ProfileSchema } from '@devbord/shared';
-import { IconButton, Select } from '../../design';
+import { Button, IconButton, PixelIcon, Select } from '../../design';
 import { useBoard, useBoardController } from '../../controllers/boardController';
 import { BoardCanvas } from '../board/BoardCanvas';
+import { ImportCardsModal } from '../board/ImportCardsModal';
 import { InlineEdit } from '../board/InlineEdit';
 import { AppShell } from '../components/AppShell';
 import { BoardSwitcher } from '../components/BoardSwitcher';
@@ -13,6 +15,7 @@ export function BoardPage() {
   const board = useBoard(boardId);
   const navigate = useNavigate();
   const { renameBoard, setProfile, deleteBoard } = useBoardController.getState();
+  const [importing, setImporting] = useState(false);
 
   if (!board) return <Navigate to="/" replace />;
   const cardCount = board.columns.reduce((n, c) => n + c.cards.length, 0);
@@ -53,6 +56,10 @@ export function BoardPage() {
               ))}
             </Select>
           </div>
+          <Button size="sm" onClick={() => setImporting(true)}>
+            <PixelIcon name="import" />
+            Traer historias
+          </Button>
           <IconButton
             icon="trash"
             label="Eliminar tablero"
@@ -70,6 +77,7 @@ export function BoardPage() {
         {/* key: switching boards starts with a clean canvas (no open card or drag state). */}
         <BoardCanvas key={board.id} board={board} />
       </main>
+      <ImportCardsModal open={importing} board={board} onClose={() => setImporting(false)} />
     </AppShell>
   );
 }

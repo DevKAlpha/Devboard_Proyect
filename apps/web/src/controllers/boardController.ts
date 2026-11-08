@@ -39,6 +39,17 @@ export interface BoardState {
   updateCard: (boardId: string, cardId: string, patch: CardPatch) => void;
   removeCard: (boardId: string, cardId: string) => void;
   moveCard: (boardId: string, cardId: string, toColumnId: string, toIndex: number) => void;
+  /**
+   * Brings cards from another board into `columnId`. `move` also removes the
+   * originals from the source board; otherwise they are copied.
+   */
+  importCards: (input: {
+    boardId: string;
+    columnId: string;
+    sourceBoardId: string;
+    cardIds: string[];
+    move: boolean;
+  }) => void;
 }
 
 /**
@@ -116,6 +127,14 @@ export function createBoardController(repo: BoardRepository) {
       removeCard: (id, cardId) => mutate(id, (b) => ops.removeCard(b, cardId)),
       moveCard: (id, cardId, toColumnId, toIndex) =>
         mutate(id, (b) => ops.moveCard(b, cardId, toColumnId, toIndex)),
+      importCards: ({ boardId, columnId, sourceBoardId, cardIds, move }) => {
+        const source = get().boards.find((b) => b.id === sourceBoardId);
+        if (!source || sourceBoardId === boardId) return;
+        mutate(boardId, (b) => ops.copyCardsInto(b, columnId, source, cardIds));
+        if (move) {
+          mutate(sourceBoardId, (b) => cardIds.reduce((acc, id) => ops.removeCard(acc, id), b));
+        }
+      },
     };
   });
 }
