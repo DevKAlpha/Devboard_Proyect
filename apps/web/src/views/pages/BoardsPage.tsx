@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { PROFILE_INFO } from '@devbord/shared';
 import { Badge, Button, PixelIcon } from '../../design';
 import { useBoardController } from '../../controllers/boardController';
 import { AppShell } from '../components/AppShell';
 import { NewBoardModal } from '../components/NewBoardModal';
+import { BoardFileError, parseBoardFile } from '../../models/boardFile';
 
 const updatedFormat = new Intl.DateTimeFormat('es', { day: 'numeric', month: 'short' });
 
@@ -12,6 +13,8 @@ const updatedFormat = new Intl.DateTimeFormat('es', { day: 'numeric', month: 'sh
 export function BoardsPage() {
   const boards = useBoardController((s) => s.boards);
   const [creating, setCreating] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
   return (
@@ -21,10 +24,48 @@ export function BoardsPage() {
           <h1 className="text-3xl">Tus tableros</h1>
           <p className="mt-1 text-muted">Todo lo que tienes entre manos, en un vistazo.</p>
         </div>
-        <Button variant="primary" onClick={() => setCreating(true)}>
-          <PixelIcon name="plus" />
-          Nuevo tablero
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => fileRef.current?.click()}>
+            <PixelIcon name="upload" />
+            Importar JSON
+          </Button>
+          <Button variant="primary" onClick={() => setCreating(true)}>
+            <PixelIcon name="plus" />
+            Nuevo tablero
+          </Button>
+        </div>
+        {/* Hidden picker behind "Importar JSON". */}
+        <input
+          ref={fileRef}
+          type="file"
+          accept="application/json,.json"
+          className="hidden"
+          aria-label="Archivo de tablero (JSON)"
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            e.target.value = ''; // allow picking the same file again
+            if (!file) return;
+            try {
+              const board = await useBoardController
+                .getState()
+                .addBoard(parseBoardFile(await file.text()));
+              navigate(`/b/${board.id}`);
+            } catch (err) {
+              setImportError(
+                err instanceof BoardFileError ? err.message : 'No se pudo importar el archivo.',
+              );
+            }
+          }}
+        />
+        {importError && (
+          <p
+            role="alert"
+            className="w-full rounded-lg bg-surface-2 px-3 py-2 text-sm"
+            style={{ color: 'var(--label-red-ink)' }}
+          >
+            {importError}
+          </p>
+        )}
       </header>
 
       <main className="min-h-0 flex-1 overflow-y-auto">

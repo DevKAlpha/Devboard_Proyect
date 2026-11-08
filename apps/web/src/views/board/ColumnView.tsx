@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { isOverWip, type Column, type Label, type ProfileFeatures } from '@devbord/shared';
-import { IconButton, PixelIcon, cx } from '../../design';
+import { IconButton, PixelIcon, confirm, cx } from '../../design';
 import { CardView } from './CardView';
 import { Composer } from './Composer';
 import { InlineEdit } from './InlineEdit';
@@ -138,7 +138,9 @@ export const ColumnView = memo(function ColumnView({
             const msg = column.cards.length
               ? `¿Eliminar "${column.title}" y sus ${column.cards.length} tarjetas?`
               : `¿Eliminar "${column.title}"?`;
-            if (window.confirm(msg)) onRemove(column.id);
+            void confirm(msg, { confirmLabel: 'Eliminar', danger: true }).then(
+              (ok) => ok && onRemove(column.id),
+            );
           }}
         />
       </header>

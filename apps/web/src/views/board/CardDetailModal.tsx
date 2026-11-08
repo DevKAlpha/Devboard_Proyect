@@ -9,7 +9,7 @@ import {
   type Label,
   type ProfileFeatures,
 } from '@devbord/shared';
-import { Badge, Button, Field, Input, Modal, Select, Textarea, cx } from '../../design';
+import { Badge, Button, Field, Input, Modal, Select, Textarea, confirm, cx } from '../../design';
 import { CARD_TYPE_META, PRIORITY_META } from './cardMeta';
 
 export interface CardDetailModalProps {
@@ -194,10 +194,14 @@ function CardForm({
           variant="ghost"
           className="text-danger hover:text-danger"
           onClick={() => {
-            if (window.confirm('¿Eliminar esta tarjeta?')) {
+            void confirm('¿Eliminar esta tarjeta?', {
+              confirmLabel: 'Eliminar',
+              danger: true,
+            }).then((ok) => {
+              if (!ok) return;
               onDelete(card.id);
               onClose();
-            }
+            });
           }}
         >
           Eliminar

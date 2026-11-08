@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router';
 import { PROFILE_INFO, ProfileSchema } from '@devbord/shared';
-import { Button, IconButton, PixelIcon, Select } from '../../design';
+import { Button, IconButton, PixelIcon, Select, confirm } from '../../design';
 import { useBoard, useBoardController } from '../../controllers/boardController';
 import { BoardCanvas } from '../board/BoardCanvas';
+import { ExportMenu } from '../board/ExportMenu';
 import { ImportCardsModal } from '../board/ImportCardsModal';
 import { InlineEdit } from '../board/InlineEdit';
 import { AppShell } from '../components/AppShell';
@@ -56,6 +57,7 @@ export function BoardPage() {
               ))}
             </Select>
           </div>
+          <ExportMenu board={board} />
           <Button size="sm" onClick={() => setImporting(true)}>
             <PixelIcon name="import" />
             Traer historias
@@ -64,8 +66,11 @@ export function BoardPage() {
             icon="trash"
             label="Eliminar tablero"
             onClick={async () => {
-              if (!window.confirm(`¿Eliminar el tablero "${board.name}"? No se puede deshacer.`))
-                return;
+              const ok = await confirm(
+                `¿Eliminar el tablero "${board.name}"? No se puede deshacer.`,
+                { confirmLabel: 'Eliminar', danger: true },
+              );
+              if (!ok) return;
               await deleteBoard(board.id);
               navigate('/', { replace: true });
             }}
