@@ -4,7 +4,13 @@
  * native arrow-key behaviour for free.
  */
 import type { ReactNode } from 'react';
-import { PROFILE_INFO, ProfileSchema, type Profile } from '@devbord/shared';
+import {
+  BoardModeSchema,
+  PROFILE_INFO,
+  ProfileSchema,
+  type BoardMode,
+  type Profile,
+} from '@devbord/shared';
 import { cx } from '../../design';
 import type { BoardTemplate } from '../../templates';
 
@@ -111,6 +117,45 @@ export function TemplatePicker({
           title={t.name}
           description={t.description}
           preview={<ColumnsPreview count={t.columns.length} />}
+        />
+      ))}
+    </div>
+  );
+}
+
+const MODE_INFO: Record<BoardMode, { title: string; description: string }> = {
+  personal: {
+    title: 'Individual',
+    description: 'Solo tú. Se guarda en este navegador.',
+  },
+  team: {
+    title: 'Equipo',
+    description: 'En tiempo real con quien tenga el enlace de invitación.',
+  },
+};
+
+/**
+ * Personal vs team, chosen once at creation. Shown as two cards so the
+ * choice is explicit: team and personal work never end up mixed.
+ */
+export function ModePicker({
+  value,
+  onChange,
+}: {
+  value: BoardMode;
+  onChange: (m: BoardMode) => void;
+}) {
+  return (
+    <div role="radiogroup" aria-label="Tipo de tablero" className="grid gap-3 sm:grid-cols-2">
+      {BoardModeSchema.options.map((m) => (
+        <OptionCard
+          key={m}
+          name="mode"
+          value={m}
+          checked={value === m}
+          onSelect={() => onChange(m)}
+          title={MODE_INFO[m].title}
+          description={MODE_INFO[m].description}
         />
       ))}
     </div>

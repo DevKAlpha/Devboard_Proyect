@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import type { Profile } from '@devbord/shared';
+import type { BoardMode, Profile } from '@devbord/shared';
 import { Button, Field, Input, Modal } from '../../design';
 import { useBoardController } from '../../controllers/boardController';
 import { usePreferences } from '../../controllers/preferencesController';
 import { buildBoardFromTemplate, getTemplate, templatesFor } from '../../templates';
-import { ProfilePicker, TemplatePicker } from './Pickers';
+import { ModePicker, ProfilePicker, TemplatePicker } from './Pickers';
 
 export interface NewBoardModalProps {
   open: boolean;
@@ -12,7 +12,7 @@ export interface NewBoardModalProps {
   onCreated: (boardId: string) => void;
 }
 
-/** Board creation: profile + template + optional name. Sensible defaults everywhere. */
+/** Board creation: personal or team, profile, template and optional name. Sensible defaults everywhere. */
 export function NewBoardModal({ open, onClose, onCreated }: NewBoardModalProps) {
   return (
     <Modal open={open} title="Nuevo tablero" onClose={onClose}>
@@ -28,6 +28,7 @@ function NewBoardForm({ onClose, onCreated }: Omit<NewBoardModalProps, 'open'>) 
   const [profile, setProfile] = useState<Profile>(preferred);
   const [templateId, setTemplateId] = useState(templatesFor(preferred)[0]!.id);
   const [name, setName] = useState('');
+  const [mode, setMode] = useState<BoardMode>('personal');
 
   const changeProfile = (p: Profile) => {
     setProfile(p);
@@ -41,12 +42,18 @@ function NewBoardForm({ onClose, onCreated }: Omit<NewBoardModalProps, 'open'>) 
       onSubmit={async (e) => {
         e.preventDefault();
         if (!template) return;
-        const board = await addBoard(buildBoardFromTemplate(template, { name, profile }));
+        const board = await addBoard(buildBoardFromTemplate(template, { name, profile, mode }));
         onClose();
         onCreated(board.id);
       }}
     >
+      <h3 className="-mb-3 text-xs font-semibold tracking-wide text-muted uppercase">
+        ¿Para quién es?
+      </h3>
+      <ModePicker value={mode} onChange={setMode} />
+      <h3 className="-mb-3 text-xs font-semibold tracking-wide text-muted uppercase">Estilo</h3>
       <ProfilePicker value={profile} onChange={changeProfile} />
+      <h3 className="-mb-3 text-xs font-semibold tracking-wide text-muted uppercase">Plantilla</h3>
       <TemplatePicker
         templates={templatesFor(profile)}
         value={templateId}

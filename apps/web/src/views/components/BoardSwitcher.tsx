@@ -4,6 +4,12 @@ import { useBoardController } from '../../controllers/boardController';
 
 const ALL_BOARDS = '__all__';
 
+/** Same split as the home page: personal and team boards are listed apart. */
+const GROUPS = [
+  { mode: 'personal', label: 'Individuales' },
+  { mode: 'team', label: 'De equipo' },
+] as const;
+
 /**
  * Board switcher shown on every board: jump to another board without going
  * back to the list. Built on a native <select> (transparent, layered over a
@@ -24,11 +30,18 @@ export function BoardSwitcher({ currentId }: { currentId: string }) {
         value={currentId}
         onChange={(e) => navigate(e.target.value === ALL_BOARDS ? '/' : `/b/${e.target.value}`)}
       >
-        {boards.map((b) => (
-          <option key={b.id} value={b.id}>
-            {b.name}
-          </option>
-        ))}
+        {GROUPS.map(({ mode, label }) => {
+          const list = boards.filter((b) => b.mode === mode);
+          return list.length ? (
+            <optgroup key={mode} label={label}>
+              {list.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </optgroup>
+          ) : null;
+        })}
         <option value={ALL_BOARDS}>Ver todos los tableros…</option>
       </select>
     </span>

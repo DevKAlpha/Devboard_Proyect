@@ -19,7 +19,12 @@ export function Modal({ open, title, onClose, children }: ModalProps) {
     const dialog = ref.current;
     if (!dialog) return;
     // showModal() is missing in jsdom; optional call keeps components testable.
-    if (open && !dialog.open) dialog.showModal?.();
+    if (open && !dialog.open) {
+      dialog.showModal?.();
+      // showModal() focuses the first focusable (the close button). Prefer the field
+      // marked with data-autofocus, so typing works right away.
+      dialog.querySelector<HTMLElement>('[data-autofocus]')?.focus();
+    }
     if (!open && dialog.open) dialog.close?.();
   }, [open]);
 

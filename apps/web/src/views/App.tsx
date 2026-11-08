@@ -7,6 +7,7 @@ import { PixelCursor } from './cursor/PixelCursor';
 import { BoardPage } from './pages/BoardPage';
 import { BoardsPage } from './pages/BoardsPage';
 import { OnboardingPage } from './pages/OnboardingPage';
+import { JoinPage } from './pages/JoinPage';
 
 /** First-time visitors with no boards land on onboarding instead of an empty home. */
 function HomeRoute() {
@@ -50,6 +51,7 @@ export function App() {
         <Route path="/" element={<HomeRoute />} />
         <Route path="/welcome" element={<OnboardingPage />} />
         <Route path="/b/:boardId" element={<BoardPage />} />
+        <Route path="/join/:boardId/:key" element={<JoinPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </HashRouter>

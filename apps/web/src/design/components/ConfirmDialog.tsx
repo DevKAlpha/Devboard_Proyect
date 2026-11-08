@@ -16,6 +16,7 @@ export function ConfirmHost() {
             <Button
               variant={request.danger ? 'danger' : 'primary'}
               autoFocus
+              data-autofocus
               onClick={() => settle(true)}
             >
               {request.confirmLabel}

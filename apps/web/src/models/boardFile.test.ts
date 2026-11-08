@@ -35,3 +35,15 @@ describe('boardFile', () => {
     expect(boardFileName(sample(), 'png')).toBe('sprint-agil-1.png');
   });
 });
+
+describe('boardFile with team boards', () => {
+  it('never exports the invite secret and gives imports a new room', () => {
+    const team = createBoard({ name: 'Equipo', profile: 'simple', mode: 'team' });
+    const text = serializeBoard(team);
+    expect(text).not.toContain(team.shareKey!);
+    const imported = parseBoardFile(text);
+    expect(imported.mode).toBe('team');
+    expect(imported.shareKey).toMatch(/^[0-9a-f]{64}$/);
+    expect(imported.shareKey).not.toBe(team.shareKey);
+  });
+});

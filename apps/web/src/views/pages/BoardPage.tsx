@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router';
 import { PROFILE_INFO, ProfileSchema } from '@devbord/shared';
 import { Button, IconButton, PixelIcon, Select, confirm } from '../../design';
@@ -9,6 +9,9 @@ import { ImportCardsModal } from '../board/ImportCardsModal';
 import { InlineEdit } from '../board/InlineEdit';
 import { AppShell } from '../components/AppShell';
 import { BoardSwitcher } from '../components/BoardSwitcher';
+import { useCollab } from '../../controllers/collabController';
+import { NamePrompt } from '../team/NamePrompt';
+import { TeamBar } from '../team/TeamBar';
 
 /** A single board: page header (name, card count, profile, delete) + Kanban canvas. */
 export function BoardPage() {
@@ -17,6 +20,15 @@ export function BoardPage() {
   const navigate = useNavigate();
   const { renameBoard, setProfile, deleteBoard } = useBoardController.getState();
   const [importing, setImporting] = useState(false);
+  const team = board?.mode === 'team';
+
+  // Team boards go live while they are on screen; leaving the page disconnects.
+  useEffect(() => {
+    if (!team || !boardId) return;
+    const current = useBoardController.getState().boards.find((b) => b.id === boardId);
+    if (current) void useCollab.getState().open(current);
+    return () => useCollab.getState().close();
+  }, [team, boardId]);
 
   if (!board) return <Navigate to="/" replace />;
   const cardCount = board.columns.reduce((n, c) => n + c.cards.length, 0);
@@ -57,6 +69,7 @@ export function BoardPage() {
               ))}
             </Select>
           </div>
+          {team && <TeamBar board={board} />}
           <ExportMenu board={board} />
           <Button size="sm" onClick={() => setImporting(true)}>
             <PixelIcon name="import" />
@@ -67,10 +80,13 @@ export function BoardPage() {
             label="Eliminar tablero"
             onClick={async () => {
               const ok = await confirm(
-                `¿Eliminar el tablero "${board.name}"? No se puede deshacer.`,
+                team
+                  ? `¿Salir del tablero de equipo "${board.name}"? Se borra solo de este navegador; tu equipo lo conserva.`
+                  : `¿Eliminar el tablero "${board.name}"? No se puede deshacer.`,
                 { confirmLabel: 'Eliminar', danger: true },
               );
               if (!ok) return;
+              if (team) await useCollab.getState().forget(board.id);
               await deleteBoard(board.id);
               navigate('/', { replace: true });
             }}
@@ -80,8 +96,9 @@ export function BoardPage() {
 
       <main className="mx-auto min-h-0 w-full max-w-[1600px] flex-1">
         {/* key: switching boards starts with a clean canvas (no open card or drag state). */}
-        <BoardCanvas key={board.id} board={board} />
+        <BoardCanvas key={board.id} board={board} team={team} />
       </main>
+      {team && <NamePrompt />}
       <ImportCardsModal open={importing} board={board} onClose={() => setImporting(false)} />
     </AppShell>
   );

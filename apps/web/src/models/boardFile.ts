@@ -8,7 +8,7 @@
  *
  * Validation uses the shared BoardSchema, the same one IndexedDB and the API use.
  */
-import { BoardSchema, newId, type Board } from '@devbord/shared';
+import { BoardSchema, newId, newShareKey, type Board } from '@devbord/shared';
 
 export const BOARD_FILE_FORMAT = 'devbord.board';
 export const BOARD_FILE_VERSION = 1;
@@ -20,7 +20,8 @@ export function serializeBoard(board: Board): string {
       format: BOARD_FILE_FORMAT,
       version: BOARD_FILE_VERSION,
       exportedAt: new Date().toISOString(),
-      board,
+      // Never export the team invite secret: a shared file must not grant room access.
+      board: { ...board, shareKey: null },
     },
     null,
     2,
@@ -60,7 +61,15 @@ export function parseBoardFile(text: string): Board {
     throw new BoardFileError('El tablero del archivo está incompleto o dañado.');
   }
   const now = new Date().toISOString();
-  return { ...result.data, id: newId(), createdAt: now, updatedAt: now };
+  const board = result.data;
+  return {
+    ...board,
+    id: newId(),
+    // An imported team board starts its own room (new link), it never joins the original one.
+    shareKey: board.mode === 'team' ? newShareKey() : null,
+    createdAt: now,
+    updatedAt: now,
+  };
 }
 
 /** File name for a board export: "mi-tablero.devbord.json". */
