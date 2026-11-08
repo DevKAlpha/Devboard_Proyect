@@ -1,10 +1,11 @@
-import { Link, Navigate, useNavigate, useParams } from 'react-router';
+import { Navigate, useNavigate, useParams } from 'react-router';
 import { PROFILE_INFO, ProfileSchema } from '@devbord/shared';
-import { IconButton, PixelIcon, Select } from '../../design';
+import { IconButton, Select } from '../../design';
 import { useBoard, useBoardController } from '../../controllers/boardController';
 import { BoardCanvas } from '../board/BoardCanvas';
 import { InlineEdit } from '../board/InlineEdit';
 import { AppShell } from '../components/AppShell';
+import { BoardSwitcher } from '../components/BoardSwitcher';
 
 /** A single board: page header (name, card count, profile, delete) + Kanban canvas. */
 export function BoardPage() {
@@ -20,12 +21,7 @@ export function BoardPage() {
     <AppShell>
       <header className="mx-auto flex w-full max-w-[1600px] flex-wrap items-center gap-x-4 gap-y-2 px-4 pt-5 pb-3">
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <Link
-            to="/"
-            className="inline-flex w-fit items-center gap-1 text-xs text-muted hover:text-ink"
-          >
-            <PixelIcon name="board" size={12} /> Tableros
-          </Link>
+          <BoardSwitcher currentId={board.id} />
           <div className="flex min-w-0 items-center gap-2">
             <InlineEdit
               value={board.name}
@@ -71,7 +67,8 @@ export function BoardPage() {
       </header>
 
       <main className="mx-auto min-h-0 w-full max-w-[1600px] flex-1">
-        <BoardCanvas board={board} />
+        {/* key: switching boards starts with a clean canvas (no open card or drag state). */}
+        <BoardCanvas key={board.id} board={board} />
       </main>
     </AppShell>
   );
