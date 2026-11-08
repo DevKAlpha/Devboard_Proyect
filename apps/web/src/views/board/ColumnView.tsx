@@ -46,17 +46,17 @@ export const ColumnView = memo(function ColumnView({
       aria-label={`Columna ${column.title}`}
       style={{ transform: CSS.Translate.toString(transform), transition }}
       className={cx(
-        'flex max-h-full w-[min(300px,85vw)] shrink-0 snap-start flex-col gap-3 bg-surface-2 p-3 pixel-soft',
+        'group/col flex max-h-full w-[min(300px,85vw)] shrink-0 snap-start flex-col gap-3 rounded-xl bg-surface-2 p-2.5',
         isDragging && 'opacity-50',
       )}
     >
-      <header className="flex items-center gap-1">
+      <header className="flex items-center gap-1 rounded-lg px-1 py-0.5">
         <button
           ref={setActivatorNodeRef}
           {...attributes}
           {...listeners}
           aria-label={`Mover columna ${column.title}`}
-          className="cursor-grab p-1 text-muted hover:text-ink"
+          className="cursor-grab rounded-md p-1 text-faint hover:text-ink"
         >
           <PixelIcon name="grip" />
         </button>
@@ -65,13 +65,17 @@ export const ColumnView = memo(function ColumnView({
           label="Nombre de la columna"
           maxLength={60}
           onSave={(title) => onRename(column.id, title)}
-          className="flex-1 font-pixel text-base"
+          className="min-w-0 font-pixel text-base"
         />
-        <span className="min-w-6 text-center text-xs text-muted tabular-nums">
+        {/* Count chip, as in the mockups ("To Do ④"). */}
+        <span className="grid h-5 min-w-5 place-items-center rounded-full bg-surface-3 px-1.5 text-[11px] font-semibold text-muted tabular-nums">
           {column.cards.length}
         </span>
+        <span className="flex-1" />
         <IconButton
           icon="trash"
+          // Quiet until the column is hovered or focused: less noise, same reach.
+          className="opacity-0 group-hover/col:opacity-100 focus-visible:opacity-100"
           label={`Eliminar columna ${column.title}`}
           onClick={() => {
             const msg = column.cards.length

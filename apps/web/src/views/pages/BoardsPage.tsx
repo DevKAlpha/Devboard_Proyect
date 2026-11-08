@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router';
 import { PROFILE_INFO } from '@devbord/shared';
 import { Badge, Button, PixelIcon } from '../../design';
 import { useBoardController } from '../../controllers/boardController';
-import { TopBar } from '../components/TopBar';
+import { AppShell } from '../components/AppShell';
 import { NewBoardModal } from '../components/NewBoardModal';
 
 const updatedFormat = new Intl.DateTimeFormat('es', { day: 'numeric', month: 'short' });
@@ -15,37 +15,38 @@ export function BoardsPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-full">
-      <TopBar />
-      <main className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h1 className="text-3xl">Tus tableros</h1>
-            <p className="mt-1 text-muted">Todo lo que tienes entre manos, en un vistazo.</p>
-          </div>
-          <Button variant="primary" onClick={() => setCreating(true)}>
-            <PixelIcon name="plus" />
-            Nuevo tablero
-          </Button>
+    <AppShell>
+      <header className="flex flex-wrap items-end justify-between gap-4 border-b border-line-soft px-5 py-4">
+        <div>
+          <h1 className="text-2xl">Tus tableros</h1>
+          <p className="mt-0.5 text-sm text-muted">
+            Todo lo que tienes entre manos, en un vistazo.
+          </p>
         </div>
+        <Button variant="primary" size="sm" onClick={() => setCreating(true)}>
+          <PixelIcon name="plus" />
+          Nuevo tablero
+        </Button>
+      </header>
 
-        <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <main className="min-h-0 flex-1 overflow-y-auto px-5 py-6">
+        <ul className="grid max-w-6xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {boards.map((b) => {
             const cards = b.columns.reduce((n, c) => n + c.cards.length, 0);
             return (
               <li key={b.id}>
                 <Link
                   to={`/b/${b.id}`}
-                  className="flex h-full flex-col gap-3 bg-surface p-4 pixel-raised transition-transform hover:-translate-y-0.5"
+                  className="flex h-full flex-col gap-3 rounded-xl border border-line-soft bg-card p-4 shadow-card transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-lift"
                 >
-                  {/* Mini preview: one bar per column, height by card count. */}
-                  <div className="flex h-12 items-end gap-1" aria-hidden>
+                  {/* Mini preview: one column per bar, filled with pixel blocks (one per card). */}
+                  <div className="flex h-14 gap-1.5 rounded-lg bg-surface-2 p-1.5" aria-hidden>
                     {b.columns.slice(0, 6).map((c) => (
-                      <span
-                        key={c.id}
-                        className="flex-1 bg-surface-2"
-                        style={{ height: `${Math.min(100, 25 + c.cards.length * 15)}%` }}
-                      />
+                      <span key={c.id} className="flex flex-1 flex-col gap-1">
+                        {Array.from({ length: Math.min(4, c.cards.length) }, (_, i) => (
+                          <span key={i} className="h-2 rounded-[2px] bg-card shadow-card" />
+                        ))}
+                      </span>
                     ))}
                   </div>
                   <h2 className="truncate text-lg">{b.name}</h2>
@@ -76,6 +77,6 @@ export function BoardsPage() {
         onClose={() => setCreating(false)}
         onCreated={(id) => navigate(`/b/${id}`)}
       />
-    </div>
+    </AppShell>
   );
 }

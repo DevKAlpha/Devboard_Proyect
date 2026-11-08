@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import type { Profile } from '@devbord/shared';
-import { Button, Field, Input } from '../../design';
+import { Button, Field, Input, cx } from '../../design';
 import { useBoardController } from '../../controllers/boardController';
 import { usePreferences } from '../../controllers/preferencesController';
 import { buildBoardFromTemplate, getTemplate, templatesFor } from '../../templates';
@@ -56,7 +56,12 @@ export function OnboardingPage() {
         <ol className="flex gap-2" aria-label="Progreso">
           {STEPS.map((label, i) => (
             <li key={label} className="flex flex-1 flex-col gap-1.5">
-              <span className={i <= step ? 'h-2 bg-accent' : 'h-2 bg-line-soft'} />
+              <span
+                className={cx(
+                  'h-1.5 rounded-[2px] transition-colors',
+                  i <= step ? 'bg-accent' : 'bg-surface-3',
+                )}
+              />
               <span
                 className={i === step ? 'text-xs font-semibold' : 'text-xs text-muted'}
                 aria-current={i === step ? 'step' : undefined}

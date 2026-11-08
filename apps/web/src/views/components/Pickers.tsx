@@ -30,12 +30,12 @@ function OptionCard({
   return (
     <label
       className={cx(
-        'flex cursor-pointer flex-col gap-1.5 bg-surface p-4 transition-transform',
+        'flex cursor-pointer flex-col gap-1.5 rounded-xl border bg-card p-4 shadow-card transition-[transform,box-shadow,border-color]',
         // The radio is visually hidden, so show its keyboard focus on the card.
         'has-focus-visible:outline-2 has-focus-visible:outline-offset-4 has-focus-visible:outline-accent',
-        checked // outline, not ring: ring uses box-shadow, which pixel-raised already owns.
-          ? 'pixel-raised outline-2 outline-offset-2 outline-accent'
-          : 'pixel-soft hover:-translate-y-0.5',
+        checked
+          ? 'border-accent shadow-[0_0_0_3px_var(--accent-soft)]'
+          : 'border-line-soft hover:-translate-y-0.5 hover:shadow-lift',
       )}
     >
       <input
@@ -81,7 +81,11 @@ export function ProfilePicker({
 const ColumnsPreview = ({ count }: { count: number }) => (
   <span className="mb-1 flex h-6 gap-1" aria-hidden>
     {Array.from({ length: count }, (_, i) => (
-      <span key={i} className="flex-1 bg-surface-2" style={{ height: `${100 - i * 12}%` }} />
+      <span
+        key={i}
+        className="flex-1 rounded-[2px] bg-surface-3"
+        style={{ height: `${100 - i * 12}%` }}
+      />
     ))}
   </span>
 );

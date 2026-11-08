@@ -1,67 +1,104 @@
 /*
  * Devbord design tokens — "pixel art meets Apple".
  *
- * Semantic CSS variables are defined per theme (light / dark) and exposed to
- * Tailwind through `@theme inline`. Components therefore use classes like
- * `bg-surface` or `text-ink` and never hard-code colors, so theming and future
- * brand changes touch only this file.
+ * Visual language (v2, from the Kanban mockup references):
+ *  - Calm, layered neutrals: app chrome (bg) → canvas (surface) → column
+ *    (surface-2) → card (card). Each layer is a small step in lightness, like
+ *    macOS windows, instead of hard outlines.
+ *  - Hairline borders + soft shadows for depth; small radii (8–14px).
+ *  - The pixel identity lives in the details: Pixelify headings, 16×16 pixel
+ *    icons, stepped animations, segmented progress and the pixel cursor.
+ *
+ * Semantic CSS variables are defined per theme and exposed to Tailwind through
+ * `@theme inline`, so components use `bg-card` / `text-ink` and never hard-code
+ * colors. Theming and brand changes touch only this file.
  */
 @import 'tailwindcss';
 
-/* Dark mode is driven by `data-theme` on <html> (see controllers/useThemeController). */
+/* Dark mode is driven by `data-theme` on <html> (see controllers/themeController). */
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 :root {
-  /* Neutrals: warm off-white paper and near-black ink, Apple-like calm. */
-  --bg: #fafaf7;
+  /* Layers, from back to front. */
+  --bg: #f0f0f4;
   --surface: #ffffff;
-  --surface-2: #f2f2ee;
-  --ink: #1c1c1e;
+  --surface-2: #f4f4f7;
+  --surface-3: #e9e9ee;
+  --card: #ffffff;
+
+  --ink: #1d1d1f;
   --muted: #6e6e73;
-  --line: #1c1c1e;
-  --line-soft: #e3e3dd;
+  --faint: #a1a1a8;
+  /* Hairlines: `line` for controls, `line-soft` for containers. */
+  --line: #d2d2d8;
+  --line-soft: #e6e6eb;
 
-  /* Single accent: Apple system blue. */
-  --accent: #0a84ff;
+  /* Single accent: Apple system indigo. */
+  --accent: #5e5ce6;
   --accent-ink: #ffffff;
-  --danger: #ff453a;
+  --accent-soft: #ebeafd;
+  --danger: #ff3b30;
 
-  /* Soft label palette (matches LabelColor in @devbord/shared). */
-  --label-blue: #cfe5ff;
-  --label-green: #d3f2dc;
-  --label-yellow: #fff1bf;
-  --label-orange: #ffe0c7;
-  --label-red: #ffd5d2;
-  --label-purple: #e6dcff;
-  --label-gray: #e5e5ea;
+  /* Soft label palette (matches LabelColor in @devbord/shared): tint + text. */
+  --label-blue: #e3efff;
+  --label-blue-ink: #1d63c7;
+  --label-green: #e2f6e8;
+  --label-green-ink: #1f8a46;
+  --label-yellow: #fff4d6;
+  --label-yellow-ink: #a26a00;
+  --label-orange: #ffeadb;
+  --label-orange-ink: #c1560f;
+  --label-red: #ffe4e2;
+  --label-red-ink: #d0302a;
+  --label-purple: #efe8ff;
+  --label-purple-ink: #6b46d6;
+  --label-gray: #ededf1;
+  --label-gray-ink: #5c5c63;
 
-  /* Pixel step: every border / shadow is a multiple of this. */
+  --shadow-card-v: 0 1px 2px rgb(16 16 24 / 0.05), 0 1px 1px rgb(16 16 24 / 0.03);
+  --shadow-lift-v: 0 18px 36px -10px rgb(16 16 24 / 0.22), 0 6px 12px -4px rgb(16 16 24 / 0.08);
+
+  /* Pixel step for pixel-art details (icons, progress blocks, cursor). */
   --px: 2px;
 
   color-scheme: light;
 }
 
 [data-theme='dark'] {
-  --bg: #111113;
-  --surface: #1c1c1e;
-  --surface-2: #232326;
-  --ink: #f5f5f7;
-  --muted: #98989f;
-  /* Softer than ink on purpose: pure white pixel borders glare on dark backgrounds. */
-  --line: #5c5c63;
-  --line-soft: #2e2e32;
+  --bg: #0e0e10;
+  --surface: #161618;
+  --surface-2: #1c1c1f;
+  --surface-3: #2a2a2e;
+  --card: #232326;
 
-  --accent: #0a84ff;
+  --ink: #ededf0;
+  --muted: #9a9aa1;
+  --faint: #66666d;
+  --line: #3a3a3f;
+  --line-soft: #2a2a2e;
+
+  --accent: #7d7aff;
   --accent-ink: #ffffff;
+  --accent-soft: #2a2950;
   --danger: #ff6961;
 
-  --label-blue: #17375a;
-  --label-green: #1b4229;
-  --label-yellow: #4a3e12;
-  --label-orange: #4d3018;
-  --label-red: #4f1f1c;
-  --label-purple: #33285a;
-  --label-gray: #2e2e32;
+  --label-blue: #1a2d47;
+  --label-blue-ink: #79b4ff;
+  --label-green: #18331f;
+  --label-green-ink: #6fd892;
+  --label-yellow: #3a3115;
+  --label-yellow-ink: #f2c55c;
+  --label-orange: #3d2616;
+  --label-orange-ink: #ffa065;
+  --label-red: #3f1c1a;
+  --label-red-ink: #ff8a80;
+  --label-purple: #2b2348;
+  --label-purple-ink: #b9a3ff;
+  --label-gray: #2c2c30;
+  --label-gray-ink: #b4b4bb;
+
+  --shadow-card-v: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-lift-v: 0 22px 40px -10px rgb(0 0 0 / 0.7), 0 6px 14px -4px rgb(0 0 0 / 0.5);
 
   color-scheme: dark;
 }
@@ -70,48 +107,24 @@
   --color-bg: var(--bg);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-card: var(--card);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
+  --color-faint: var(--faint);
   --color-line: var(--line);
   --color-line-soft: var(--line-soft);
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
   --color-danger: var(--danger);
+
+  --shadow-card: var(--shadow-card-v);
+  --shadow-lift: var(--shadow-lift-v);
 
   --font-pixel: 'Pixelify Sans', ui-monospace, monospace;
   --font-sans:
     -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Segoe UI', Roboto, sans-serif;
-}
-
-/*
- * Pixel border: four hard shadows instead of `border` leave the corners
- * notched, which reads as pixel art while staying crisp at any zoom.
- */
-@utility pixel-border {
-  box-shadow:
-    0 calc(-1 * var(--px)) 0 0 var(--line),
-    0 var(--px) 0 0 var(--line),
-    calc(-1 * var(--px)) 0 0 0 var(--line),
-    var(--px) 0 0 0 var(--line);
-}
-
-/* Same notched border plus a hard offset drop shadow for raised elements. */
-@utility pixel-raised {
-  box-shadow:
-    0 calc(-1 * var(--px)) 0 0 var(--line),
-    0 var(--px) 0 0 var(--line),
-    calc(-1 * var(--px)) 0 0 0 var(--line),
-    var(--px) 0 0 0 var(--line),
-    calc(2 * var(--px)) calc(3 * var(--px)) 0 0 color-mix(in srgb, var(--line) 18%, transparent);
-}
-
-/* Soft border for low-emphasis containers (columns), keeps the UI calm. */
-@utility pixel-soft {
-  box-shadow:
-    0 calc(-1 * var(--px)) 0 0 var(--line-soft),
-    0 var(--px) 0 0 var(--line-soft),
-    calc(-1 * var(--px)) 0 0 0 var(--line-soft),
-    var(--px) 0 0 0 var(--line-soft);
 }
 
 @layer base {
@@ -135,10 +148,10 @@
     letter-spacing: 0.01em;
   }
 
-  /* Visible, pixel-style focus ring for keyboard users. */
+  /* Visible focus ring for keyboard users, in the accent color. */
   :focus-visible {
     outline: var(--px) solid var(--accent);
-    outline-offset: calc(2 * var(--px));
+    outline-offset: var(--px);
   }
 
   @media (prefers-reduced-motion: reduce) {
