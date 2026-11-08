@@ -60,6 +60,10 @@ function CursorLayer() {
   const [shownHint, setShownHint] = useState<{ el: Element; text: string } | null>(null);
   const dragging = useCursorController((s) => s.dragging);
   const dragHint = useCursorController((s) => s.hint);
+  const draggingRef = useRef(dragging);
+  useEffect(() => {
+    draggingRef.current = dragging;
+  }, [dragging]);
 
   // Mutable per-frame state lives in a ref (no re-render on mouse move).
   const live = useRef({ x: -100, y: -100, prevX: -100, tilt: 0, element: null as Element | null });
@@ -156,7 +160,9 @@ function CursorLayer() {
           s.x + 16 + hint.offsetWidth > window.innerWidth - 8
             ? s.x - hint.offsetWidth - 8
             : s.x + 16;
-        hint.style.transform = `translate3d(${hx}px, ${s.y + 22}px, 0)`;
+        // While dragging the card hangs below the hand: put the hint above it instead.
+        const hy = draggingRef.current ? s.y - 34 : s.y + 22;
+        hint.style.transform = `translate3d(${hx}px, ${hy}px, 0)`;
       }
 
       const halo = haloRef.current;
@@ -236,7 +242,7 @@ function CursorLayer() {
             hintRef.current = el;
             // Place it before first paint; the frame loop takes over afterwards.
             if (el)
-              el.style.transform = `translate3d(${live.current.x + 16}px, ${live.current.y + 22}px, 0)`;
+              el.style.transform = `translate3d(${live.current.x + 16}px, ${live.current.y + (draggingRef.current ? -34 : 22)}px, 0)`;
           }}
           key={hint}
           className="pc-hint"

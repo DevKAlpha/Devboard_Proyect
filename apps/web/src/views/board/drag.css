@@ -1,0 +1,27 @@
+/*
+ * Lifted card while dragging: it "fidgets" in the hand. The pivot is the grip
+ * point (where the pixel hand holds it), so the card swings around the hand.
+ * Transform-only, stepped; off in lite mode.
+ */
+.drag-jitter {
+  transform-origin: var(--grip-x) var(--grip-y);
+  animation: drag-jitter 0.36s steps(4, end) infinite;
+}
+@keyframes drag-jitter {
+  0%,
+  100% {
+    transform: rotate(0deg) translate(0, 0);
+  }
+  25% {
+    transform: rotate(-1deg) translate(-0.5px, 0.5px);
+  }
+  50% {
+    transform: rotate(0.8deg) translate(0.5px, -0.5px);
+  }
+  75% {
+    transform: rotate(-0.5deg) translate(0.5px, 0.5px);
+  }
+}
+html[data-motion='lite'] .drag-jitter {
+  animation: none;
+}

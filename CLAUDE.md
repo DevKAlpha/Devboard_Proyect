@@ -38,8 +38,21 @@ docker/         Dockerfiles. docker-compose.yml en la raíz.
 
 ## Git
 - Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`, `ci:`).
-- Ramas: `feat/<tema>`, `fix/<tema>`, `chore/<tema>`, `ci/<tema>`. Merge a `main` con `--no-ff`. La rama se conserva.
-- **No hacer push** sin confirmación explícita del usuario.
+- **Ramas por apartado** (permanentes, una por área de la app). Todo cambio se hace en la rama de su área y **se hace push a esa rama directamente**, sin preguntar:
+  | Rama | Apartado |
+  |---|---|
+  | `area/shared` | `packages/shared`: modelo de dominio, schemas, operaciones puras |
+  | `area/design` | `apps/web/src/design` + `views/cursor`: tokens, componentes base, animaciones, cursor pixel |
+  | `area/board` | `views/board`, `controllers/boardController`: tablero, columnas, tarjetas, DnD, estados |
+  | `area/boards` | `views/pages`, `views/components`, `templates`, `models/boardFile`: inicio, onboarding, plantillas, importar/exportar |
+  | `area/collab` | `models/collab`, `views/team`, `controllers/collab*`, `controllers/identity*`: tableros de equipo en tiempo real |
+  | `area/api` | `apps/api` |
+  | `area/infra` | Docker, CI/CD, configuración, documentación |
+- Un cambio que toca varias áreas va en la rama del área principal y se menciona en el commit.
+- Flujo: `area/*` (push directo) → merge `--no-ff` a **`develop`** (integración; el CI corre en cada push) → **`main` = producción**.
+- Antes de empezar en un área: `git switch area/<x> && git merge develop`, para partir de lo último integrado.
+- **`main` solo se actualiza con aprobación explícita del usuario**, después de validar en `develop` (lint, typecheck, tests, build y prueba en el navegador). Cada push a `main` despliega GitHub Pages.
+- Las ramas `feat/*` y `fix/*` antiguas son historial; no se usan para trabajo nuevo.
 - **Sin atribución de IA**: nunca añadir `Co-Authored-By` ni "Generated with Claude Code" en commits o PRs. El único autor es la cuenta del usuario (DevKAlpha).
 
 ## Código
