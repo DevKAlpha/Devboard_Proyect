@@ -22,6 +22,7 @@ import {
 } from '@dnd-kit/sortable';
 import { PROFILE_FEATURES, findCard, moveCard, type Board } from '@devbord/shared';
 import { useBoardController } from '../../controllers/boardController';
+import { useCursorController } from '../../controllers/cursorController';
 import { CardDetailModal } from './CardDetailModal';
 import { CardFace } from './CardView';
 import { ColumnView } from './ColumnView';
@@ -62,6 +63,8 @@ const collisionDetection: CollisionDetection = (args) => {
  */
 /** Actions are stable; reading them via getState() avoids subscribing this view to the whole store. */
 const ctrl = () => useBoardController.getState();
+/** The pixel cursor shows the grabbing hand and the destination column during drags. */
+const cursor = () => useCursorController.getState();
 
 export function BoardCanvas({ board }: { board: Board }) {
   const [draft, setDraft] = useState<Board | null>(null);
@@ -91,11 +94,15 @@ export function BoardCanvas({ board }: { board: Board }) {
 
   const onDragStart = ({ active }: DragStartEvent) => {
     setActiveId(String(active.id));
-    if (kindOf(active.data) === 'card') setDraft(board);
+    if (kindOf(active.data) === 'card') {
+      setDraft(board);
+      cursor().drag(columnOf(board, String(active.id))?.title ?? null);
+    } else cursor().drag(null);
   };
 
   const onDragOver = ({ active, over }: DragOverEvent) => {
     if (!over || kindOf(active.data) !== 'card') return;
+    cursor().drag(columnOf(draft ?? board, String(over.id))?.title ?? null);
     setDraft((current) => {
       const b = current ?? board;
       const from = columnOf(b, String(active.id));
@@ -110,6 +117,7 @@ export function BoardCanvas({ board }: { board: Board }) {
   const reset = () => {
     setDraft(null);
     setActiveId(null);
+    cursor().endDrag();
   };
 
   const onDragEnd = ({ active, over }: DragEndEvent) => {

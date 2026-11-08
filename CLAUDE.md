@@ -28,6 +28,7 @@ docker/         Dockerfiles. docker-compose.yml en la raíz.
 - `design/`: tokens y componentes UI base (pixel + Apple).
 - `templates/`: plantillas de tablero por perfil.
 - `integrations/`: contratos de proveedores externos (GitHub, Google, Microsoft).
+- `views/cursor/`: cursor pixel (sprites, halo, pistas y chispas). Su estado vive en `controllers/cursorController.ts`. Se monta solo con puntero fino y se puede apagar desde la barra lateral.
 
 ### MVC en `apps/api/src`
 `routes → controllers → services → models`. La validación usa los schemas de `@devbord/shared`.

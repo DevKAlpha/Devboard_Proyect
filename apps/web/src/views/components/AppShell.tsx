@@ -3,6 +3,7 @@ import { NavLink } from 'react-router';
 import { IconButton, PixelIcon, cx } from '../../design';
 import { useBoardController } from '../../controllers/boardController';
 import { useThemeController } from '../../controllers/themeController';
+import { useCursorController } from '../../controllers/cursorController';
 import { Logo } from './Logo';
 
 /** Dot colors cycle per board so the sidebar list is scannable (like project dots in Linear/Mast). */
@@ -42,7 +43,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         <NavLink to="/" aria-label="Inicio">
           <Logo />
         </NavLink>
-        <ThemeToggle />
+        <div className="flex items-center gap-1">
+          <CursorToggle />
+          <ThemeToggle />
+        </div>
       </header>
 
       <aside
@@ -79,7 +83,10 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         <div className="mt-auto flex items-center justify-between px-1">
           <span className="text-xs text-faint">Apariencia</span>
-          <ThemeToggle />
+          <div className="flex items-center gap-1">
+            <CursorToggle />
+            <ThemeToggle />
+          </div>
         </div>
       </aside>
 
@@ -87,5 +94,20 @@ export function AppShell({ children }: { children: ReactNode }) {
         {children}
       </div>
     </div>
+  );
+}
+
+/** Turns the pixel cursor on or off (some users prefer their system pointer). */
+function CursorToggle() {
+  const enabled = useCursorController((s) => s.enabled);
+  const setEnabled = useCursorController((s) => s.setEnabled);
+  return (
+    <IconButton
+      icon="cursor"
+      label={enabled ? 'Usar cursor del sistema' : 'Usar cursor pixel'}
+      aria-pressed={enabled}
+      className={enabled ? 'text-accent' : undefined}
+      onClick={() => setEnabled(!enabled)}
+    />
   );
 }
