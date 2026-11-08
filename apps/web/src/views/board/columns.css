@@ -1,0 +1,167 @@
+/*
+ * Column decorations (see ColumnDecor.tsx). Every animation is transform or
+ * opacity with steps() timing: composited by the GPU, nothing re-layouts.
+ * In lite mode the sprites stay but stop moving, and the snowfall is hidden.
+ */
+.col-ring,
+.col-sprite {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.col-sprite {
+  position: relative;
+  width: 16px;
+  height: 16px;
+}
+.col-sprite > span {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+/* New issues: twinkling sparkle. */
+.col-sprite-new svg {
+  animation: col-twinkle 1.8s steps(4, end) infinite;
+}
+@keyframes col-twinkle {
+  0%,
+  100% {
+    transform: scale(0.75) rotate(0deg);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1) rotate(45deg);
+    opacity: 1;
+  }
+}
+
+/* Icebox: slowly turning snowflake. */
+.col-sprite-icebox svg {
+  animation: col-turn 3s steps(4, end) infinite;
+}
+@keyframes col-turn {
+  to {
+    transform: rotate(90deg);
+  }
+}
+
+/* Product backlog: the box stack settles now and then. */
+.col-sprite-backlog svg {
+  animation: col-bob 2.6s steps(3, end) infinite;
+}
+@keyframes col-bob {
+  0%,
+  70%,
+  100% {
+    transform: translateY(0);
+  }
+  80% {
+    transform: translateY(-2px);
+  }
+}
+
+/* Sprint backlog: waving flag (two frames). */
+.col-frame-b {
+  opacity: 0;
+}
+.col-sprite-sprint .col-frame-a {
+  animation: col-swap 0.8s steps(1, end) infinite;
+}
+.col-sprite-sprint .col-frame-b {
+  animation: col-swap 0.8s steps(1, end) infinite reverse;
+}
+@keyframes col-swap {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* In progress: spinning gear (symmetric, so a 90° step loop looks continuous). */
+.col-sprite-progress svg {
+  animation: col-turn 1.2s steps(2, end) infinite;
+}
+
+/* In review: magnifier scanning left and right. */
+.col-sprite-review svg {
+  animation: col-scan 2.4s steps(4, end) infinite alternate;
+}
+@keyframes col-scan {
+  from {
+    transform: translateX(-2px);
+  }
+  to {
+    transform: translateX(2px);
+  }
+}
+
+/* Done: trophy with a passing shine. */
+.col-shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    transparent 40%,
+    rgb(255 255 255 / 0.85) 50%,
+    transparent 60%
+  );
+  mix-blend-mode: soft-light;
+  animation: col-shine 3s steps(6, end) infinite;
+}
+@keyframes col-shine {
+  0%,
+  60% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+/* Icebox snowfall: pixel flakes drifting down the whole column. */
+.col-snow {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  border-radius: inherit;
+}
+.col-snow-flake {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 2px;
+  animation: col-fall 8s steps(40, end) infinite;
+}
+.col-snow-flake::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 2px;
+  background: color-mix(in srgb, #9fd3ff 80%, transparent);
+}
+@keyframes col-fall {
+  from {
+    transform: translateY(-4%);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+html[data-motion='lite'] .col-sprite svg,
+html[data-motion='lite'] .col-sprite span {
+  animation: none;
+}
+html[data-motion='lite'] .col-frame-b,
+html[data-motion='lite'] .col-shine,
+html[data-motion='lite'] .col-snow {
+  display: none;
+}

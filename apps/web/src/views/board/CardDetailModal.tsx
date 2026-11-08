@@ -52,6 +52,7 @@ function CardForm({
     type: card.type,
     priority: card.priority,
     storyPoints: card.storyPoints,
+    sprint: card.sprint,
   });
   const set = (patch: CardPatch) => setDraft((d) => ({ ...d, ...patch }));
   const labelIds = draft.labelIds ?? [];
@@ -163,6 +164,17 @@ function CardForm({
                 </option>
               ))}
             </Select>
+          </Field>
+        )}
+        {features.agile && (
+          <Field label="Sprint" htmlFor="card-sprint">
+            <Input
+              id="card-sprint"
+              maxLength={30}
+              placeholder="Ej. Sprint 1"
+              value={draft.sprint ?? ''}
+              onChange={(e) => set({ sprint: e.target.value.trim() ? e.target.value : null })}
+            />
           </Field>
         )}
         {features.agile && (

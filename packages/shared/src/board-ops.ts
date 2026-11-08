@@ -43,6 +43,8 @@ export interface NewBoardInput {
   columnTitles?: string[];
   /** WIP limit per column, aligned with `columnTitles` (missing = unlimited). */
   wipLimits?: (number | null)[];
+  /** Column descriptions, aligned with `columnTitles`. */
+  columnDescriptions?: (string | null)[];
   labels?: Omit<Label, 'id'>[];
   cardTemplate?: string | null;
 }
@@ -58,9 +60,11 @@ export function createBoard(input: NewBoardInput): Board {
     templateId: input.templateId ?? null,
     labels: (input.labels ?? []).map((l) => ({ ...l, id: newId() })),
     cardTemplate: input.cardTemplate ?? null,
+    nextNumber: 1,
     columns: (input.columnTitles ?? []).map((title, i) => ({
       id: newId(),
       title,
+      description: input.columnDescriptions?.[i] ?? null,
       wipLimit: input.wipLimits?.[i] ?? null,
       cards: [],
     })),
@@ -80,6 +84,8 @@ export function createCard(title: string, patch: CardPatch = {}): Card {
     storyPoints: null,
     movedAt: null,
     moveLog: [],
+    number: null,
+    sprint: null,
     ...patch,
     id: newId(),
     title: title.trim(),
@@ -103,6 +109,7 @@ export function addColumn(board: Board, title: string, index = board.columns.len
   columns.splice(clampIndex(index, columns.length), 0, {
     id: newId(),
     title: title.trim(),
+    description: null,
     wipLimit: null,
     cards: [],
   });
@@ -115,6 +122,20 @@ export function setColumnWipLimit(board: Board, columnId: string, wipLimit: numb
   return touch(
     board,
     board.columns.map((c) => (c.id === columnId ? { ...c, wipLimit } : c)),
+  );
+}
+
+/** Sets (or clears with null/empty) a column's one-line description. */
+export function setColumnDescription(
+  board: Board,
+  columnId: string,
+  description: string | null,
+): Board {
+  if (!board.columns.some((c) => c.id === columnId)) return board;
+  const value = description?.trim() || null;
+  return touch(
+    board,
+    board.columns.map((c) => (c.id === columnId ? { ...c, description: value } : c)),
   );
 }
 
@@ -173,6 +194,15 @@ export function addCard(board: Board, columnId: string, card: Card, index?: numb
       return { ...c, cards };
     }),
   );
+}
+
+/**
+ * Adds a NEW card and gives it the board's next number (#1, #2…).
+ * Use this for cards the user creates; `addCard` places an existing card as is.
+ */
+export function addNewCard(board: Board, columnId: string, card: Card, index?: number): Board {
+  const next = addCard(board, columnId, { ...card, number: board.nextNumber }, index);
+  return next === board ? board : { ...next, nextNumber: board.nextNumber + 1 };
 }
 
 export function updateCard(board: Board, cardId: string, patch: CardPatch): Board {
@@ -270,9 +300,11 @@ export function copyCardsInto(
   };
 
   const at = nowIso();
-  const copies: Card[] = picked.map((card) => ({
+  const copies: Card[] = picked.map((card, i) => ({
     ...card,
     id: newId(),
+    // Copies are new items on the target board: they take its next numbers.
+    number: target.nextNumber + i,
     labelIds: card.labelIds.flatMap(mapLabel),
     // A copy starts fresh on the target board: no inherited "stale" or "hot" state.
     movedAt: null,
@@ -287,5 +319,6 @@ export function copyCardsInto(
       target.columns.map((c) => (c.id === columnId ? { ...c, cards: [...c.cards, ...copies] } : c)),
     ),
     labels,
+    nextNumber: target.nextNumber + copies.length,
   };
 }

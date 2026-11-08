@@ -193,6 +193,11 @@ export function BoardCanvas({ board, team = false }: { board: Board; team?: bool
     (columnId: string, title: string) => ctrl().addCard(board.id, columnId, title),
     [board.id],
   );
+  const onDescribe = useCallback(
+    (columnId: string, description: string) =>
+      ctrl().setColumnDescription(board.id, columnId, description),
+    [board.id],
+  );
   const onWipLimit = useCallback(
     (columnId: string, wipLimit: number | null) => ctrl().setWipLimit(board.id, columnId, wipLimit),
     [board.id],
@@ -247,6 +252,7 @@ export function BoardCanvas({ board, team = false }: { board: Board; team?: bool
                 onAddCard={onAddCard}
                 onOpenCard={setOpenCardId}
                 onWipLimit={onWipLimit}
+                onDescribe={onDescribe}
               />
             ))}
           </SortableContext>

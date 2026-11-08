@@ -37,7 +37,10 @@ export function CardFace({
   const showType = features.cardTypes && card.type !== 'task';
   const showPriority = features.priority && card.priority;
   const showPoints = features.agile && card.storyPoints !== null;
-  const showMeta = showType || showPriority || showPoints || due;
+  const showSprint = features.agile && card.sprint;
+  const showMeta = showType || showPriority || showPoints || showSprint || due;
+  // GitHub-style issue reference ("#12") for technical boards.
+  const showRef = features.devVocabulary && card.number !== null;
 
   return (
     <div
@@ -51,6 +54,12 @@ export function CardFace({
       )}
     >
       <MoodDecor mood={mood} />
+      {showRef && (
+        <span className="flex items-center gap-1 text-[11px] text-muted">
+          <PixelIcon name="issue" size={12} style={{ color: 'var(--label-green-ink)' }} />#
+          {card.number}
+        </span>
+      )}
       {cardLabels.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {cardLabels.map((l) => (
@@ -68,6 +77,15 @@ export function CardFace({
       )}
       {showMeta && (
         <div className="mt-0.5 flex flex-wrap items-center gap-1.5 border-t border-line-soft pt-2 text-xs">
+          {showPoints && (
+            // Pixel "die" with the estimate, the usual place for points in Scrum boards.
+            <span
+              className="grid h-5 min-w-5 place-items-center rounded-md border border-line px-1 text-[11px] font-semibold text-ink tabular-nums"
+              title={`${card.storyPoints} story points`}
+            >
+              {card.storyPoints}
+            </span>
+          )}
           {showType && (
             <Badge color={CARD_TYPE_META[card.type].color}>{CARD_TYPE_META[card.type].label}</Badge>
           )}
@@ -76,13 +94,11 @@ export function CardFace({
               {PRIORITY_META[card.priority].label}
             </Badge>
           )}
-          {showPoints && (
-            // Pixel "die" with the estimate, the usual place for points in Scrum boards.
-            <span
-              className="grid h-5 min-w-5 place-items-center rounded-md border border-line px-1 text-[11px] font-semibold text-ink tabular-nums"
-              title={`${card.storyPoints} story points`}
-            >
-              {card.storyPoints}
+          {showSprint && (
+            // Iteration chip, like GitHub Projects ("↻ Sprint 1").
+            <span className="inline-flex h-5 items-center gap-1 rounded-full border border-line px-1.5 text-[11px] text-muted">
+              <PixelIcon name="iteration" size={10} />
+              {card.sprint}
             </span>
           )}
           {due && (
