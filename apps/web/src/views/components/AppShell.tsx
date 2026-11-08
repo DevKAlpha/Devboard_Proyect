@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router';
-import { IconButton, PixelIcon, cx } from '../../design';
+import { IconButton } from '../../design';
 import { useThemeController } from '../../controllers/themeController';
 import { useCursorController } from '../../controllers/cursorController';
 import { Logo } from './Logo';
@@ -41,23 +41,9 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="flex h-full flex-col bg-surface">
       <header className="sticky top-0 z-20 shrink-0 border-b border-line-soft bg-surface/80 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-[1600px] items-center gap-3 px-4">
+          {/* The logo is the way home: always back to the start screen (board list). */}
           <NavLink to="/" aria-label="Devbord, ir al inicio">
             <Logo />
-          </NavLink>
-          {/* Explicit "Inicio": always takes the user back to the start screen (board list). */}
-          <NavLink
-            to="/"
-            end
-            className={({ isActive }) =>
-              cx(
-                'inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-sm transition-colors',
-                isActive
-                  ? 'bg-surface-3 text-ink'
-                  : 'text-muted hover:bg-surface-3/70 hover:text-ink',
-              )
-            }
-          >
-            <PixelIcon name="home" /> Inicio
           </NavLink>
           <span className="flex-1" />
           <CursorToggle />

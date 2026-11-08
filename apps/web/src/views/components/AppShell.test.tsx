@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { AppShell } from './AppShell';
 
 describe('AppShell', () => {
-  it('"Inicio" takes the user back to the start screen from anywhere', async () => {
+  it('the logo takes the user back to the start screen from anywhere', async () => {
     render(
       <MemoryRouter initialEntries={['/b/some-board']}>
         <Routes>
@@ -15,7 +15,7 @@ describe('AppShell', () => {
       </MemoryRouter>,
     );
 
-    await userEvent.click(screen.getByRole('link', { name: 'Inicio' }));
+    await userEvent.click(screen.getByRole('link', { name: /ir al inicio/ }));
     expect(screen.getByText('Pantalla inicial')).toBeInTheDocument();
   });
 });
