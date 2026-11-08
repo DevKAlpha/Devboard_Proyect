@@ -61,7 +61,10 @@ export function InlineEdit({ value, onSave, label, className, maxLength = 80 }: 
           setEditing(false);
         }
       }}
-      className={cx('min-w-0 bg-surface px-1 pixel-border outline-none', className)}
+      className={cx(
+        'min-w-0 rounded-md border border-accent bg-card px-1 shadow-[0_0_0_3px_var(--accent-soft)] outline-none',
+        className,
+      )}
     />
   );
 }

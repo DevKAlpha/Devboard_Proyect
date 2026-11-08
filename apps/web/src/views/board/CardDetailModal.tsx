@@ -109,7 +109,7 @@ function CardForm({
                   }
                   className={cx('transition-opacity', !active && 'opacity-45 hover:opacity-80')}
                 >
-                  <Badge color={l.color} className={active ? 'pixel-border' : undefined}>
+                  <Badge color={l.color} className={active ? 'ring-1 ring-current' : undefined}>
                     {l.name}
                   </Badge>
                 </button>

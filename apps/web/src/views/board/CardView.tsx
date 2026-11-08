@@ -14,18 +14,25 @@ export interface CardViewProps {
   overlay?: boolean;
 }
 
-/** Visual body of a card, shared by the sortable item and the drag overlay. */
+/**
+ * Visual body of a card, shared by the sortable item and the drag overlay.
+ * Layout follows the mockups: labels, title, two-line description, then a
+ * meta row (type, priority, due date).
+ */
 export function CardFace({ card, labels, features, overlay }: Omit<CardViewProps, 'onOpen'>) {
   const cardLabels = labels.filter((l) => card.labelIds.includes(l.id));
   const due = card.dueDate ? describeDueDate(card.dueDate) : null;
-  const showMeta =
-    (features.cardTypes && card.type !== 'task') || (features.priority && card.priority) || due;
+  const showType = features.cardTypes && card.type !== 'task';
+  const showPriority = features.priority && card.priority;
+  const showMeta = showType || showPriority || due;
 
   return (
     <div
       className={cx(
-        'flex flex-col gap-2 bg-surface p-3 text-left pixel-raised',
-        overlay && 'rotate-[1.5deg] cursor-grabbing',
+        'flex flex-col gap-2 rounded-lg border border-line-soft bg-card p-3 text-left shadow-card',
+        'transition-[box-shadow,border-color] duration-150 group-hover/card:border-line',
+        // Lifted card: tilted and floating, like picking up a paper card.
+        overlay && 'scale-[1.02] rotate-[2.5deg] shadow-lift',
       )}
     >
       {cardLabels.length > 0 && (
@@ -37,13 +44,18 @@ export function CardFace({ card, labels, features, overlay }: Omit<CardViewProps
           ))}
         </div>
       )}
-      <p className="text-[15px] leading-snug break-words">{card.title}</p>
+      <p className="text-[14px] leading-snug font-semibold break-words">{card.title}</p>
+      {card.description && (
+        <p className="line-clamp-2 text-[13px] leading-snug break-words text-muted">
+          {card.description}
+        </p>
+      )}
       {showMeta && (
-        <div className="flex flex-wrap items-center gap-1.5 text-xs">
-          {features.cardTypes && card.type !== 'task' && (
+        <div className="mt-0.5 flex flex-wrap items-center gap-1.5 border-t border-line-soft pt-2 text-xs">
+          {showType && (
             <Badge color={CARD_TYPE_META[card.type].color}>{CARD_TYPE_META[card.type].label}</Badge>
           )}
-          {features.priority && card.priority && (
+          {showPriority && card.priority && (
             <Badge color={PRIORITY_META[card.priority].color}>
               {PRIORITY_META[card.priority].label}
             </Badge>
@@ -51,7 +63,7 @@ export function CardFace({ card, labels, features, overlay }: Omit<CardViewProps
           {due && (
             <span
               className={cx(
-                'inline-flex items-center gap-1',
+                'ml-auto inline-flex items-center gap-1 tabular-nums',
                 due.overdue ? 'font-semibold text-danger' : 'text-muted',
               )}
             >
@@ -79,7 +91,7 @@ export const CardView = memo(function CardView({ card, labels, features, onOpen 
     <li
       ref={setNodeRef}
       style={{ transform: CSS.Translate.toString(transform), transition }}
-      className={cx('list-none', isDragging && 'opacity-40')}
+      className="group/card list-none"
     >
       <div
         {...attributes}
@@ -93,9 +105,18 @@ export const CardView = memo(function CardView({ card, labels, features, onOpen 
             if (!isDragging) onOpen?.(card.id);
           } else listeners?.onKeyDown?.(e);
         }}
-        className="cursor-grab touch-manipulation"
+        className="relative cursor-grab touch-manipulation rounded-lg"
       >
-        <CardFace card={card} labels={labels} features={features} />
+        {/* While lifted, the slot shows an empty "drop here" shape of the same size. */}
+        <div className={cx(isDragging && 'invisible')}>
+          <CardFace card={card} labels={labels} features={features} />
+        </div>
+        {isDragging && (
+          <div
+            aria-hidden
+            className="absolute inset-0 rounded-lg border-2 border-dashed border-line bg-surface-3/60"
+          />
+        )}
       </div>
     </li>
   );

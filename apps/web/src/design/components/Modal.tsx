@@ -30,7 +30,7 @@ export function Modal({ open, title, onClose, children }: ModalProps) {
       onClose={onClose}
       // A click on the dialog element itself is a click on the backdrop.
       onClick={(e) => e.target === e.currentTarget && onClose()}
-      className="m-auto w-[min(560px,calc(100vw-32px))] animate-pixel-pop bg-surface p-0 text-ink pixel-raised backdrop:bg-black/30 backdrop:backdrop-blur-sm"
+      className="m-auto w-[min(560px,calc(100vw-32px))] animate-pixel-pop rounded-2xl border border-line-soft bg-surface p-0 text-ink shadow-lift backdrop:bg-black/30 backdrop:backdrop-blur-sm"
     >
       {open && (
         <div className="flex flex-col gap-4 p-5">

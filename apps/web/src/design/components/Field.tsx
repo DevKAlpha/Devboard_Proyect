@@ -8,7 +8,7 @@ import {
 import { cx } from '../cx';
 
 const base =
-  'w-full bg-surface text-ink placeholder:text-muted pixel-border px-3 py-2 text-[15px] outline-none focus:shadow-[0_0_0_2px_var(--accent)]';
+  'w-full rounded-lg border border-line bg-card px-3 py-2 text-[15px] text-ink placeholder:text-faint outline-none transition-shadow focus:border-accent focus:shadow-[0_0_0_3px_var(--accent-soft)]';
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(
   function Input({ className, ...rest }, ref) {
