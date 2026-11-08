@@ -29,6 +29,9 @@ docker/         Dockerfiles. docker-compose.yml en la raíz.
 - `templates/`: plantillas de tablero por perfil.
 - `integrations/`: contratos de proveedores externos (GitHub, Google, Microsoft).
 - `views/cursor/`: cursor pixel (sprites, halo, pistas y chispas). Su estado vive en `controllers/cursorController.ts`. Se monta solo con puntero fino y se puede apagar desde la barra lateral.
+- `models/collab/`: tiempo real de los tableros de **equipo**. `CollabTransport` es la interfaz; hoy usa `P2PTransport` (WebRTC con Trystero, sin servidor, funciona en Pages). El tablero vive en un CRDT de Yjs (`yBoard.ts`) que fusiona ediciones simultáneas. Para el servidor propio: implementar un transporte WebSocket en `apps/api` y elegirlo en `models/collab/index.ts` (`VITE_COLLAB_URL`). Yjs y Trystero se cargan solo al abrir un tablero de equipo.
+- `views/team/`: presencia (avatares, estado, Invitar), cursores remotos y petición de nombre.
+- Tableros **individuales** y **de equipo** se eligen al crear (`Board.mode`) y nunca se mezclan: se listan por separado.
 
 ### MVC en `apps/api/src`
 `routes → controllers → services → models`. La validación usa los schemas de `@devbord/shared`.

@@ -22,6 +22,11 @@ export interface BoardState {
   /** Loads boards from storage once (subsequent calls are no-ops unless `force`). */
   load: (force?: boolean) => Promise<void>;
   createBoard: (input: NewBoardInput) => Promise<Board>;
+  /**
+   * Stores a board that changed elsewhere (a teammate, via the collaboration
+   * layer): inserts or replaces it and persists it locally.
+   */
+  receiveBoard: (board: Board) => void;
   /** Adds an already-built board (e.g. one created from a template). */
   addBoard: (board: Board) => Promise<Board>;
   deleteBoard: (boardId: string) => Promise<void>;
@@ -98,6 +103,16 @@ export function createBoardController(repo: BoardRepository) {
         set({ boards: [board, ...get().boards] });
         await persist(board);
         return board;
+      },
+
+      receiveBoard: (board) => {
+        const exists = get().boards.some((b) => b.id === board.id);
+        set({
+          boards: exists
+            ? get().boards.map((b) => (b.id === board.id ? board : b))
+            : [board, ...get().boards],
+        });
+        void persist(board);
       },
 
       deleteBoard: async (boardId) => {

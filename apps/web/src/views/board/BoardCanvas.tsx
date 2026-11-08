@@ -23,6 +23,8 @@ import {
 import { PROFILE_FEATURES, findCard, moveCard, type Board } from '@devbord/shared';
 import { useBoardController } from '../../controllers/boardController';
 import { useCursorController } from '../../controllers/cursorController';
+import { useCollab } from '../../controllers/collabController';
+import { RemoteCursors } from '../team/RemoteCursors';
 import { CardDetailModal } from './CardDetailModal';
 import { CardFace } from './CardView';
 import { ColumnView } from './ColumnView';
@@ -66,7 +68,7 @@ const ctrl = () => useBoardController.getState();
 /** The pixel cursor shows the grabbing hand and the destination column during drags. */
 const cursor = () => useCursorController.getState();
 
-export function BoardCanvas({ board }: { board: Board }) {
+export function BoardCanvas({ board, team = false }: { board: Board; team?: boolean }) {
   const [draft, setDraft] = useState<Board | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [openCardId, setOpenCardId] = useState<string | null>(null);
@@ -188,7 +190,24 @@ export function BoardCanvas({ board }: { board: Board }) {
           },
         }}
       >
-        <div className="flex h-full snap-x snap-mandatory items-start gap-4 overflow-x-auto px-4 pt-2 pb-6 sm:snap-none">
+        <div
+          className="relative flex h-full snap-x snap-mandatory items-start gap-4 overflow-x-auto px-4 pt-2 pb-6 sm:snap-none"
+          // Team boards share the pointer position (content coordinates, scroll included).
+          onPointerMove={
+            team
+              ? (e) => {
+                  const el = e.currentTarget;
+                  const rect = el.getBoundingClientRect();
+                  useCollab.getState().setCursor({
+                    x: Math.round(e.clientX - rect.left + el.scrollLeft),
+                    y: Math.round(e.clientY - rect.top + el.scrollTop),
+                  });
+                }
+              : undefined
+          }
+          onPointerLeave={team ? () => useCollab.getState().setCursor(null) : undefined}
+        >
+          {team && <RemoteCursors />}
           <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
             {view.columns.map((column) => (
               <ColumnView

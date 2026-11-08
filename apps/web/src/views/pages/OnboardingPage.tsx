@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import type { Profile } from '@devbord/shared';
+import type { BoardMode, Profile } from '@devbord/shared';
 import { Button, Field, Input, cx } from '../../design';
 import { useBoardController } from '../../controllers/boardController';
 import { usePreferences } from '../../controllers/preferencesController';
 import { buildBoardFromTemplate, getTemplate, templatesFor } from '../../templates';
 import { Logo } from '../components/Logo';
-import { ProfilePicker, TemplatePicker } from '../components/Pickers';
+import { ModePicker, ProfilePicker, TemplatePicker } from '../components/Pickers';
 
-const STEPS = ['Perfil', 'Plantilla', 'Nombre'] as const;
+const STEPS = ['Perfil', 'Plantilla', 'Tipo y nombre'] as const;
 
 /**
  * First-run flow: 3 short steps, every one with a sensible default, and a
@@ -23,6 +23,7 @@ export function OnboardingPage() {
   const [profile, setProfile] = useState<Profile>('simple');
   const [templateId, setTemplateId] = useState(templatesFor('simple')[0]!.id);
   const [name, setName] = useState('');
+  const [mode, setMode] = useState<BoardMode>('personal');
   const template = getTemplate(templateId);
 
   const changeProfile = (p: Profile) => {
@@ -32,7 +33,7 @@ export function OnboardingPage() {
 
   const finish = async () => {
     if (!template) return;
-    const board = await addBoard(buildBoardFromTemplate(template, { name, profile }));
+    const board = await addBoard(buildBoardFromTemplate(template, { name, profile, mode }));
     completeOnboarding(profile);
     navigate(`/b/${board.id}`, { replace: true });
   };
@@ -113,9 +114,13 @@ export function OnboardingPage() {
               }}
             >
               <div>
-                <h1 className="text-3xl">Ponle nombre</h1>
-                <p className="mt-2 text-muted">O déjalo así. Se puede cambiar luego.</p>
+                <h1 className="text-3xl">¿Para quién es?</h1>
+                <p className="mt-2 text-muted">
+                  Individual o de equipo. Se elige una vez, así nunca se mezcla tu trabajo con el
+                  del equipo.
+                </p>
               </div>
+              <ModePicker value={mode} onChange={setMode} />
               <Field label="Nombre del tablero" htmlFor="onboarding-board-name">
                 <Input
                   id="onboarding-board-name"

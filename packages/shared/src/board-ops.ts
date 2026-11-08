@@ -9,12 +9,16 @@
  * Unknown ids are a no-op (the board is returned unchanged). That keeps
  * stale UI events (e.g. a double click on a deleted card) harmless.
  */
-import type { Board, Card, CardPatch, Column, Label, Profile } from './schemas';
+import type { Board, BoardMode, Card, CardPatch, Column, Label, Profile } from './schemas';
 
 /** Collision-safe id. `crypto.randomUUID` exists in modern browsers (secure context) and Node >= 19. */
 // Typed locally so this package needs neither DOM nor Node type libs.
 const webCrypto = (globalThis as unknown as { crypto: { randomUUID(): string } }).crypto;
 export const newId = (): string => webCrypto.randomUUID();
+
+/** Unguessable secret for team invite links (two UUIDs, hyphens removed: 64 hex chars). */
+export const newShareKey = (): string =>
+  (webCrypto.randomUUID() + webCrypto.randomUUID()).replace(/-/g, '');
 
 const nowIso = (): string => new Date().toISOString();
 
@@ -32,6 +36,8 @@ const clampIndex = (index: number, length: number): number =>
 export interface NewBoardInput {
   name: string;
   profile: Profile;
+  /** Default "personal". Team boards get a random share key. */
+  mode?: BoardMode;
   templateId?: string | null;
   columnTitles?: string[];
   /** WIP limit per column, aligned with `columnTitles` (missing = unlimited). */
@@ -46,6 +52,8 @@ export function createBoard(input: NewBoardInput): Board {
     id: newId(),
     name: input.name.trim(),
     profile: input.profile,
+    mode: input.mode ?? 'personal',
+    shareKey: input.mode === 'team' ? newShareKey() : null,
     templateId: input.templateId ?? null,
     labels: (input.labels ?? []).map((l) => ({ ...l, id: newId() })),
     cardTemplate: input.cardTemplate ?? null,

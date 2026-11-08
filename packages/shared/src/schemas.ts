@@ -11,6 +11,14 @@ import { z } from 'zod';
 export const ProfileSchema = z.enum(['technical', 'simple']);
 export type Profile = z.infer<typeof ProfileSchema>;
 
+/**
+ * Who works on the board, chosen once at creation and never changed:
+ * personal boards stay private to this browser, team boards sync in real time.
+ * Keeping them apart avoids mixing someone's own work with shared work.
+ */
+export const BoardModeSchema = z.enum(['personal', 'team']);
+export type BoardMode = z.infer<typeof BoardModeSchema>;
+
 /** Card categories used by technical boards (hidden for the "simple" profile). */
 export const CardTypeSchema = z.enum(['task', 'feature', 'bug']);
 export type CardType = z.infer<typeof CardTypeSchema>;
@@ -85,6 +93,12 @@ export const BoardSchema = z.object({
   id: z.string().min(1),
   name: z.string().trim().min(1).max(80),
   profile: ProfileSchema,
+  mode: BoardModeSchema.default('personal'),
+  /**
+   * Team boards only: secret shared through the invite link. It names and
+   * encrypts the real-time room, so only people with the link can join.
+   */
+  shareKey: z.string().min(16).nullable().default(null),
   /** Template the board was created from, kept for analytics / "reset to template". */
   templateId: z.string().nullable().default(null),
   labels: z.array(LabelSchema).default([]),

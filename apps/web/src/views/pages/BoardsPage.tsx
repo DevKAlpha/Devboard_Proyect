@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { PROFILE_INFO } from '@devbord/shared';
+import { PROFILE_INFO, type Board } from '@devbord/shared';
 import { Badge, Button, PixelIcon } from '../../design';
 import { useBoardController } from '../../controllers/boardController';
 import { AppShell } from '../components/AppShell';
@@ -69,39 +69,24 @@ export function BoardsPage() {
       </header>
 
       <main className="min-h-0 flex-1 overflow-y-auto">
-        <ul className="mx-auto grid max-w-5xl gap-5 px-4 pb-8 sm:grid-cols-2 lg:grid-cols-3">
-          {boards.map((b) => {
-            const cards = b.columns.reduce((n, c) => n + c.cards.length, 0);
-            return (
-              <li key={b.id}>
-                <Link
-                  to={`/b/${b.id}`}
-                  className="flex h-full flex-col gap-3 rounded-xl border border-line-soft bg-card p-4 shadow-card transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-lift"
-                >
-                  {/* Mini preview: one column per bar, filled with pixel blocks (one per card). */}
-                  <div className="flex h-14 gap-1.5 rounded-lg bg-surface-2 p-1.5" aria-hidden>
-                    {b.columns.slice(0, 6).map((c) => (
-                      <span key={c.id} className="flex flex-1 flex-col gap-1">
-                        {Array.from({ length: Math.min(4, c.cards.length) }, (_, i) => (
-                          <span key={i} className="h-2 rounded-[2px] bg-card shadow-card" />
-                        ))}
-                      </span>
-                    ))}
-                  </div>
-                  <h2 className="truncate text-lg">{b.name}</h2>
-                  <div className="mt-auto flex items-center justify-between text-xs text-muted">
-                    <Badge color={b.profile === 'technical' ? 'blue' : 'green'}>
-                      {PROFILE_INFO[b.profile].title}
-                    </Badge>
-                    <span>
-                      {cards} tarjetas · {updatedFormat.format(new Date(b.updatedAt))}
-                    </span>
-                  </div>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+        {(['personal', 'team'] as const).map((mode) => {
+          const list = boards.filter((b) => b.mode === mode);
+          if (!list.length) return null;
+          return (
+            <section key={mode} className="mx-auto flex max-w-5xl flex-col gap-3 px-4 pb-8">
+              {/* Personal and team boards are listed apart: they never mix. */}
+              <h2 className="flex items-center gap-2 text-sm text-muted">
+                <PixelIcon name={mode === 'team' ? 'team' : 'board'} />
+                {mode === 'team' ? 'Tableros de equipo' : 'Tableros individuales'}
+              </h2>
+              <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {list.map((b) => (
+                  <BoardTile key={b.id} board={b} />
+                ))}
+              </ul>
+            </section>
+          );
+        })}
 
         {boards.length === 0 && (
           <div className="flex flex-col items-center gap-3 py-16 text-center text-muted">
@@ -117,5 +102,38 @@ export function BoardsPage() {
         onCreated={(id) => navigate(`/b/${id}`)}
       />
     </AppShell>
+  );
+}
+
+/** One board in the home grid: mini preview, name, profile and activity. */
+function BoardTile({ board: b }: { board: Board }) {
+  const cards = b.columns.reduce((n, c) => n + c.cards.length, 0);
+  return (
+    <li>
+      <Link
+        to={`/b/${b.id}`}
+        className="flex h-full flex-col gap-3 rounded-xl border border-line-soft bg-card p-4 shadow-card transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-lift"
+      >
+        {/* Mini preview: one column per bar, filled with pixel blocks (one per card). */}
+        <div className="flex h-14 gap-1.5 rounded-lg bg-surface-2 p-1.5" aria-hidden>
+          {b.columns.slice(0, 6).map((c) => (
+            <span key={c.id} className="flex flex-1 flex-col gap-1">
+              {Array.from({ length: Math.min(4, c.cards.length) }, (_, i) => (
+                <span key={i} className="h-2 rounded-[2px] bg-card shadow-card" />
+              ))}
+            </span>
+          ))}
+        </div>
+        <h3 className="truncate text-lg">{b.name}</h3>
+        <div className="mt-auto flex items-center justify-between text-xs text-muted">
+          <Badge color={b.profile === 'technical' ? 'blue' : 'green'}>
+            {PROFILE_INFO[b.profile].title}
+          </Badge>
+          <span>
+            {cards} tarjetas · {updatedFormat.format(new Date(b.updatedAt))}
+          </span>
+        </div>
+      </Link>
+    </li>
   );
 }
