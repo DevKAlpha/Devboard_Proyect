@@ -142,3 +142,18 @@ describe('copyCardsInto', () => {
     expect(copyCardsInto(board, board.columns[0]!.id, board, [])).toBe(board);
   });
 });
+
+describe('move history', () => {
+  it('records column changes, not reorders, and keeps the last 5', () => {
+    const { board, a, b, c1, c2 } = seed();
+    const reordered = moveCard(board, c2.id, a.id, 0);
+    expect(findCard(reordered, c2.id)!.card.moveLog).toEqual([]);
+
+    let moved = board;
+    for (let i = 0; i < 7; i++) moved = moveCard(moved, c1.id, i % 2 ? a.id : b.id, 0);
+    const card = findCard(moved, c1.id)!.card;
+    expect(card.moveLog).toHaveLength(5);
+    expect(card.movedAt).toBe(card.moveLog.at(-1));
+    expect(BoardSchema.safeParse(moved).success).toBe(true);
+  });
+});

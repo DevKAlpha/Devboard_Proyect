@@ -94,7 +94,7 @@ export function BoardPage() {
         </div>
       </header>
 
-      <main className="mx-auto min-h-0 w-full max-w-[1600px] flex-1">
+      <main key={board.id} className="mx-auto min-h-0 w-full max-w-[1600px] flex-1 animate-page-in">
         {/* key: switching boards starts with a clean canvas (no open card or drag state). */}
         <BoardCanvas key={board.id} board={board} team={team} />
       </main>

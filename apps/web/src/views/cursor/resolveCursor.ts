@@ -6,14 +6,15 @@
  *  1. `data-cursor="default|pointer|grab|text"` on any element overrides everything.
  *  2. Text fields → `text` (the native I-beam is kept: precise caret placement
  *     matters more than style there).
- *  3. Draggables (dnd-kit sets `aria-roledescription`) → `grab`.
+ *  3. Draggables (dnd-kit sets `aria-roledescription`) → `grab`, with their
+ *     `data-cursor-hint` (e.g. a card's mood) as hint.
  *  4. Enabled interactive elements → `pointer`, with a highlight around them.
  */
 export type CursorVariant = 'default' | 'pointer' | 'grab' | 'text';
 
 export interface CursorTarget {
   variant: CursorVariant;
-  /** Element to highlight (pointer variant only). */
+  /** Hovered control: highlighted for "pointer", hint source for "grab". */
   element: Element | null;
   /** Label for icon-only controls, shown next to the cursor. */
   hint: string | null;
@@ -57,7 +58,8 @@ export function resolveCursor(start: Element | null): CursorTarget {
     }
     if (isTextField(el)) return { variant: 'text', element: null, hint: null };
     if (el.hasAttribute('aria-roledescription')) {
-      return { variant: 'grab', element: null, hint: null };
+      // element is kept for the hint; the highlight is only drawn for 'pointer'.
+      return { variant: 'grab', element: el, hint: el.getAttribute('data-cursor-hint') };
     }
     if (el.matches(INTERACTIVE)) {
       return isDisabled(el) ? NONE : { variant: 'pointer', element: el, hint: hintFor(el) };

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -24,7 +24,9 @@ import { PROFILE_FEATURES, findCard, moveCard, type Board } from '@devbord/share
 import { useBoardController } from '../../controllers/boardController';
 import { useCursorController } from '../../controllers/cursorController';
 import { useCollab } from '../../controllers/collabController';
+import { animateLand, animateOut, flip } from '../../design';
 import { RemoteCursors } from '../team/RemoteCursors';
+import { useNow } from './useNow';
 import { CardDetailModal } from './CardDetailModal';
 import { CardFace } from './CardView';
 import { ColumnView } from './ColumnView';
@@ -65,12 +67,26 @@ const collisionDetection: CollisionDetection = (args) => {
  */
 /** Actions are stable; reading them via getState() avoids subscribing this view to the whole store. */
 const ctrl = () => useBoardController.getState();
+/** Finds a card or column element on the canvas by its FLIP id. */
+const flipNode = (id: string) => document.querySelector(`[data-flip-id="${CSS.escape(id)}"]`);
+
 /** The pixel cursor shows the grabbing hand and the destination column during drags. */
 const cursor = () => useCursorController.getState();
 
 export function BoardCanvas({ board, team = false }: { board: Board; team?: boolean }) {
   const [draft, setDraft] = useState<Board | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const now = useNow();
+
+  // FLIP: after every render, cards/columns that moved glide to their new spot and
+  // new ones pop in. This animates local actions and teammates' changes alike.
+  // Skipped mid-drag: dnd-kit animates the drag itself.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const positions = useRef(new Map<string, DOMRect>());
+  useLayoutEffect(() => {
+    if (!scrollRef.current) return;
+    positions.current = flip(scrollRef.current, positions.current, { animate: activeId === null });
+  });
   const [openCardId, setOpenCardId] = useState<string | null>(null);
 
   const view = draft ?? board;
@@ -147,7 +163,11 @@ export function BoardCanvas({ board, team = false }: { board: Board; team?: bool
             : to.cards.length; // dropped on another column: append
       b = moveCard(b, id, to.id, index);
       const final = findCard(b, id);
-      if (final) ctrl().moveCard(board.id, id, final.column.id, final.index);
+      if (final) {
+        ctrl().moveCard(board.id, id, final.column.id, final.index);
+        // Squash when it lands (after React commits the new position).
+        requestAnimationFrame(() => animateLand(flipNode(id)?.firstElementChild));
+      }
     }
     reset();
   };
@@ -162,7 +182,11 @@ export function BoardCanvas({ board, team = false }: { board: Board; team?: bool
     [board.id],
   );
   const onRemove = useCallback(
-    (columnId: string) => ctrl().removeColumn(board.id, columnId),
+    // Animate the column away first, then remove it from the board.
+    (columnId: string) =>
+      void animateOut(flipNode(`col:${columnId}`)).then(() =>
+        ctrl().removeColumn(board.id, columnId),
+      ),
     [board.id],
   );
   const onAddCard = useCallback(
@@ -191,6 +215,7 @@ export function BoardCanvas({ board, team = false }: { board: Board; team?: bool
         }}
       >
         <div
+          ref={scrollRef}
           className="relative flex h-full snap-x snap-mandatory items-start gap-4 overflow-x-auto px-4 pt-2 pb-6 sm:snap-none"
           // Team boards share the pointer position (content coordinates, scroll included).
           onPointerMove={
@@ -209,9 +234,11 @@ export function BoardCanvas({ board, team = false }: { board: Board; team?: bool
         >
           {team && <RemoteCursors />}
           <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
-            {view.columns.map((column) => (
+            {view.columns.map((column, i) => (
               <ColumnView
                 key={column.id}
+                isLastColumn={i === view.columns.length - 1}
+                now={now}
                 column={column}
                 labels={board.labels}
                 features={features}
@@ -248,7 +275,9 @@ export function BoardCanvas({ board, team = false }: { board: Board; team?: bool
         features={features}
         onClose={() => setOpenCardId(null)}
         onSave={(cardId, patch) => ctrl().updateCard(board.id, cardId, patch)}
-        onDelete={(cardId) => ctrl().removeCard(board.id, cardId)}
+        onDelete={(cardId) =>
+          void animateOut(flipNode(cardId)).then(() => ctrl().removeCard(board.id, cardId))
+        }
       />
     </>
   );

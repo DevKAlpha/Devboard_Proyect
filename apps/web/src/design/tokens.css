@@ -155,13 +155,12 @@
     outline-offset: var(--px);
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-      animation-duration: 0.01ms !important;
-      transition-duration: 0.01ms !important;
-    }
+  /* Lite motion (OS "reduce motion", modest device, or the user's choice; see design/motion.ts). */
+  html[data-motion='lite'] *,
+  html[data-motion='lite'] *::before,
+  html[data-motion='lite'] *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
@@ -186,4 +185,28 @@ select,
 option,
 optgroup {
   font-family: inherit;
+}
+
+/* Modal backdrop fades in instead of snapping. */
+dialog[open]::backdrop {
+  animation: backdrop-in 160ms steps(4, end);
+}
+@keyframes backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Page/board entrance: a short rise + fade (switching boards feels continuous). */
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+@utility animate-page-in {
+  animation: page-in 220ms steps(5, end) both;
+}
+html[data-motion='lite'] .animate-page-in {
+  animation: none;
 }

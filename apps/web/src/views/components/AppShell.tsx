@@ -3,6 +3,7 @@ import { NavLink } from 'react-router';
 import { IconButton } from '../../design';
 import { useThemeController } from '../../controllers/themeController';
 import { useCursorController } from '../../controllers/cursorController';
+import { useMotion } from '../../controllers/motionController';
 import { Logo } from './Logo';
 
 function ThemeToggle() {
@@ -11,6 +12,21 @@ function ThemeToggle() {
     <IconButton
       icon={resolved === 'dark' ? 'sun' : 'moon'}
       label={resolved === 'dark' ? 'Tema claro' : 'Tema oscuro'}
+      onClick={toggle}
+    />
+  );
+}
+
+/** Full or reduced animations (overrides the OS setting / device guess). */
+function MotionToggle() {
+  const level = useMotion((s) => s.level);
+  const toggle = useMotion((s) => s.toggle);
+  return (
+    <IconButton
+      icon="spark"
+      label={level === 'full' ? 'Reducir animaciones' : 'Activar animaciones'}
+      aria-pressed={level === 'full'}
+      className={level === 'full' ? 'text-accent' : undefined}
       onClick={toggle}
     />
   );
@@ -46,6 +62,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Logo />
           </NavLink>
           <span className="flex-1" />
+          <MotionToggle />
           <CursorToggle />
           <ThemeToggle />
         </div>

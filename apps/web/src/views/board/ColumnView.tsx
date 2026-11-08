@@ -1,8 +1,9 @@
-import { memo } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { isOverWip, type Column, type Label, type ProfileFeatures } from '@devbord/shared';
-import { IconButton, PixelIcon, confirm, cx } from '../../design';
+import { IconButton, PixelIcon, animateShake, confirm, cx } from '../../design';
+import { cardMood, describeMood } from './cardMood';
 import { CardView } from './CardView';
 import { Composer } from './Composer';
 import { InlineEdit } from './InlineEdit';
@@ -16,6 +17,10 @@ export interface ColumnViewProps {
   onAddCard: (columnId: string, title: string) => void;
   onOpenCard: (cardId: string) => void;
   onWipLimit: (columnId: string, wipLimit: number | null) => void;
+  /** Last column (Done): its cards never gather cobwebs. */
+  isLastColumn?: boolean;
+  /** Shared clock (ms) for card moods; see useNow. */
+  now: number;
 }
 
 const WIP_OPTIONS = [1, 2, 3, 4, 5, 6, 8, 10];
@@ -73,6 +78,8 @@ export const ColumnView = memo(function ColumnView({
   onAddCard,
   onOpenCard,
   onWipLimit,
+  isLastColumn = false,
+  now,
 }: ColumnViewProps) {
   const {
     attributes,
@@ -86,9 +93,18 @@ export const ColumnView = memo(function ColumnView({
   const points = column.cards.reduce((sum, c) => sum + (c.storyPoints ?? 0), 0);
   const overWip = isOverWip(column);
 
+  // Shake once when the column crosses its WIP limit (not on every render).
+  const headerRef = useRef<HTMLElement>(null);
+  const wasOver = useRef(overWip);
+  useEffect(() => {
+    if (overWip && !wasOver.current) animateShake(headerRef.current);
+    wasOver.current = overWip;
+  }, [overWip]);
+
   return (
     <section
       ref={setNodeRef}
+      data-flip-id={`col:${column.id}`}
       aria-label={`Columna ${column.title}`}
       style={{ transform: CSS.Translate.toString(transform), transition }}
       className={cx(
@@ -98,7 +114,7 @@ export const ColumnView = memo(function ColumnView({
         isDragging && 'opacity-50',
       )}
     >
-      <header className="flex items-center gap-1 rounded-lg px-1 py-0.5">
+      <header ref={headerRef} className="flex items-center gap-1 rounded-lg px-1 py-0.5">
         <button
           ref={setActivatorNodeRef}
           {...attributes}
@@ -147,15 +163,20 @@ export const ColumnView = memo(function ColumnView({
 
       <SortableContext items={column.cards.map((c) => c.id)} strategy={verticalListSortingStrategy}>
         <ul className="-mx-1 flex min-h-8 flex-col gap-2.5 overflow-y-auto px-1 py-1">
-          {column.cards.map((card) => (
-            <CardView
-              key={card.id}
-              card={card}
-              labels={labels}
-              features={features}
-              onOpen={onOpenCard}
-            />
-          ))}
+          {column.cards.map((card) => {
+            const mood = cardMood(card, column, isLastColumn, now);
+            return (
+              <CardView
+                key={card.id}
+                card={card}
+                labels={labels}
+                features={features}
+                onOpen={onOpenCard}
+                mood={mood}
+                moodLabel={describeMood(mood, card, now)}
+              />
+            );
+          })}
         </ul>
       </SortableContext>
 

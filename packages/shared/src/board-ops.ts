@@ -9,6 +9,7 @@
  * Unknown ids are a no-op (the board is returned unchanged). That keeps
  * stale UI events (e.g. a double click on a deleted card) harmless.
  */
+import { MOVE_LOG_SIZE } from './schemas';
 import type { Board, BoardMode, Card, CardPatch, Column, Label, Profile } from './schemas';
 
 /** Collision-safe id. `crypto.randomUUID` exists in modern browsers (secure context) and Node >= 19. */
@@ -77,6 +78,8 @@ export function createCard(title: string, patch: CardPatch = {}): Card {
     type: 'task',
     priority: null,
     storyPoints: null,
+    movedAt: null,
+    moveLog: [],
     ...patch,
     id: newId(),
     title: title.trim(),
@@ -210,7 +213,19 @@ export function moveCard(board: Board, cardId: string, toColumnId: string, toInd
   const columns = without.map((col) => {
     if (col.id !== toColumnId) return col;
     const cards = [...col.cards];
-    cards.splice(clampIndex(toIndex, cards.length), 0, found.card);
+    // Changing column is "progress": record it (reordering inside a column is not).
+    const card =
+      found.column.id === toColumnId
+        ? found.card
+        : (() => {
+            const at = nowIso();
+            return {
+              ...found.card,
+              movedAt: at,
+              moveLog: [...found.card.moveLog, at].slice(-MOVE_LOG_SIZE),
+            };
+          })();
+    cards.splice(clampIndex(toIndex, cards.length), 0, card);
     return { ...col, cards };
   });
   return touch(board, columns);
@@ -259,6 +274,9 @@ export function copyCardsInto(
     ...card,
     id: newId(),
     labelIds: card.labelIds.flatMap(mapLabel),
+    // A copy starts fresh on the target board: no inherited "stale" or "hot" state.
+    movedAt: null,
+    moveLog: [],
     createdAt: at,
     updatedAt: at,
   }));

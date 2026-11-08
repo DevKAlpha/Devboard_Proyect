@@ -18,14 +18,13 @@
  * turned it off. Touch and keyboard use is unchanged.
  */
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { PixelIcon } from '../../design';
+import { PixelIcon, isMotionLite } from '../../design';
 import { useCursorController } from '../../controllers/cursorController';
 import { resolveCursor, type CursorTarget } from './resolveCursor';
 import { RUNS, SCALE, SPRITES, type SpriteName } from './sprites';
 import './cursor.css';
 
 const FINE_POINTER = '(pointer: fine) and (hover: hover)';
-const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
 
 const subscribeFine = (cb: () => void) => {
   const mq = window.matchMedia?.(FINE_POINTER);
@@ -66,8 +65,8 @@ function CursorLayer() {
   const live = useRef({ x: -100, y: -100, prevX: -100, tilt: 0, element: null as Element | null });
   useEffect(() => {
     // No highlight while dragging: the lifted card is the focus.
-    live.current.element = dragging ? null : target.element;
-  }, [target.element, dragging]);
+    live.current.element = dragging || target.variant !== 'pointer' ? null : target.element;
+  }, [target.element, target.variant, dragging]);
 
   const sprite: SpriteName = dragging
     ? 'grabbing'
@@ -109,7 +108,6 @@ function CursorLayer() {
   // Pointer listeners + animation loop.
   useEffect(() => {
     const layer = layerRef.current!;
-    const reduced = window.matchMedia(REDUCED_MOTION).matches;
     let frame = 0;
 
     const onMove = (e: PointerEvent) => {
@@ -129,7 +127,7 @@ function CursorLayer() {
     const onDown = (e: PointerEvent) => {
       if (e.pointerType !== 'mouse') return;
       layer.dataset.pressed = '';
-      if (!reduced) burst(layer, e.clientX, e.clientY);
+      if (!isMotionLite()) burst(layer, e.clientX, e.clientY);
     };
     const onUp = () => delete layer.dataset.pressed;
     const onLeave = () => (layer.dataset.hidden = '');
@@ -139,7 +137,9 @@ function CursorLayer() {
       // Tilt follows horizontal speed and eases back when the pointer stops.
       const speed = s.x - s.prevX;
       s.prevX = s.x;
-      const goal = reduced ? 0 : Math.max(-MAX_TILT_DEG, Math.min(MAX_TILT_DEG, speed * 0.9));
+      const goal = isMotionLite()
+        ? 0
+        : Math.max(-MAX_TILT_DEG, Math.min(MAX_TILT_DEG, speed * 0.9));
       s.tilt += (goal - s.tilt) * 0.2;
 
       const [hx, hy] = hotspotRef.current;
