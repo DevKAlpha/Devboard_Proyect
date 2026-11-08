@@ -6,8 +6,8 @@
  *    (surface-2) → card (card). Each layer is a small step in lightness, like
  *    macOS windows, instead of hard outlines.
  *  - Hairline borders + soft shadows for depth; small radii (8–14px).
- *  - The pixel identity lives in the details: Pixelify headings, 16×16 pixel
- *    icons, stepped animations, segmented progress and the pixel cursor.
+ *  - The pixel identity: Pixelify Sans for all text, 16×16 pixel icons,
+ *    stepped animations, segmented progress and the pixel cursor.
  *
  * Semantic CSS variables are defined per theme and exposed to Tailwind through
  * `@theme inline`, so components use `bg-card` / `text-ink` and never hard-code
@@ -123,8 +123,9 @@
   --shadow-lift: var(--shadow-lift-v);
 
   --font-pixel: 'Pixelify Sans', ui-monospace, monospace;
-  --font-sans:
-    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Segoe UI', Roboto, sans-serif;
+  /* All UI text is pixel type: it is the brand. System fonts are only the
+     fallback while Pixelify loads (or if it is blocked). */
+  --font-sans: 'Pixelify Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 @layer base {
