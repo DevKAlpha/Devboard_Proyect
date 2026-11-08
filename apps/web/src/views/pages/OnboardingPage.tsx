@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import type { Profile } from '@devbord/shared';
 import { Button, Field, Input, cx } from '../../design';
 import { useBoardController } from '../../controllers/boardController';
@@ -45,7 +45,9 @@ export function OnboardingPage() {
   return (
     <div className="flex min-h-full flex-col">
       <header className="mx-auto flex w-full max-w-3xl items-center justify-between px-4 py-5">
-        <Logo />
+        <Link to="/" aria-label="Devbord, ir al inicio">
+          <Logo />
+        </Link>
         <Button variant="ghost" size="sm" onClick={skip}>
           Saltar
         </Button>
