@@ -1,0 +1,17 @@
+{
+  "name": "@devbord/shared",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Domain model (types + zod schemas + pure board operations) shared by web and api.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  }
+}

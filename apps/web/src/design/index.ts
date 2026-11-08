@@ -1,0 +1,8 @@
+/** Design system barrel. Views import UI primitives from here only. */
+export { Button, type ButtonProps } from './components/Button';
+export { IconButton } from './components/IconButton';
+export { PixelIcon, type IconName } from './components/PixelIcon';
+export { Input, Textarea, Select, Field } from './components/Field';
+export { Modal } from './components/Modal';
+export { Badge } from './components/Badge';
+export { cx } from './cx';

@@ -1,0 +1,168 @@
+/*
+ * Devbord design tokens — "pixel art meets Apple".
+ *
+ * Semantic CSS variables are defined per theme (light / dark) and exposed to
+ * Tailwind through `@theme inline`. Components therefore use classes like
+ * `bg-surface` or `text-ink` and never hard-code colors, so theming and future
+ * brand changes touch only this file.
+ */
+@import 'tailwindcss';
+
+/* Dark mode is driven by `data-theme` on <html> (see controllers/useThemeController). */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+:root {
+  /* Neutrals: warm off-white paper and near-black ink, Apple-like calm. */
+  --bg: #fafaf7;
+  --surface: #ffffff;
+  --surface-2: #f2f2ee;
+  --ink: #1c1c1e;
+  --muted: #6e6e73;
+  --line: #1c1c1e;
+  --line-soft: #e3e3dd;
+
+  /* Single accent: Apple system blue. */
+  --accent: #0a84ff;
+  --accent-ink: #ffffff;
+  --danger: #ff453a;
+
+  /* Soft label palette (matches LabelColor in @devbord/shared). */
+  --label-blue: #cfe5ff;
+  --label-green: #d3f2dc;
+  --label-yellow: #fff1bf;
+  --label-orange: #ffe0c7;
+  --label-red: #ffd5d2;
+  --label-purple: #e6dcff;
+  --label-gray: #e5e5ea;
+
+  /* Pixel step: every border / shadow is a multiple of this. */
+  --px: 2px;
+
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --bg: #111113;
+  --surface: #1c1c1e;
+  --surface-2: #232326;
+  --ink: #f5f5f7;
+  --muted: #98989f;
+  /* Softer than ink on purpose: pure white pixel borders glare on dark backgrounds. */
+  --line: #5c5c63;
+  --line-soft: #2e2e32;
+
+  --accent: #0a84ff;
+  --accent-ink: #ffffff;
+  --danger: #ff6961;
+
+  --label-blue: #17375a;
+  --label-green: #1b4229;
+  --label-yellow: #4a3e12;
+  --label-orange: #4d3018;
+  --label-red: #4f1f1c;
+  --label-purple: #33285a;
+  --label-gray: #2e2e32;
+
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-danger: var(--danger);
+
+  --font-pixel: 'Pixelify Sans', ui-monospace, monospace;
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Segoe UI', Roboto, sans-serif;
+}
+
+/*
+ * Pixel border: four hard shadows instead of `border` leave the corners
+ * notched, which reads as pixel art while staying crisp at any zoom.
+ */
+@utility pixel-border {
+  box-shadow:
+    0 calc(-1 * var(--px)) 0 0 var(--line),
+    0 var(--px) 0 0 var(--line),
+    calc(-1 * var(--px)) 0 0 0 var(--line),
+    var(--px) 0 0 0 var(--line);
+}
+
+/* Same notched border plus a hard offset drop shadow for raised elements. */
+@utility pixel-raised {
+  box-shadow:
+    0 calc(-1 * var(--px)) 0 0 var(--line),
+    0 var(--px) 0 0 var(--line),
+    calc(-1 * var(--px)) 0 0 0 var(--line),
+    var(--px) 0 0 0 var(--line),
+    calc(2 * var(--px)) calc(3 * var(--px)) 0 0 color-mix(in srgb, var(--line) 18%, transparent);
+}
+
+/* Soft border for low-emphasis containers (columns), keeps the UI calm. */
+@utility pixel-soft {
+  box-shadow:
+    0 calc(-1 * var(--px)) 0 0 var(--line-soft),
+    0 var(--px) 0 0 var(--line-soft),
+    calc(-1 * var(--px)) 0 0 0 var(--line-soft),
+    var(--px) 0 0 0 var(--line-soft);
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-pixel);
+    letter-spacing: 0.01em;
+  }
+
+  /* Visible, pixel-style focus ring for keyboard users. */
+  :focus-visible {
+    outline: var(--px) solid var(--accent);
+    outline-offset: calc(2 * var(--px));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* Stepped "pop in" animation: steps() gives the 8-bit feel. */
+@keyframes pixel-pop {
+  from {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@utility animate-pixel-pop {
+  animation: pixel-pop 160ms steps(4) both;
+}

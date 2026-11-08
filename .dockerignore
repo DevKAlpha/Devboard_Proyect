@@ -1,0 +1,10 @@
+**/node_modules
+**/dist
+**/coverage
+.git
+.agents
+.claude
+graphify-out
+**/.env
+**/.env.*
+!**/.env.example
