@@ -39,6 +39,7 @@ export interface BoardState {
   moveColumn: (boardId: string, columnId: string, toIndex: number) => void;
   /** Lean WIP limit for a column; null removes it. */
   setWipLimit: (boardId: string, columnId: string, wipLimit: number | null) => void;
+  setColumnDescription: (boardId: string, columnId: string, description: string | null) => void;
 
   addCard: (boardId: string, columnId: string, title: string) => void;
   updateCard: (boardId: string, cardId: string, patch: CardPatch) => void;
@@ -129,6 +130,8 @@ export function createBoardController(repo: BoardRepository) {
       removeColumn: (id, columnId) => mutate(id, (b) => ops.removeColumn(b, columnId)),
       moveColumn: (id, columnId, toIndex) =>
         mutate(id, (b) => ops.moveColumn(b, columnId, toIndex)),
+      setColumnDescription: (id, columnId, description) =>
+        mutate(id, (b) => ops.setColumnDescription(b, columnId, description)),
       setWipLimit: (id, columnId, wipLimit) =>
         mutate(id, (b) => ops.setColumnWipLimit(b, columnId, wipLimit)),
 
@@ -136,7 +139,7 @@ export function createBoardController(repo: BoardRepository) {
         title.trim() &&
         mutate(id, (b) =>
           // New cards start from the board template (e.g. the Scrum user story).
-          ops.addCard(b, columnId, ops.createCard(title, { description: b.cardTemplate ?? '' })),
+          ops.addNewCard(b, columnId, ops.createCard(title, { description: b.cardTemplate ?? '' })),
         ),
       updateCard: (id, cardId, patch) => mutate(id, (b) => ops.updateCard(b, cardId, patch)),
       removeCard: (id, cardId) => mutate(id, (b) => ops.removeCard(b, cardId)),

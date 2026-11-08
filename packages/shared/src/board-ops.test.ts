@@ -13,6 +13,8 @@ import {
   isOverWip,
   setColumnWipLimit,
   copyCardsInto,
+  addNewCard,
+  setColumnDescription,
 } from './board-ops';
 import { BoardSchema, CardSchema } from './schemas';
 
@@ -155,5 +157,37 @@ describe('move history', () => {
     expect(card.moveLog).toHaveLength(5);
     expect(card.movedAt).toBe(card.moveLog.at(-1));
     expect(BoardSchema.safeParse(moved).success).toBe(true);
+  });
+});
+
+describe('GitHub-style numbering and columns', () => {
+  it('numbers new cards #1, #2… and never reuses a number', () => {
+    let board = createBoard({ name: 'B', profile: 'technical', columnTitles: ['A'] });
+    const col = board.columns[0]!.id;
+    board = addNewCard(board, col, createCard('uno'));
+    board = addNewCard(board, col, createCard('dos'));
+    const second = board.columns[0]!.cards[1]!;
+    board = removeCard(board, second.id);
+    board = addNewCard(board, col, createCard('tres'));
+    expect(board.columns[0]!.cards.map((c) => c.number)).toEqual([1, 3]);
+    expect(board.nextNumber).toBe(4);
+  });
+
+  it('gives copied cards the target board numbers', () => {
+    let source = createBoard({ name: 'S', profile: 'technical', columnTitles: ['A'] });
+    source = addNewCard(source, source.columns[0]!.id, createCard('x'));
+    let target = createBoard({ name: 'T', profile: 'technical', columnTitles: ['A'] });
+    target = addNewCard(target, target.columns[0]!.id, createCard('y'));
+    const ids = source.columns[0]!.cards.map((c) => c.id);
+    const result = copyCardsInto(target, target.columns[0]!.id, source, ids);
+    expect(result.columns[0]!.cards.map((c) => c.number)).toEqual([1, 2]);
+    expect(result.nextNumber).toBe(3);
+  });
+
+  it('sets and clears column descriptions', () => {
+    const { board, a } = seed();
+    const withDesc = setColumnDescription(board, a.id, '  En revisión ');
+    expect(withDesc.columns[0]!.description).toBe('En revisión');
+    expect(setColumnDescription(withDesc, a.id, ' ').columns[0]!.description).toBeNull();
   });
 });

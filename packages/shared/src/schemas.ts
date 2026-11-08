@@ -73,6 +73,10 @@ export const CardSchema = z.object({
   movedAt: z.iso.datetime().nullable().default(null),
   /** Last cross-column moves (newest last, max 5). Drives the "hot" look. */
   moveLog: z.array(z.iso.datetime()).max(MOVE_LOG_SIZE).default([]),
+  /** Board-scoped sequential number shown as "#12" (like a GitHub issue). Null on legacy cards. */
+  number: z.number().int().positive().nullable().default(null),
+  /** Iteration the card is planned for, e.g. "Sprint 1" (GitHub Projects "Iteration"). */
+  sprint: z.string().trim().max(30).nullable().default(null),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
 });
@@ -81,6 +85,8 @@ export type Card = z.infer<typeof CardSchema>;
 export const ColumnSchema = z.object({
   id: z.string().min(1),
   title: z.string().trim().min(1).max(60),
+  /** One-line purpose shown under the title ("This is actively being worked on"). */
+  description: z.string().trim().max(140).nullable().default(null),
   /**
    * Work-in-progress limit (Lean / Kanban). Null means unlimited. The UI
    * warns when a column goes over it: stop starting, start finishing.
@@ -114,6 +120,8 @@ export const BoardSchema = z.object({
    * story template ("Como… Necesito… Para que…" + Gherkin criteria).
    */
   cardTemplate: z.string().max(10_000).nullable().default(null),
+  /** Next card number to hand out (#1, #2…). Only grows, so numbers are never reused. */
+  nextNumber: z.number().int().positive().default(1),
   columns: z.array(ColumnSchema),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),

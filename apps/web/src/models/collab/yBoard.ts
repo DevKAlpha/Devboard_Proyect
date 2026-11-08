@@ -26,6 +26,7 @@ const META_KEYS = [
   'shareKey',
   'templateId',
   'cardTemplate',
+  'nextNumber',
   'createdAt',
   'updatedAt',
 ] as const;

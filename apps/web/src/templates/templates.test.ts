@@ -43,8 +43,21 @@ describe('scrum template', () => {
     expect(BoardSchema.safeParse(board).success).toBe(true);
     expect(board.cardTemplate).toBe(USER_STORY_TEMPLATE);
     const wip = Object.fromEntries(board.columns.map((c) => [c.title, c.wipLimit]));
-    expect(wip['In Progress']).toBe(3);
-    expect(wip['Review/QA']).toBe(2);
+    expect(board.columns.map((c) => c.title)).toEqual([
+      'New issues',
+      'Icebox',
+      'Product Backlog',
+      'Sprint Backlog',
+      'In progress',
+      'In review',
+      'Done',
+    ]);
+    expect(wip['In progress']).toBe(3);
+    expect(wip['Product Backlog']).toBe(5);
+    expect(wip['In review']).toBe(5);
+    expect(board.columns[4]!.description).toBe('Se está trabajando activamente');
+    // Example cards are numbered like GitHub issues.
+    expect(board.columns.flatMap((c) => c.cards).every((c) => c.number !== null)).toBe(true);
     expect(board.labels.map((l) => l.name)).toEqual(['enhancement', 'bug', 'technical debt']);
   });
 

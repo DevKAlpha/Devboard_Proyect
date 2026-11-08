@@ -8,13 +8,22 @@ export interface InlineEditProps {
   label: string;
   className?: string;
   maxLength?: number;
+  /** Shown (faded) when the value is empty, e.g. "Añadir descripción". */
+  placeholder?: string;
 }
 
 /**
  * Click-to-edit text. Enter or blur saves, Escape cancels.
  * Empty values are discarded (the previous value stays).
  */
-export function InlineEdit({ value, onSave, label, className, maxLength = 80 }: InlineEditProps) {
+export function InlineEdit({
+  value,
+  onSave,
+  label,
+  className,
+  maxLength = 80,
+  placeholder,
+}: InlineEditProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -34,14 +43,14 @@ export function InlineEdit({ value, onSave, label, className, maxLength = 80 }: 
     return (
       <button
         type="button"
-        aria-label={`${label}: ${value}. Pulsa para editar`}
+        aria-label={`${label}: ${value || placeholder || 'vacío'}. Pulsa para editar`}
         onClick={() => {
           setDraft(value);
           setEditing(true);
         }}
-        className={cx('min-w-0 cursor-text truncate text-left', className)}
+        className={cx('min-w-0 cursor-text truncate text-left', !value && 'text-faint', className)}
       >
-        {value}
+        {value || placeholder}
       </button>
     );
   }

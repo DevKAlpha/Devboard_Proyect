@@ -6,7 +6,7 @@
  * ("drag me", "open me") instead of a tutorial.
  */
 import {
-  addCard,
+  addNewCard,
   createBoard,
   createCard,
   type Board,
@@ -24,6 +24,8 @@ export interface BoardTemplate {
   columns: string[];
   /** WIP limit per column, aligned with `columns` (null = unlimited). */
   wipLimits?: (number | null)[];
+  /** One-line description per column, aligned with `columns`. */
+  columnDescriptions?: string[];
   labels: { name: string; color: LabelColor }[];
   /** Description pre-filled in every new card of the board. */
   cardTemplate?: string;
@@ -69,26 +71,43 @@ ${s.details.map((d) => `* ${d}`).join('\n')}
 ${s.gherkin.join('\n')}
 \`\`\``;
 
+/**
+ * Column structure of a GitHub Projects board (agile-planning reference repos):
+ * names, WIP limits ("2/5") and the one-line descriptions under each title.
+ */
+const GITHUB_BOARD = {
+  columns: [
+    'New issues',
+    'Icebox',
+    'Product Backlog',
+    'Sprint Backlog',
+    'In progress',
+    'In review',
+    'Done',
+  ],
+  columnDescriptions: [
+    'Recién llegado, aún sin refinar',
+    'Listo para que alguien lo tome',
+    'Aún no se ha empezado',
+    'Comprometido para este sprint',
+    'Se está trabajando activamente',
+    'Esperando revisión',
+    'Completado',
+  ],
+  // Lean: limit work in progress where work actually happens.
+  wipLimits: [null, null, 5, null, 3, 5, null],
+};
+
 export const TEMPLATES: readonly BoardTemplate[] = [
   {
     // Scrum board as used in the agile-planning reference repos (GitHub Projects):
-    // New Issues → Icebox → Product Backlog → Sprint Backlog → In Progress → Review/QA → Done.
+    // New issues → Icebox → Product Backlog → Sprint Backlog → In progress → In review → Done.
     id: 'scrum',
     profile: 'technical',
     name: 'Scrum',
     description:
       'Historias de usuario con criterios Gherkin, story points y límites WIP. Flujo Lean: termina antes de empezar.',
-    columns: [
-      'New Issues',
-      'Icebox',
-      'Product Backlog',
-      'Sprint Backlog',
-      'In Progress',
-      'Review/QA',
-      'Done',
-    ],
-    // Lean: limit work in progress only where work actually happens.
-    wipLimits: [null, null, null, null, 3, 2, null],
+    ...GITHUB_BOARD,
     // Same labels as the reference repositories.
     labels: [
       { name: 'enhancement', color: 'blue' },
@@ -107,7 +126,7 @@ En la planificación, el equipo trae al **Sprint Backlog** lo que cabe en el spr
 
 Principios ágiles y Lean aplicados:
 * Entrega valor pronto y a menudo: historias pequeñas (≤ 8 puntos; 13 = divídela).
-* Limita el trabajo en curso (WIP): In Progress 3, Review/QA 2. Si la columna se pone roja, termina antes de empezar algo nuevo.
+* Limita el trabajo en curso (WIP): Product Backlog 5, In progress 3, In review 5. Si la columna se pone roja, termina antes de empezar algo nuevo.
 * Tira del trabajo (pull), no lo empujes.
 * Elimina desperdicio: sin criterios de aceptación, no entra al sprint.
 * Mejora continua: revisa el flujo en cada retrospectiva.`,
@@ -161,6 +180,7 @@ Principios ágiles y Lean aplicados:
           type: 'feature',
           priority: 'high',
           storyPoints: 3,
+          sprint: 'Sprint 1',
           description: story({
             role: 'usuario del sistema',
             need: 'listar todos los productos del catálogo',
@@ -182,6 +202,7 @@ Principios ágiles y Lean aplicados:
           type: 'task',
           priority: 'medium',
           storyPoints: 8,
+          sprint: 'Sprint 1',
           description: story({
             role: 'equipo de desarrollo',
             need: 'desplegar automáticamente en la nube',
@@ -215,8 +236,8 @@ Principios ágiles y Lean aplicados:
     id: 'dev-sprint',
     profile: 'technical',
     name: 'Sprint de desarrollo',
-    description: 'Backlog, revisión y despliegue. Bugs y features con prioridad.',
-    columns: ['Backlog', 'To Do', 'In Progress', 'Review', 'Done'],
+    description: 'Tablero estilo GitHub Projects: del issue nuevo a Done, con bugs y features.',
+    ...GITHUB_BOARD,
     labels: [
       { name: 'frontend', color: 'blue' },
       { name: 'backend', color: 'purple' },
@@ -224,28 +245,31 @@ Principios ágiles y Lean aplicados:
     ],
     cards: [
       {
-        column: 0,
+        column: 2,
         title: 'Conectar repositorio de GitHub',
         labels: ['infra'],
         patch: { type: 'feature', priority: 'medium' },
       },
       {
-        column: 1,
-        title: 'Arrastra esta tarjeta a "In Progress"',
+        column: 3,
+        title: 'Arrastra esta tarjeta a "In progress"',
         labels: ['frontend'],
-        patch: { type: 'task', priority: 'low' },
+        patch: { type: 'task', priority: 'low', sprint: 'Sprint 1' },
       },
       {
-        column: 2,
+        column: 4,
         title: 'Corregir login en Safari',
         labels: ['frontend'],
-        patch: { type: 'bug', priority: 'high' },
+        patch: { type: 'bug', priority: 'high', sprint: 'Sprint 1' },
       },
       {
-        column: 3,
+        column: 5,
         title: 'Abre esta tarjeta para ver sus detalles',
         labels: ['backend'],
-        patch: { description: 'Aquí puedes escribir criterios de aceptación, notas o enlaces.' },
+        patch: {
+          sprint: 'Sprint 1',
+          description: 'Aquí puedes escribir criterios de aceptación, notas o enlaces.',
+        },
       },
     ],
   },
@@ -355,6 +379,7 @@ export function buildBoardFromTemplate(
     templateId: template.id,
     columnTitles: template.columns,
     wipLimits: template.wipLimits,
+    columnDescriptions: template.columnDescriptions,
     labels: template.labels,
     cardTemplate: template.cardTemplate ?? null,
   });
@@ -364,7 +389,7 @@ export function buildBoardFromTemplate(
     const column = board.columns[seed.column];
     if (!column) continue;
     const labelIds = (seed.labels ?? []).flatMap((name) => labelId.get(name) ?? []);
-    board = addCard(board, column.id, createCard(seed.title, { ...seed.patch, labelIds }));
+    board = addNewCard(board, column.id, createCard(seed.title, { ...seed.patch, labelIds }));
   }
   return board;
 }

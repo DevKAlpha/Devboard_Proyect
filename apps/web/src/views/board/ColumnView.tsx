@@ -5,6 +5,8 @@ import { isOverWip, type Column, type Label, type ProfileFeatures } from '@devbo
 import { IconButton, PixelIcon, animateShake, confirm, cx } from '../../design';
 import { cardMood, describeMood } from './cardMood';
 import { CardView } from './CardView';
+import { ColumnSprite, Snowfall, StatusRing } from './ColumnDecor';
+import { columnKind } from './columnKind';
 import { Composer } from './Composer';
 import { InlineEdit } from './InlineEdit';
 
@@ -17,6 +19,7 @@ export interface ColumnViewProps {
   onAddCard: (columnId: string, title: string) => void;
   onOpenCard: (cardId: string) => void;
   onWipLimit: (columnId: string, wipLimit: number | null) => void;
+  onDescribe: (columnId: string, description: string) => void;
   /** Last column (Done): its cards never gather cobwebs. */
   isLastColumn?: boolean;
   /** Shared clock (ms) for card moods; see useNow. */
@@ -78,6 +81,7 @@ export const ColumnView = memo(function ColumnView({
   onAddCard,
   onOpenCard,
   onWipLimit,
+  onDescribe,
   isLastColumn = false,
   now,
 }: ColumnViewProps) {
@@ -92,6 +96,7 @@ export const ColumnView = memo(function ColumnView({
   } = useSortable({ id: column.id, data: { type: 'column' } });
   const points = column.cards.reduce((sum, c) => sum + (c.storyPoints ?? 0), 0);
   const overWip = isOverWip(column);
+  const kind = columnKind(column.title, isLastColumn);
 
   // Shake once when the column crosses its WIP limit (not on every render).
   const headerRef = useRef<HTMLElement>(null);
@@ -108,56 +113,80 @@ export const ColumnView = memo(function ColumnView({
       aria-label={`Columna ${column.title}`}
       style={{ transform: CSS.Translate.toString(transform), transition }}
       className={cx(
-        'group/col flex max-h-full w-[min(300px,85vw)] shrink-0 snap-start flex-col gap-3 rounded-xl bg-surface-2 p-2.5',
+        // *:relative keeps the content above decorative layers (icebox snowfall).
+        'group/col relative flex max-h-full w-[min(320px,85vw)] shrink-0 snap-start flex-col gap-3 rounded-xl bg-surface-2 p-2.5 *:relative',
         // Over the WIP limit: a visible but calm signal to finish before starting more.
         overWip && 'shadow-[inset_0_0_0_2px_var(--label-red-ink)]',
         isDragging && 'opacity-50',
       )}
     >
-      <header ref={headerRef} className="flex items-center gap-1 rounded-lg px-1 py-0.5">
-        <button
-          ref={setActivatorNodeRef}
-          {...attributes}
-          {...listeners}
-          aria-label={`Mover columna ${column.title}`}
-          className="cursor-grab rounded-md p-1 text-faint hover:text-ink"
-        >
-          <PixelIcon name="grip" />
-        </button>
+      {kind === 'icebox' && <Snowfall />}
+      {/* GitHub Projects-style header: status ring, name, count/WIP, estimate, then the column's sprite. */}
+      <header ref={headerRef} className="flex flex-col gap-0.5 px-1">
+        <div className="flex items-center gap-1.5">
+          <button
+            ref={setActivatorNodeRef}
+            {...attributes}
+            {...listeners}
+            aria-label={`Mover columna ${column.title}`}
+            className="-ml-1 cursor-grab rounded-md p-0.5 text-faint hover:text-ink"
+          >
+            <PixelIcon name="grip" size={12} />
+          </button>
+          <StatusRing kind={kind} />
+          <InlineEdit
+            value={column.title}
+            label="Nombre de la columna"
+            maxLength={60}
+            onSave={(title) => onRename(column.id, title)}
+            className="min-w-0 font-pixel text-base"
+          />
+          {features.agile ? (
+            <WipChip column={column} onChange={(limit) => onWipLimit(column.id, limit)} />
+          ) : (
+            // Count chip, as in the mockups ("To Do ④").
+            <span className="grid h-5 min-w-5 place-items-center rounded-full bg-surface-3 px-1.5 text-[11px] font-semibold text-muted tabular-nums">
+              {column.cards.length}
+            </span>
+          )}
+          {features.agile && (
+            <span
+              className="shrink-0 rounded-full border border-line px-1.5 py-px text-[10px] text-muted tabular-nums"
+              title="Estimación total de la columna (story points)"
+            >
+              Est. {points}
+            </span>
+          )}
+          <span className="flex-1" />
+          <ColumnSprite kind={kind} />
+          <IconButton
+            icon="trash"
+            // Quiet until the column is hovered or focused: less noise, same reach.
+            // Hidden (no space taken) until the column is hovered or has focus inside.
+            className="hidden! group-focus-within/col:inline-flex! group-hover/col:inline-flex!"
+            label={`Eliminar columna ${column.title}`}
+            onClick={() => {
+              const msg = column.cards.length
+                ? `¿Eliminar "${column.title}" y sus ${column.cards.length} tarjetas?`
+                : `¿Eliminar "${column.title}"?`;
+              void confirm(msg, { confirmLabel: 'Eliminar', danger: true }).then(
+                (ok) => ok && onRemove(column.id),
+              );
+            }}
+          />
+        </div>
         <InlineEdit
-          value={column.title}
-          label="Nombre de la columna"
-          maxLength={60}
-          onSave={(title) => onRename(column.id, title)}
-          className="min-w-0 font-pixel text-base"
-        />
-        {features.agile ? (
-          <WipChip column={column} onChange={(limit) => onWipLimit(column.id, limit)} />
-        ) : (
-          // Count chip, as in the mockups ("To Do ④").
-          <span className="grid h-5 min-w-5 place-items-center rounded-full bg-surface-3 px-1.5 text-[11px] font-semibold text-muted tabular-nums">
-            {column.cards.length}
-          </span>
-        )}
-        <span className="flex-1" />
-        {features.agile && points > 0 && (
-          <span className="text-[11px] text-muted tabular-nums" title="Story points en la columna">
-            {points} pts
-          </span>
-        )}
-        <IconButton
-          icon="trash"
-          // Quiet until the column is hovered or focused: less noise, same reach.
-          className="opacity-0 group-hover/col:opacity-100 focus-visible:opacity-100"
-          label={`Eliminar columna ${column.title}`}
-          onClick={() => {
-            const msg = column.cards.length
-              ? `¿Eliminar "${column.title}" y sus ${column.cards.length} tarjetas?`
-              : `¿Eliminar "${column.title}"?`;
-            void confirm(msg, { confirmLabel: 'Eliminar', danger: true }).then(
-              (ok) => ok && onRemove(column.id),
-            );
-          }}
+          value={column.description ?? ''}
+          placeholder="Añadir descripción"
+          label="Descripción de la columna"
+          maxLength={140}
+          onSave={(text) => onDescribe(column.id, text)}
+          className={cx(
+            'pl-5 text-xs text-muted',
+            // The empty placeholder only shows on hover: calm columns by default.
+            !column.description &&
+              'opacity-0 group-hover/col:opacity-100 focus-visible:opacity-100',
+          )}
         />
       </header>
 
