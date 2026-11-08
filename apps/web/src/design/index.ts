@@ -17,8 +17,4 @@ export {
   flip,
   initMotion,
   isMotionLite,
-  autoMotionLevel,
-  setMotionLevel,
-  storedMotionLevel,
-  type MotionLevel,
 } from './motion';

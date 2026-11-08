@@ -2,12 +2,12 @@
  * Motion system: one place decides how much animation the device gets.
  *
  * `<html data-motion="full|lite">`
- *  - lite when the user asks for reduced motion, or the device looks modest
- *    (≤ 2 CPU cores, ≤ 2 GB RAM, or data saver on). Lite keeps every state
- *    visible (cobwebs, frost…) but drops decorative loops and shortens moves,
- *    so the app stays smooth on any hardware.
- *  - The user can override the automatic choice (top-bar toggle); the choice
- *    is stored and wins over the OS setting and the hardware guess.
+ *  - lite only on modest devices (≤ 2 CPU cores, ≤ 2 GB RAM, or data saver on).
+ *    Lite keeps every state visible (cobwebs, frost…) but drops decorative
+ *    loops, so the app stays smooth on any hardware.
+ *  - The OS "reduce motion" setting does NOT turn animations off: product
+ *    decision, the animations are part of how the board communicates. They are
+ *    short, small and never flash.
  *  - Animations only touch `transform` and `opacity` (GPU-composited, no
  *    layout), and use the Web Animations API, so nothing blocks input.
  */
@@ -16,9 +16,6 @@ type NavigatorHints = Navigator & {
   deviceMemory?: number;
   connection?: { saveData?: boolean };
 };
-
-const reducedMotion = () =>
-  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
 function modestDevice(): boolean {
   const nav = navigator as NavigatorHints;
@@ -29,42 +26,9 @@ function modestDevice(): boolean {
   );
 }
 
-export type MotionLevel = 'full' | 'lite';
-const MOTION_KEY = 'devbord:motion';
-
-/** Level picked from the OS setting and the device (used when the user has not chosen). */
-export const autoMotionLevel = (): MotionLevel =>
-  reducedMotion() || modestDevice() ? 'lite' : 'full';
-
-/** The user's explicit choice, or null for automatic. */
-export function storedMotionLevel(): MotionLevel | null {
-  try {
-    const v = localStorage.getItem(MOTION_KEY);
-    return v === 'full' || v === 'lite' ? v : null;
-  } catch {
-    return null;
-  }
-}
-
-const apply = () => {
-  document.documentElement.dataset.motion = storedMotionLevel() ?? autoMotionLevel();
-};
-
-/** Saves the user's choice (null = back to automatic) and applies it. */
-export function setMotionLevel(level: MotionLevel | null) {
-  try {
-    if (level) localStorage.setItem(MOTION_KEY, level);
-    else localStorage.removeItem(MOTION_KEY);
-  } catch {
-    /* storage blocked: the choice lasts for this session */
-  }
-  apply();
-}
-
-/** Sets `data-motion` on <html> and keeps it in sync with the OS setting. */
+/** Sets `data-motion` on <html> once, from the device capabilities. */
 export function initMotion() {
-  apply();
-  window.matchMedia?.('(prefers-reduced-motion: reduce)').addEventListener?.('change', apply);
+  document.documentElement.dataset.motion = modestDevice() ? 'lite' : 'full';
 }
 
 /** True when animations should be minimal (see initMotion). */

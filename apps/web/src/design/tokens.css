@@ -155,7 +155,7 @@
     outline-offset: var(--px);
   }
 
-  /* Lite motion (OS "reduce motion", modest device, or the user's choice; see design/motion.ts). */
+  /* Lite motion (modest device; see design/motion.ts). */
   html[data-motion='lite'] *,
   html[data-motion='lite'] *::before,
   html[data-motion='lite'] *::after {
