@@ -1,0 +1,156 @@
+/*
+ * Pixel cursor styles. Plain CSS (no Tailwind utilities) because everything
+ * here is positioned per frame from JS and must not depend on class scanning.
+ */
+
+/* Sprite colors: classic dark outline + white fill reads on any background. */
+:root {
+  --cursor-outline: #141416;
+  --cursor-fill: #ffffff;
+}
+
+/* While the pixel cursor is active, hide the system one everywhere... */
+html[data-pixel-cursor],
+html[data-pixel-cursor] * {
+  cursor: none !important;
+}
+
+/* ...except in text fields: the native I-beam places the caret precisely. */
+html[data-pixel-cursor]
+  :is(
+    textarea,
+    [contenteditable='true'],
+    input:not(
+      [type='checkbox'],
+      [type='radio'],
+      [type='range'],
+      [type='color'],
+      [type='file'],
+      [type='button'],
+      [type='submit'],
+      [type='reset']
+    )
+  ) {
+  cursor: text !important;
+}
+
+/* Full-viewport, click-through layer. It is a manual popover so it can sit in
+   the browser top layer, above modal <dialog>s too. */
+.pc-layer {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 2147483647;
+}
+.pc-layer[data-hidden] .pc-sprite,
+.pc-layer[data-hidden] .pc-halo,
+.pc-layer[data-hidden] .pc-hint {
+  opacity: 0;
+}
+
+.pc-sprite,
+.pc-halo,
+.pc-hint,
+.pc-spark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform;
+}
+
+.pc-sprite {
+  filter: drop-shadow(1px 2px 0 rgb(0 0 0 / 0.18));
+  transition: opacity 120ms;
+}
+.pc-sprite > svg {
+  display: block;
+  transition: transform 90ms steps(2);
+}
+/* Press: a quick 2-step squash, like a pixel button. */
+.pc-layer[data-pressed] .pc-sprite > svg {
+  transform: scale(0.85);
+}
+/* Sprite swap "pop". */
+.pc-sprite > svg {
+  animation: pc-pop 150ms steps(3);
+}
+@keyframes pc-pop {
+  from {
+    transform: scale(0.6);
+  }
+}
+
+/* iPadOS-style highlight that morphs onto the hovered control. */
+.pc-halo {
+  width: 0;
+  height: 0;
+  opacity: 0;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--accent) 45%, transparent);
+  transition:
+    transform 140ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    width 140ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    height 140ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-radius 140ms,
+    opacity 120ms;
+}
+.pc-halo[data-on] {
+  opacity: 1;
+}
+
+/* Small inverted pixel pill next to the cursor (tooltips, drop target). */
+.pc-hint {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: var(--ink);
+  color: var(--bg);
+  font: 600 12px/1.2 var(--font-pixel);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  box-shadow: 2px 2px 0 color-mix(in srgb, var(--accent) 60%, transparent);
+  transition: opacity 120ms;
+  animation: pc-pop 150ms steps(3);
+}
+.pc-hint[data-drag] {
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: 2px 2px 0 rgb(0 0 0 / 0.25);
+}
+
+/* Click burst: 8 pixel sparks fly out in stepped frames. */
+.pc-spark {
+  width: 4px;
+  height: 4px;
+  background: var(--accent);
+  animation: pc-spark 320ms steps(5) forwards;
+}
+@keyframes pc-spark {
+  from {
+    translate: 0 0;
+    opacity: 1;
+  }
+  to {
+    translate: var(--dx) var(--dy);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pc-spark {
+    display: none;
+  }
+  .pc-halo {
+    transition: opacity 120ms;
+  }
+}
