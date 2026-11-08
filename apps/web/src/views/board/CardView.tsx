@@ -3,7 +3,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Card, Label, ProfileFeatures } from '@devbord/shared';
 import { Badge, PixelIcon, cx } from '../../design';
-import { CARD_TYPE_META, PRIORITY_META, describeDueDate } from './cardMeta';
+import { CARD_TYPE_META, PRIORITY_META, describeDueDate, previewText } from './cardMeta';
 
 export interface CardViewProps {
   card: Card;
@@ -24,7 +24,8 @@ export function CardFace({ card, labels, features, overlay }: Omit<CardViewProps
   const due = card.dueDate ? describeDueDate(card.dueDate) : null;
   const showType = features.cardTypes && card.type !== 'task';
   const showPriority = features.priority && card.priority;
-  const showMeta = showType || showPriority || due;
+  const showPoints = features.agile && card.storyPoints !== null;
+  const showMeta = showType || showPriority || showPoints || due;
 
   return (
     <div
@@ -47,7 +48,7 @@ export function CardFace({ card, labels, features, overlay }: Omit<CardViewProps
       <p className="text-[14px] leading-snug font-semibold break-words">{card.title}</p>
       {card.description && (
         <p className="line-clamp-2 text-[13px] leading-snug break-words text-muted">
-          {card.description}
+          {previewText(card.description)}
         </p>
       )}
       {showMeta && (
@@ -59,6 +60,15 @@ export function CardFace({ card, labels, features, overlay }: Omit<CardViewProps
             <Badge color={PRIORITY_META[card.priority].color}>
               {PRIORITY_META[card.priority].label}
             </Badge>
+          )}
+          {showPoints && (
+            // Pixel "die" with the estimate, the usual place for points in Scrum boards.
+            <span
+              className="grid h-5 min-w-5 place-items-center rounded-md border border-line px-1 text-[11px] font-semibold text-ink tabular-nums"
+              title={`${card.storyPoints} story points`}
+            >
+              {card.storyPoints}
+            </span>
           )}
           {due && (
             <span

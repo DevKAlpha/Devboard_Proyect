@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { BoardSchema } from '@devbord/shared';
-import { TEMPLATES, buildBoardFromTemplate, templatesFor } from './index';
+import {
+  TEMPLATES,
+  USER_STORY_TEMPLATE,
+  buildBoardFromTemplate,
+  getTemplate,
+  templatesFor,
+} from './index';
+import { previewText } from '../views/board/cardMeta';
 
 describe('templates', () => {
   it.each(TEMPLATES.map((t) => [t.id, t] as const))('%s builds a valid board', (_id, template) => {
@@ -21,5 +28,28 @@ describe('templates', () => {
   it('offers the blank template to every profile', () => {
     expect(templatesFor('technical').some((t) => t.id === 'blank')).toBe(true);
     expect(templatesFor('simple').some((t) => t.id === 'blank')).toBe(true);
+  });
+});
+
+describe('scrum template', () => {
+  const scrum = getTemplate('scrum')!;
+
+  it('is the default choice for technical profiles', () => {
+    expect(templatesFor('technical')[0]!.id).toBe('scrum');
+  });
+
+  it('builds a valid board with WIP limits and the user story template', () => {
+    const board = buildBoardFromTemplate(scrum);
+    expect(BoardSchema.safeParse(board).success).toBe(true);
+    expect(board.cardTemplate).toBe(USER_STORY_TEMPLATE);
+    const wip = Object.fromEntries(board.columns.map((c) => [c.title, c.wipLimit]));
+    expect(wip['In Progress']).toBe(3);
+    expect(wip['Review/QA']).toBe(2);
+    expect(board.labels.map((l) => l.name)).toEqual(['enhancement', 'bug', 'technical debt']);
+  });
+
+  it('previews the story without Markdown noise', () => {
+    expect(previewText(USER_STORY_TEMPLATE)).toMatch(/^Como \[rol\] · Necesito \[función\]/);
+    expect(previewText(USER_STORY_TEMPLATE)).not.toMatch(/\*\*|```|###/);
   });
 });

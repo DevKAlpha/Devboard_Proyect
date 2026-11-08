@@ -2,6 +2,8 @@ import { useState } from 'react';
 import {
   CardTypeSchema,
   PrioritySchema,
+  STORY_POINTS,
+  StoryPointsSchema,
   type Card,
   type CardPatch,
   type Label,
@@ -49,6 +51,7 @@ function CardForm({
     dueDate: card.dueDate,
     type: card.type,
     priority: card.priority,
+    storyPoints: card.storyPoints,
   });
   const set = (patch: CardPatch) => setDraft((d) => ({ ...d, ...patch }));
   const labelIds = draft.labelIds ?? [];
@@ -84,6 +87,7 @@ function CardForm({
         <Textarea
           id="card-description"
           placeholder="Añade más detalles…"
+          className="min-h-52"
           value={draft.description ?? ''}
           onChange={(e) => set({ description: e.target.value })}
         />
@@ -119,7 +123,7 @@ function CardForm({
         </fieldset>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Fecha límite" htmlFor="card-due">
           <Input
             id="card-due"
@@ -156,6 +160,28 @@ function CardForm({
               {PrioritySchema.options.map((p) => (
                 <option key={p} value={p}>
                   {PRIORITY_META[p].label}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        )}
+        {features.agile && (
+          <Field label="Story points" htmlFor="card-points">
+            <Select
+              id="card-points"
+              value={draft.storyPoints ?? ''}
+              onChange={(e) =>
+                set({
+                  storyPoints: e.target.value
+                    ? StoryPointsSchema.parse(Number(e.target.value))
+                    : null,
+                })
+              }
+            >
+              <option value="">Sin estimar</option>
+              {STORY_POINTS.map((p) => (
+                <option key={p} value={p}>
+                  {p === 13 ? '13 (divídela)' : p}
                 </option>
               ))}
             </Select>

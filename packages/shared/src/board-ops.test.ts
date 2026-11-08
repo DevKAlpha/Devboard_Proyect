@@ -10,8 +10,10 @@ import {
   removeCard,
   removeColumn,
   updateCard,
+  isOverWip,
+  setColumnWipLimit,
 } from './board-ops';
-import { BoardSchema } from './schemas';
+import { BoardSchema, CardSchema } from './schemas';
 
 const seed = () => {
   let board = createBoard({ name: 'Test', profile: 'technical', columnTitles: ['A', 'B'] });
@@ -67,5 +69,31 @@ describe('board-ops', () => {
   it('moves columns and clamps out-of-range indexes', () => {
     const { board, a } = seed();
     expect(moveColumn(board, a.id, 99).columns.at(-1)!.id).toBe(a.id);
+  });
+});
+
+describe('agile fields', () => {
+  it('parses boards saved before these fields existed (defaults fill the gaps)', () => {
+    const legacy = createBoard({ name: 'Old', profile: 'technical', columnTitles: ['A'] });
+    const raw = JSON.parse(JSON.stringify(legacy)) as Record<string, unknown>;
+    delete raw.cardTemplate;
+    for (const c of raw.columns as Record<string, unknown>[]) delete c.wipLimit;
+    const parsed = BoardSchema.parse(raw);
+    expect(parsed.cardTemplate).toBeNull();
+    expect(parsed.columns[0]!.wipLimit).toBeNull();
+  });
+
+  it('accepts only Fibonacci story points', () => {
+    const card = createCard('x');
+    expect(CardSchema.safeParse({ ...card, storyPoints: 5 }).success).toBe(true);
+    expect(CardSchema.safeParse({ ...card, storyPoints: 4 }).success).toBe(false);
+  });
+
+  it('flags a column over its WIP limit', () => {
+    const { board, a } = seed();
+    const limited = setColumnWipLimit(board, a.id, 1);
+    expect(isOverWip(limited.columns[0]!)).toBe(true);
+    expect(isOverWip(setColumnWipLimit(board, a.id, 2).columns[0]!)).toBe(false);
+    expect(isOverWip(setColumnWipLimit(board, a.id, null).columns[0]!)).toBe(false);
   });
 });
