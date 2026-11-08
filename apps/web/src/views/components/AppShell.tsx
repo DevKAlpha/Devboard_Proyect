@@ -40,7 +40,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-full flex-col bg-surface">
       <header className="sticky top-0 z-20 shrink-0 border-b border-line-soft bg-surface/80 backdrop-blur-xl">
-        <div className="flex h-14 items-center gap-3 px-5">
+        <div className="mx-auto flex h-14 max-w-[1600px] items-center gap-3 px-4">
           <NavLink to="/" aria-label="Inicio">
             <Logo />
           </NavLink>

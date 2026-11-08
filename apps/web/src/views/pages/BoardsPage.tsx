@@ -16,21 +16,19 @@ export function BoardsPage() {
 
   return (
     <AppShell>
-      <header className="flex flex-wrap items-end justify-between gap-4 border-b border-line-soft px-5 py-4">
+      <header className="mx-auto flex w-full max-w-5xl flex-wrap items-end justify-between gap-4 px-4 pt-8 pb-6">
         <div>
-          <h1 className="text-2xl">Tus tableros</h1>
-          <p className="mt-0.5 text-sm text-muted">
-            Todo lo que tienes entre manos, en un vistazo.
-          </p>
+          <h1 className="text-3xl">Tus tableros</h1>
+          <p className="mt-1 text-muted">Todo lo que tienes entre manos, en un vistazo.</p>
         </div>
-        <Button variant="primary" size="sm" onClick={() => setCreating(true)}>
+        <Button variant="primary" onClick={() => setCreating(true)}>
           <PixelIcon name="plus" />
           Nuevo tablero
         </Button>
       </header>
 
-      <main className="min-h-0 flex-1 overflow-y-auto px-5 py-6">
-        <ul className="grid max-w-6xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <main className="min-h-0 flex-1 overflow-y-auto">
+        <ul className="mx-auto grid max-w-5xl gap-5 px-4 pb-8 sm:grid-cols-2 lg:grid-cols-3">
           {boards.map((b) => {
             const cards = b.columns.reduce((n, c) => n + c.cards.length, 0);
             return (

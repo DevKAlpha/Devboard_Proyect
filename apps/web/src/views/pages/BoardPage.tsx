@@ -18,7 +18,7 @@ export function BoardPage() {
 
   return (
     <AppShell>
-      <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line-soft px-5 py-4">
+      <header className="mx-auto flex w-full max-w-[1600px] flex-wrap items-center gap-x-4 gap-y-2 px-4 pt-5 pb-3">
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <Link
             to="/"
@@ -70,7 +70,7 @@ export function BoardPage() {
         </div>
       </header>
 
-      <main className="min-h-0 flex-1">
+      <main className="mx-auto min-h-0 w-full max-w-[1600px] flex-1">
         <BoardCanvas board={board} />
       </main>
     </AppShell>
