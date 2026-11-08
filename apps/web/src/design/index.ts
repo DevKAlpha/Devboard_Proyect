@@ -8,3 +8,17 @@ export { Badge } from './components/Badge';
 export { cx } from './cx';
 export { ConfirmHost } from './components/ConfirmDialog';
 export { confirm, type ConfirmOptions } from './confirm';
+export {
+  animateFlash,
+  animateIn,
+  animateLand,
+  animateOut,
+  animateShake,
+  flip,
+  initMotion,
+  isMotionLite,
+  autoMotionLevel,
+  setMotionLevel,
+  storedMotionLevel,
+  type MotionLevel,
+} from './motion';

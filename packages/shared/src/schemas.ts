@@ -43,6 +43,9 @@ export type LabelColor = z.infer<typeof LabelColorSchema>;
  * with size, which reflects how uncertainty grows. 13 is the ceiling: anything
  * bigger is an epic and should be split (small batches, a Lean principle).
  */
+/** How many recent column changes a card remembers. */
+export const MOVE_LOG_SIZE = 5;
+
 export const STORY_POINTS = [1, 2, 3, 5, 8, 13] as const;
 export const StoryPointsSchema = z.literal(STORY_POINTS);
 export type StoryPoints = z.infer<typeof StoryPointsSchema>;
@@ -66,6 +69,10 @@ export const CardSchema = z.object({
   priority: PrioritySchema.nullable().default(null),
   /** Relative size estimate (Scrum). Null means "not refined yet". */
   storyPoints: StoryPointsSchema.nullable().default(null),
+  /** When the card last changed column (null: never moved, use createdAt). Drives the "stale" look. */
+  movedAt: z.iso.datetime().nullable().default(null),
+  /** Last cross-column moves (newest last, max 5). Drives the "hot" look. */
+  moveLog: z.array(z.iso.datetime()).max(MOVE_LOG_SIZE).default([]),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
 });

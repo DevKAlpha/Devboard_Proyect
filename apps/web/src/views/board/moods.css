@@ -1,0 +1,198 @@
+/*
+ * Card moods (stale / hot / frozen). Plain CSS: everything here is decoration
+ * positioned over the card face. Animations only use transform/opacity and
+ * steps() timing; in lite motion mode the loops stop and the sprites stay.
+ */
+:root {
+  --mood-web: color-mix(in srgb, var(--muted) 70%, transparent);
+  --mood-hot: #ff6a1f;
+  --mood-ice: #9fd3ff;
+  --mood-ice-ink: #5aaef0;
+}
+[data-theme='dark'] {
+  --mood-web: color-mix(in srgb, #ffffff 45%, transparent);
+  --mood-ice: #2b5d86;
+  --mood-ice-ink: #9fd3ff;
+}
+
+.mood-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  overflow: hidden;
+}
+/* Card content stays above the decorations (text always readable). */
+[class*='card-mood-'] > :not(.mood-layer) {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Stale: cobwebs and a dangling spider; the card looks a bit dusty. ── */
+.card-mood-stale,
+.card-mood-stale2 {
+  filter: saturate(0.75);
+}
+.card-mood-stale2 {
+  filter: saturate(0.55) brightness(0.98);
+}
+.mood-web {
+  position: absolute;
+}
+.mood-web-tr {
+  top: 0;
+  right: 0;
+}
+.mood-web-bl {
+  bottom: 0;
+  left: 0;
+  transform: rotate(180deg);
+}
+.mood-spider {
+  position: absolute;
+  top: 0;
+  right: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: mood-bob 2.4s steps(6, end) infinite alternate;
+  transform-origin: top center;
+}
+.mood-spider-thread {
+  width: 1px;
+  height: 14px;
+  background: var(--mood-web);
+}
+@keyframes mood-bob {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(6px);
+  }
+}
+
+/* ── Hot: warm glow, flickering pixel flames on the top edge. ── */
+.card-mood-hot {
+  border-color: color-mix(in srgb, var(--mood-hot) 70%, transparent) !important;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--mood-hot) 35%, transparent),
+    0 6px 18px -8px color-mix(in srgb, var(--mood-hot) 70%, transparent);
+  background-image: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--mood-hot) 10%, transparent),
+    transparent 45%
+  );
+}
+.mood-flames {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+}
+.mood-flame {
+  animation: mood-flicker 0.42s steps(1, end) infinite;
+}
+.mood-flame-b {
+  opacity: 0;
+  animation: mood-swap 0.36s steps(1, end) infinite;
+}
+.mood-flame-a {
+  animation: mood-swap 0.36s steps(1, end) infinite reverse;
+}
+@keyframes mood-swap {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes mood-flicker {
+  0% {
+    transform: translateY(0) scaleY(1);
+  }
+  50% {
+    transform: translateY(-1px) scaleY(1.08);
+  }
+}
+
+/* ── Frozen: icy tint, frost crystals, slow twinkles. ── */
+.card-mood-frozen {
+  border-color: color-mix(in srgb, var(--mood-ice-ink) 55%, transparent) !important;
+  background-image: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--mood-ice) 30%, transparent),
+    transparent 60%
+  );
+}
+.mood-frost {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--mood-ice) 45%, transparent);
+}
+.mood-flake {
+  position: absolute;
+}
+.mood-flake-tr {
+  top: 10px;
+  right: 6px;
+}
+.mood-icicles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 10px;
+}
+.mood-icicles svg {
+  position: absolute;
+  top: 0;
+}
+.mood-flake-bl {
+  bottom: 4px;
+  left: 4px;
+  opacity: 0.7;
+}
+.mood-twinkle {
+  position: absolute;
+  opacity: 0;
+  animation: mood-twinkle 3.2s steps(4, end) infinite;
+}
+@keyframes mood-twinkle {
+  0%,
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  80% {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+}
+
+/* Lite motion (reduced motion or modest hardware): keep the look, stop the loops. */
+html[data-motion='lite'] .mood-spider,
+html[data-motion='lite'] .mood-flame,
+html[data-motion='lite'] .mood-flame-a,
+html[data-motion='lite'] .mood-flame-b,
+html[data-motion='lite'] .mood-twinkle {
+  animation: none;
+}
+html[data-motion='lite'] .mood-flame-b,
+html[data-motion='lite'] .mood-twinkle {
+  display: none;
+}
+/* Filters are the one costly effect: skip them on modest devices. */
+html[data-motion='lite'] .card-mood-stale,
+html[data-motion='lite'] .card-mood-stale2 {
+  filter: none;
+  opacity: 0.85;
+}

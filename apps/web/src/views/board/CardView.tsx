@@ -1,9 +1,11 @@
-import { memo } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Card, Label, ProfileFeatures } from '@devbord/shared';
-import { Badge, PixelIcon, cx } from '../../design';
+import { Badge, PixelIcon, animateFlash, cx } from '../../design';
 import { CARD_TYPE_META, PRIORITY_META, describeDueDate, previewText } from './cardMeta';
+import type { CardMood } from './cardMood';
+import { MoodDecor } from './MoodDecor';
 
 export interface CardViewProps {
   card: Card;
@@ -12,6 +14,10 @@ export interface CardViewProps {
   onOpen?: (cardId: string) => void;
   /** Rendered inside the DragOverlay (no sortable wiring, lifted look). */
   overlay?: boolean;
+  /** Flow state shown as pixel decorations (cobwebs, flames, frost). */
+  mood?: CardMood;
+  /** Text version of the mood, for the tooltip and screen readers. */
+  moodLabel?: string | null;
 }
 
 /**
@@ -19,7 +25,13 @@ export interface CardViewProps {
  * Layout follows the mockups: labels, title, two-line description, then a
  * meta row (type, priority, due date).
  */
-export function CardFace({ card, labels, features, overlay }: Omit<CardViewProps, 'onOpen'>) {
+export function CardFace({
+  card,
+  labels,
+  features,
+  overlay,
+  mood = null,
+}: Omit<CardViewProps, 'onOpen' | 'moodLabel'>) {
   const cardLabels = labels.filter((l) => card.labelIds.includes(l.id));
   const due = card.dueDate ? describeDueDate(card.dueDate) : null;
   const showType = features.cardTypes && card.type !== 'task';
@@ -30,12 +42,15 @@ export function CardFace({ card, labels, features, overlay }: Omit<CardViewProps
   return (
     <div
       className={cx(
-        'flex flex-col gap-2 rounded-lg border border-line-soft bg-card p-3 text-left shadow-card',
-        'transition-[box-shadow,border-color] duration-150 group-hover/card:border-line',
+        'relative flex flex-col gap-2 rounded-lg border border-line-soft bg-card p-3 text-left shadow-card',
+        // Hover: lift 1px; press: sink back (tactile, transform only).
+        'transition-[box-shadow,border-color,transform] duration-150 group-hover/card:-translate-y-px group-hover/card:border-line group-hover/card:shadow-lift group-active/card:translate-y-0',
+        mood && `card-mood-${mood}`,
         // Lifted card: tilted and floating, like picking up a paper card.
         overlay && 'scale-[1.02] rotate-[2.5deg] shadow-lift',
       )}
     >
+      <MoodDecor mood={mood} />
       {cardLabels.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {cardLabels.map((l) => (
@@ -91,15 +106,32 @@ export function CardFace({ card, labels, features, overlay }: Omit<CardViewProps
  * Sortable card. The whole card is the drag handle for pointer users.
  * Keyboard: Space starts dragging (dnd-kit), Enter opens the detail.
  */
-export const CardView = memo(function CardView({ card, labels, features, onOpen }: CardViewProps) {
+export const CardView = memo(function CardView({
+  card,
+  labels,
+  features,
+  onOpen,
+  mood = null,
+  moodLabel = null,
+}: CardViewProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: card.id,
     data: { type: 'card' },
   });
 
+  // Flash when the card's content changes (local edit or a teammate's), not on mount.
+  const faceRef = useRef<HTMLDivElement>(null);
+  const lastUpdate = useRef(card.updatedAt);
+  useEffect(() => {
+    if (lastUpdate.current === card.updatedAt) return;
+    lastUpdate.current = card.updatedAt;
+    animateFlash(faceRef.current?.firstElementChild);
+  }, [card.updatedAt]);
+
   return (
     <li
       ref={setNodeRef}
+      data-flip-id={card.id}
       style={{ transform: CSS.Translate.toString(transform), transition }}
       className="group/card list-none"
     >
@@ -107,7 +139,9 @@ export const CardView = memo(function CardView({ card, labels, features, onOpen 
         {...attributes}
         {...listeners}
         aria-roledescription="tarjeta"
-        aria-label={card.title}
+        aria-label={moodLabel ? `${card.title}. ${moodLabel}` : card.title}
+        // Shown by the pixel cursor as a pixel tooltip (native titles use the system font).
+        data-cursor-hint={moodLabel ?? undefined}
         onClick={() => !isDragging && onOpen?.(card.id)}
         onKeyDown={(e) => {
           // Enter also drops a keyboard drag; only open when not dragging.
@@ -118,8 +152,8 @@ export const CardView = memo(function CardView({ card, labels, features, onOpen 
         className="relative cursor-grab touch-manipulation rounded-lg"
       >
         {/* While lifted, the slot shows an empty "drop here" shape of the same size. */}
-        <div className={cx(isDragging && 'invisible')}>
-          <CardFace card={card} labels={labels} features={features} />
+        <div ref={faceRef} className={cx(isDragging && 'invisible')}>
+          <CardFace card={card} labels={labels} features={features} mood={mood} />
         </div>
         {isDragging && (
           <div

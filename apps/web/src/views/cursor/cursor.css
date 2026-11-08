@@ -146,11 +146,9 @@ html[data-pixel-cursor]
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .pc-spark {
-    display: none;
-  }
-  .pc-halo {
-    transition: opacity 120ms;
-  }
+html[data-motion='lite'] .pc-spark {
+  display: none;
+}
+html[data-motion='lite'] .pc-halo {
+  transition: opacity 120ms;
 }

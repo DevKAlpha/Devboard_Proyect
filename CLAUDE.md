@@ -47,6 +47,8 @@ docker/         Dockerfiles. docker-compose.yml en la raíz.
 - JSDoc en los exports públicos. Los comentarios explican el **por qué**, no el qué.
 - Accesibilidad: todo lo arrastrable también se opera con teclado (dnd-kit KeyboardSensor). Usar labels y foco visible.
 - Mobile-first.
+- Animaciones: usar los helpers de `design/motion.ts` (`animateIn/Out/Land/Flash/Shake`, `flip`). Solo `transform`/`opacity` y `steps()`. Respetar `html[data-motion="lite"]` (SO con movimiento reducido, hardware modesto o elección del usuario en la barra superior): nada de bucles decorativos ni filtros en lite.
+- Estados de tarjeta (telaraña, caliente, congelada): lógica pura en `views/board/cardMood.ts`, sprites en `MoodDecor.tsx`.
 
 ## Comandos
 ```
