@@ -180,3 +180,10 @@
 @utility animate-pixel-pop {
   animation: pixel-pop 160ms steps(4) both;
 }
+
+/* Native dropdown lists (<option>) do not always inherit the page font. */
+select,
+option,
+optgroup {
+  font-family: inherit;
+}

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { HashRouter, Navigate, Route, Routes } from 'react-router';
 import { useBoardController } from '../controllers/boardController';
 import { usePreferences } from '../controllers/preferencesController';
+import { ConfirmHost } from '../design';
 import { PixelCursor } from './cursor/PixelCursor';
 import { BoardPage } from './pages/BoardPage';
 import { BoardsPage } from './pages/BoardsPage';
@@ -38,6 +39,8 @@ export function App() {
   return (
     <HashRouter>
       <PixelCursor />
+      <ConfirmHost />
+      <ConfirmHost />
       {error && (
         <div role="alert" className="bg-danger px-4 py-2 text-center text-sm text-white">
           {error}
