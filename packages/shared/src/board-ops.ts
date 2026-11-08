@@ -207,3 +207,59 @@ export function moveCard(board: Board, cardId: string, toColumnId: string, toInd
   });
   return touch(board, columns);
 }
+
+// ─── Cross-board ────────────────────────────────────────────────────────────
+
+/**
+ * Copies cards from `source` into a column of `target` (appended, in source
+ * order). Works between any boards, whatever their profile or template.
+ *
+ * - Copies get new ids and timestamps; the source board is not touched
+ *   (callers that "move" remove the originals with `removeCard`).
+ * - Labels are matched by name (case-insensitive). A missing label is
+ *   created on the target with the source color, so no tag is lost.
+ */
+export function copyCardsInto(
+  target: Board,
+  columnId: string,
+  source: Board,
+  cardIds: readonly string[],
+): Board {
+  if (!target.columns.some((c) => c.id === columnId)) return target;
+  const wanted = new Set(cardIds);
+  const picked = source.columns.flatMap((c) => c.cards).filter((c) => wanted.has(c.id));
+  if (picked.length === 0) return target;
+
+  const labels = [...target.labels];
+  const byName = new Map(labels.map((l) => [l.name.toLowerCase(), l.id]));
+  const sourceLabels = new Map(source.labels.map((l) => [l.id, l]));
+  const mapLabel = (sourceId: string): string[] => {
+    const label = sourceLabels.get(sourceId);
+    if (!label) return [];
+    const key = label.name.toLowerCase();
+    let id = byName.get(key);
+    if (!id) {
+      id = newId();
+      labels.push({ id, name: label.name, color: label.color });
+      byName.set(key, id);
+    }
+    return [id];
+  };
+
+  const at = nowIso();
+  const copies: Card[] = picked.map((card) => ({
+    ...card,
+    id: newId(),
+    labelIds: card.labelIds.flatMap(mapLabel),
+    createdAt: at,
+    updatedAt: at,
+  }));
+
+  return {
+    ...touch(
+      target,
+      target.columns.map((c) => (c.id === columnId ? { ...c, cards: [...c.cards, ...copies] } : c)),
+    ),
+    labels,
+  };
+}

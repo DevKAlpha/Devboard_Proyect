@@ -12,6 +12,7 @@ import {
   updateCard,
   isOverWip,
   setColumnWipLimit,
+  copyCardsInto,
 } from './board-ops';
 import { BoardSchema, CardSchema } from './schemas';
 
@@ -95,5 +96,49 @@ describe('agile fields', () => {
     expect(isOverWip(limited.columns[0]!)).toBe(true);
     expect(isOverWip(setColumnWipLimit(board, a.id, 2).columns[0]!)).toBe(false);
     expect(isOverWip(setColumnWipLimit(board, a.id, null).columns[0]!)).toBe(false);
+  });
+});
+
+describe('copyCardsInto', () => {
+  it('copies cards across boards of any profile, merging labels by name', () => {
+    let source = createBoard({
+      name: 'Scrum',
+      profile: 'technical',
+      columnTitles: ['Backlog'],
+      labels: [
+        { name: 'bug', color: 'red' },
+        { name: 'infra', color: 'orange' },
+      ],
+    });
+    const [bug, infra] = source.labels;
+    const story = createCard('Login', {
+      labelIds: [bug!.id, infra!.id],
+      storyPoints: 5,
+      type: 'feature',
+    });
+    source = addCard(source, source.columns[0]!.id, story);
+
+    const target = createBoard({
+      name: 'Casa',
+      profile: 'simple',
+      columnTitles: ['Por hacer'],
+      labels: [{ name: 'BUG', color: 'red' }],
+    });
+    const result = copyCardsInto(target, target.columns[0]!.id, source, [story.id]);
+
+    const copy = result.columns[0]!.cards[0]!;
+    expect(copy.id).not.toBe(story.id);
+    expect(copy).toMatchObject({ title: 'Login', storyPoints: 5, type: 'feature' });
+    // "bug" reuses the existing "BUG" label; "infra" is created on the target.
+    expect(result.labels.map((l) => l.name)).toEqual(['BUG', 'infra']);
+    expect(copy.labelIds).toEqual(result.labels.map((l) => l.id));
+    expect(BoardSchema.safeParse(result).success).toBe(true);
+    expect(source.columns[0]!.cards).toHaveLength(1); // source untouched
+  });
+
+  it('is a no-op for unknown columns or empty selections', () => {
+    const { board } = seed();
+    expect(copyCardsInto(board, 'nope', board, ['x'])).toBe(board);
+    expect(copyCardsInto(board, board.columns[0]!.id, board, [])).toBe(board);
   });
 });
