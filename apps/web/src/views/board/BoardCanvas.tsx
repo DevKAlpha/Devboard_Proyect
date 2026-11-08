@@ -167,6 +167,10 @@ export function BoardCanvas({ board }: { board: Board }) {
     (columnId: string, title: string) => ctrl().addCard(board.id, columnId, title),
     [board.id],
   );
+  const onWipLimit = useCallback(
+    (columnId: string, wipLimit: number | null) => ctrl().setWipLimit(board.id, columnId, wipLimit),
+    [board.id],
+  );
 
   return (
     <>
@@ -196,6 +200,7 @@ export function BoardCanvas({ board }: { board: Board }) {
                 onRemove={onRemove}
                 onAddCard={onAddCard}
                 onOpenCard={setOpenCardId}
+                onWipLimit={onWipLimit}
               />
             ))}
           </SortableContext>

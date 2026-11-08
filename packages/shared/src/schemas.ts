@@ -30,6 +30,15 @@ export const LabelColorSchema = z.enum([
 ]);
 export type LabelColor = z.infer<typeof LabelColorSchema>;
 
+/**
+ * Story points use the modified Fibonacci scale common in Scrum: the gaps grow
+ * with size, which reflects how uncertainty grows. 13 is the ceiling: anything
+ * bigger is an epic and should be split (small batches, a Lean principle).
+ */
+export const STORY_POINTS = [1, 2, 3, 5, 8, 13] as const;
+export const StoryPointsSchema = z.literal(STORY_POINTS);
+export type StoryPoints = z.infer<typeof StoryPointsSchema>;
+
 export const LabelSchema = z.object({
   id: z.string().min(1),
   name: z.string().trim().min(1).max(30),
@@ -47,6 +56,8 @@ export const CardSchema = z.object({
   dueDate: z.iso.date().nullable().default(null),
   type: CardTypeSchema.default('task'),
   priority: PrioritySchema.nullable().default(null),
+  /** Relative size estimate (Scrum). Null means "not refined yet". */
+  storyPoints: StoryPointsSchema.nullable().default(null),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
 });
@@ -55,6 +66,11 @@ export type Card = z.infer<typeof CardSchema>;
 export const ColumnSchema = z.object({
   id: z.string().min(1),
   title: z.string().trim().min(1).max(60),
+  /**
+   * Work-in-progress limit (Lean / Kanban). Null means unlimited. The UI
+   * warns when a column goes over it: stop starting, start finishing.
+   */
+  wipLimit: z.number().int().positive().max(99).nullable().default(null),
   /** Ordered: array position is the visual position. */
   cards: z.array(CardSchema),
 });
@@ -72,6 +88,11 @@ export const BoardSchema = z.object({
   /** Template the board was created from, kept for analytics / "reset to template". */
   templateId: z.string().nullable().default(null),
   labels: z.array(LabelSchema).default([]),
+  /**
+   * Description given to every new card on this board, e.g. the Scrum user
+   * story template ("Como… Necesito… Para que…" + Gherkin criteria).
+   */
+  cardTemplate: z.string().max(10_000).nullable().default(null),
   columns: z.array(ColumnSchema),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),

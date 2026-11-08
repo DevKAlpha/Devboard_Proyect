@@ -34,7 +34,10 @@ export interface NewBoardInput {
   profile: Profile;
   templateId?: string | null;
   columnTitles?: string[];
+  /** WIP limit per column, aligned with `columnTitles` (missing = unlimited). */
+  wipLimits?: (number | null)[];
   labels?: Omit<Label, 'id'>[];
+  cardTemplate?: string | null;
 }
 
 export function createBoard(input: NewBoardInput): Board {
@@ -45,7 +48,13 @@ export function createBoard(input: NewBoardInput): Board {
     profile: input.profile,
     templateId: input.templateId ?? null,
     labels: (input.labels ?? []).map((l) => ({ ...l, id: newId() })),
-    columns: (input.columnTitles ?? []).map((title) => ({ id: newId(), title, cards: [] })),
+    cardTemplate: input.cardTemplate ?? null,
+    columns: (input.columnTitles ?? []).map((title, i) => ({
+      id: newId(),
+      title,
+      wipLimit: input.wipLimits?.[i] ?? null,
+      cards: [],
+    })),
     createdAt: at,
     updatedAt: at,
   };
@@ -59,6 +68,7 @@ export function createCard(title: string, patch: CardPatch = {}): Card {
     dueDate: null,
     type: 'task',
     priority: null,
+    storyPoints: null,
     ...patch,
     id: newId(),
     title: title.trim(),
@@ -82,10 +92,24 @@ export function addColumn(board: Board, title: string, index = board.columns.len
   columns.splice(clampIndex(index, columns.length), 0, {
     id: newId(),
     title: title.trim(),
+    wipLimit: null,
     cards: [],
   });
   return touch(board, columns);
 }
+
+/** Sets (or clears with null) a column's WIP limit. */
+export function setColumnWipLimit(board: Board, columnId: string, wipLimit: number | null): Board {
+  if (!board.columns.some((c) => c.id === columnId)) return board;
+  return touch(
+    board,
+    board.columns.map((c) => (c.id === columnId ? { ...c, wipLimit } : c)),
+  );
+}
+
+/** True when a column holds more cards than its WIP limit allows. */
+export const isOverWip = (column: Column): boolean =>
+  column.wipLimit !== null && column.cards.length > column.wipLimit;
 
 export function renameColumn(board: Board, columnId: string, title: string): Board {
   if (!board.columns.some((c) => c.id === columnId)) return board;

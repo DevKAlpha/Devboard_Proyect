@@ -21,12 +21,195 @@ export interface BoardTemplate {
   name: string;
   description: string;
   columns: string[];
+  /** WIP limit per column, aligned with `columns` (null = unlimited). */
+  wipLimits?: (number | null)[];
   labels: { name: string; color: LabelColor }[];
+  /** Description pre-filled in every new card of the board. */
+  cardTemplate?: string;
   /** `column` is an index into `columns`; `labels` are label names. */
   cards: { column: number; title: string; labels?: string[]; patch?: CardPatch }[];
 }
 
+/**
+ * User story template, same structure as the GitHub issue template used in
+ * DevKAlpha/agile-final-project (.github/ISSUE_TEMPLATE/user-story.md):
+ * role, need, benefit, then details and Gherkin acceptance criteria.
+ */
+export const USER_STORY_TEMPLATE = `**Como** [rol]
+**Necesito** [función]
+**Para que** [beneficio]
+
+### Detalles y Suposiciones
+* [documenta lo que sabes]
+
+### Criterios de Aceptación
+\`\`\`gherkin
+Dado [algún contexto]
+Cuando [se realiza cierta acción]
+Entonces [se observa el resultado de la acción]
+\`\`\``;
+
+/** Builds a filled-in user story in the same format as the template. */
+const story = (s: {
+  role: string;
+  need: string;
+  benefit: string;
+  details: string[];
+  gherkin: string[];
+}) => `**Como** ${s.role}
+**Necesito** ${s.need}
+**Para que** ${s.benefit}
+
+### Detalles y Suposiciones
+${s.details.map((d) => `* ${d}`).join('\n')}
+
+### Criterios de Aceptación
+\`\`\`gherkin
+${s.gherkin.join('\n')}
+\`\`\``;
+
 export const TEMPLATES: readonly BoardTemplate[] = [
+  {
+    // Scrum board as used in the agile-planning reference repos (GitHub Projects):
+    // New Issues → Icebox → Product Backlog → Sprint Backlog → In Progress → Review/QA → Done.
+    id: 'scrum',
+    profile: 'technical',
+    name: 'Scrum',
+    description:
+      'Historias de usuario con criterios Gherkin, story points y límites WIP. Flujo Lean: termina antes de empezar.',
+    columns: [
+      'New Issues',
+      'Icebox',
+      'Product Backlog',
+      'Sprint Backlog',
+      'In Progress',
+      'Review/QA',
+      'Done',
+    ],
+    // Lean: limit work in progress only where work actually happens.
+    wipLimits: [null, null, null, null, 3, 2, null],
+    // Same labels as the reference repositories.
+    labels: [
+      { name: 'enhancement', color: 'blue' },
+      { name: 'bug', color: 'red' },
+      { name: 'technical debt', color: 'orange' },
+    ],
+    cardTemplate: USER_STORY_TEMPLATE,
+    cards: [
+      {
+        column: 0,
+        title: 'Cómo usar este tablero',
+        patch: {
+          description: `Flujo: una idea entra en **New Issues**. Se refina (historia + criterios + story points) y pasa a **Product Backlog**, ordenado por valor. Lo que no es prioritario espera en **Icebox**.
+
+En la planificación, el equipo trae al **Sprint Backlog** lo que cabe en el sprint.
+
+Principios ágiles y Lean aplicados:
+* Entrega valor pronto y a menudo: historias pequeñas (≤ 8 puntos; 13 = divídela).
+* Limita el trabajo en curso (WIP): In Progress 3, Review/QA 2. Si la columna se pone roja, termina antes de empezar algo nuevo.
+* Tira del trabajo (pull), no lo empujes.
+* Elimina desperdicio: sin criterios de aceptación, no entra al sprint.
+* Mejora continua: revisa el flujo en cada retrospectiva.`,
+        },
+      },
+      {
+        column: 1,
+        title: 'Valorar productos con "me gusta"',
+        labels: ['enhancement'],
+        patch: {
+          description: story({
+            role: 'usuario del sistema',
+            need: 'marcar un producto con "me gusta"',
+            benefit: 'pueda expresar mi preferencia',
+            details: ['El usuario debe estar autenticado', 'Solo un "me gusta" por producto'],
+            gherkin: [
+              'Dado que soy un usuario autenticado',
+              'Y existe un producto en el catálogo',
+              'Cuando marco el producto con "me gusta"',
+              'Entonces el sistema registra mi preferencia',
+            ],
+          }),
+        },
+      },
+      {
+        column: 2,
+        title: 'Filtrar productos',
+        labels: ['enhancement'],
+        patch: {
+          type: 'feature',
+          priority: 'medium',
+          storyPoints: 5,
+          description: story({
+            role: 'usuario del sistema',
+            need: 'consultar un subconjunto de productos',
+            benefit: 'encuentre productos según criterios concretos',
+            details: ['Filtros por categoría, precio o popularidad', 'Resultados paginados'],
+            gherkin: [
+              'Dado que existen productos en el catálogo',
+              'Cuando aplico filtros de búsqueda',
+              'Entonces el sistema devuelve solo los productos que cumplen los criterios',
+            ],
+          }),
+        },
+      },
+      {
+        column: 3,
+        title: 'Listar productos',
+        labels: ['enhancement'],
+        patch: {
+          type: 'feature',
+          priority: 'high',
+          storyPoints: 3,
+          description: story({
+            role: 'usuario del sistema',
+            need: 'listar todos los productos del catálogo',
+            benefit: 'pueda explorar las opciones disponibles',
+            details: ['La lista puede ir paginada'],
+            gherkin: [
+              'Dado que existen productos en el catálogo',
+              'Cuando solicito la lista de productos',
+              'Entonces el sistema muestra todos los productos disponibles',
+            ],
+          }),
+        },
+      },
+      {
+        column: 4,
+        title: 'Automatizar el despliegue',
+        labels: ['technical debt'],
+        patch: {
+          type: 'task',
+          priority: 'medium',
+          storyPoints: 8,
+          description: story({
+            role: 'equipo de desarrollo',
+            need: 'desplegar automáticamente en la nube',
+            benefit: 'entreguemos cambios de forma rápida y fiable',
+            details: [
+              'Se usará un pipeline CI/CD',
+              'El despliegue ocurre tras aprobar los cambios',
+            ],
+            gherkin: [
+              'Dado que se hace un cambio en el código',
+              'Cuando el cambio se aprueba y se fusiona',
+              'Entonces el sistema se despliega automáticamente',
+            ],
+          }),
+        },
+      },
+      {
+        column: 6,
+        title: 'Definición de Hecho (DoD)',
+        patch: {
+          description: `Una historia está **Hecha** cuando:
+* Cumple todos sus criterios de aceptación.
+* El código está revisado (pull request aprobada).
+* Tiene pruebas automatizadas y pasan en CI.
+* Está desplegada y el Product Owner la aceptó.`,
+        },
+      },
+    ],
+  },
   {
     id: 'dev-sprint',
     profile: 'technical',
@@ -169,7 +352,9 @@ export function buildBoardFromTemplate(
     profile: options.profile ?? template.profile,
     templateId: template.id,
     columnTitles: template.columns,
+    wipLimits: template.wipLimits,
     labels: template.labels,
+    cardTemplate: template.cardTemplate ?? null,
   });
 
   const labelId = new Map(board.labels.map((l) => [l.name, l.id]));

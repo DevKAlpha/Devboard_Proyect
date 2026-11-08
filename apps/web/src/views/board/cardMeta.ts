@@ -25,3 +25,21 @@ export function describeDueDate(dueDate: string, today = new Date()) {
   const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   return { text: dateFormat.format(date), overdue: date < startOfToday };
 }
+
+/**
+ * Plain-text preview of a Markdown description (user stories use `**bold**`,
+ * `###` headings and ```gherkin fences). Keeps the card face calm: just words.
+ */
+export function previewText(markdown: string): string {
+  return markdown
+    .split('\n')
+    .filter((line) => !line.trim().startsWith('```'))
+    .map((line) =>
+      line
+        .replace(/^\s*#{1,6}\s*/, '')
+        .replace(/^\s*[*-]\s+/, '')
+        .replace(/\*\*(.+?)\*\*/g, '$1'),
+    )
+    .filter((line) => line.trim())
+    .join(' · ');
+}

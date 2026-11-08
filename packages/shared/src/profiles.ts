@@ -14,11 +14,13 @@ export interface ProfileFeatures {
   priority: boolean;
   /** Show developer vocabulary (e.g. "Backlog", "Issue") in hints. */
   devVocabulary: boolean;
+  /** Show Scrum estimation (story points) and WIP limits. */
+  agile: boolean;
 }
 
 export const PROFILE_FEATURES: Readonly<Record<Profile, ProfileFeatures>> = {
-  technical: { cardTypes: true, priority: true, devVocabulary: true },
-  simple: { cardTypes: false, priority: false, devVocabulary: false },
+  technical: { cardTypes: true, priority: true, devVocabulary: true, agile: true },
+  simple: { cardTypes: false, priority: false, devVocabulary: false, agile: false },
 };
 
 /** Human-facing copy for the profile picker. */
