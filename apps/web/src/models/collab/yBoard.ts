@@ -23,6 +23,7 @@ const META_KEYS = [
   'name',
   'profile',
   'mode',
+  'skin',
   'shareKey',
   'templateId',
   'cardTemplate',

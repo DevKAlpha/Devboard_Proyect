@@ -10,7 +10,16 @@
  * stale UI events (e.g. a double click on a deleted card) harmless.
  */
 import { MOVE_LOG_SIZE } from './schemas';
-import type { Board, BoardMode, BoardSkin, Card, CardPatch, Column, Label, Profile } from './schemas';
+import type {
+  Board,
+  BoardMode,
+  BoardSkin,
+  Card,
+  CardPatch,
+  Column,
+  Label,
+  Profile,
+} from './schemas';
 
 /** Collision-safe id. `crypto.randomUUID` exists in modern browsers (secure context) and Node >= 19. */
 // Typed locally so this package needs neither DOM nor Node type libs.

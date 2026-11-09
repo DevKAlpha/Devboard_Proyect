@@ -116,7 +116,7 @@ export const ColumnView = memo(function ColumnView({
       style={{ transform: CSS.Translate.toString(transform), transition }}
       className={cx(
         // *:relative keeps the content above decorative layers (icebox snowfall).
-        'group/col relative flex max-h-full w-[min(320px,85vw)] shrink-0 snap-start flex-col gap-3 rounded-xl bg-surface-2 p-2.5 *:relative',
+        'kb-col group/col relative flex max-h-full w-[min(320px,85vw)] shrink-0 snap-start flex-col gap-3 rounded-xl bg-surface-2 p-2.5 *:relative',
         // Over the WIP limit: a visible but calm signal to finish before starting more.
         overWip && 'shadow-[inset_0_0_0_2px_var(--label-red-ink)]',
         isDragging && 'opacity-50',

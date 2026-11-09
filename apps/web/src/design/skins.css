@@ -1,0 +1,311 @@
+/*
+ * Seasonal board skins: Halloween and Navidad.
+ *
+ * A skin is active while its board is open (`<html data-skin>`, set by
+ * controllers/themeController). It restyles everything with one fixed look,
+ * no light/dark variant: the color tokens, the page backdrop (SkinBackdrop),
+ * the columns (.kb-col), the cards (.kb-card) and the pixel cursor.
+ * Sprites come from design/skinSprites.ts as `--sprite-*` data URIs.
+ * Motion follows the usual rules: transform/opacity, steps(), off in lite mode.
+ */
+
+/* ── Halloween: a purple night, pumpkin orange accent ─────────────────────── */
+:root[data-skin='halloween'] {
+  --bg: #140a1f;
+  --surface: #1b0f2a;
+  --surface-2: #241536;
+  --surface-3: #352050;
+  --card: #2c1a41;
+  --ink: #f8ecdf;
+  --muted: #bda7cf;
+  --faint: #7d6593;
+  --line: #4d3368;
+  --line-soft: #3a2652;
+  --accent: #ff7a1a;
+  --accent-ink: #1f0e00;
+  --accent-soft: #4a2814;
+  --label-green: #1d3a1c;
+  --label-green-ink: #8ef06b;
+  --label-orange: #4a2412;
+  --label-orange-ink: #ff9d4d;
+  --label-purple: #3a2160;
+  --label-purple-ink: #c9a6ff;
+  --shadow-card-v: 0 2px 0 rgb(0 0 0 / 0.35);
+  --cursor-outline: #1c0b26;
+  --cursor-fill: #ffab4a;
+  --skin-spark-2: #8ef06b;
+  --skin-backdrop: radial-gradient(120% 80% at 80% 0%, #3b1d52 0%, #1d0f2c 55%, #120819 100%);
+}
+
+/* ── Navidad: winter morning, Christmas red and pine green ────────────────── */
+:root[data-skin='christmas'] {
+  --bg: #e9f2f6;
+  --surface: #f6f1e8;
+  --surface-2: #eef4ec;
+  --surface-3: #dde8da;
+  --card: #fffdf8;
+  --ink: #1d3325;
+  --muted: #587062;
+  --faint: #93a99a;
+  --line: #c6d6c6;
+  --line-soft: #dbe6d8;
+  --accent: #d62839;
+  --accent-ink: #ffffff;
+  --accent-soft: #fbe0e3;
+  --shadow-card-v: 0 1px 0 #d4e0d2, 0 2px 6px -2px rgb(29 51 37 / 0.18);
+  --cursor-outline: #a3162a;
+  --cursor-fill: #ffffff;
+  --skin-spark-2: #2f8f4e;
+  --skin-backdrop: linear-gradient(#dcebf3 0%, #edf4f4 45%, #f6f1e8 100%);
+}
+
+/* The page shows the skin's backdrop instead of the flat app background. */
+:root[data-skin] body {
+  background: var(--skin-backdrop);
+  background-attachment: fixed;
+}
+:root[data-skin] .app-shell {
+  background: transparent;
+}
+
+.skin-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* ── Columns ───────────────────────────────────────────────────────────────── */
+:root[data-skin='halloween'] .kb-col {
+  box-shadow:
+    inset 0 0 0 1px var(--line-soft),
+    0 0 24px -8px rgb(255 122 26 / 0.35);
+}
+/* A cobweb in the top-right corner of every column. */
+:root[data-skin='halloween'] .kb-col::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 40px;
+  height: 40px;
+  background: var(--sprite-cobweb) top right / contain no-repeat;
+  opacity: 0.8;
+  pointer-events: none;
+  border-top-right-radius: inherit;
+}
+
+:root[data-skin='christmas'] .kb-col {
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+/* Snow piled on top of every column. */
+:root[data-skin='christmas'] .kb-col::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: 4px;
+  right: 4px;
+  height: 16px;
+  background: var(--sprite-snow-cap) left top / 32px 16px repeat-x;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ── Cards ─────────────────────────────────────────────────────────────────── */
+/* Halloween: a glowing pumpkin-orange edge. */
+:root[data-skin='halloween'] .kb-card::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: -1px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--accent);
+  box-shadow: 0 0 8px rgb(255 122 26 / 0.7);
+}
+/* Navidad: a candy-cane ribbon on top and a sprig of holly. */
+:root[data-skin='christmas'] .kb-card::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 12px;
+  right: 12px;
+  height: 4px;
+  border-radius: 0 0 3px 3px;
+  background: repeating-linear-gradient(-45deg, #d62839 0 4px, #ffffff 4px 8px);
+}
+:root[data-skin='christmas'] .kb-card::after {
+  content: '';
+  position: absolute;
+  bottom: 6px;
+  right: 8px;
+  width: 24px;
+  height: 12px;
+  background: var(--sprite-holly) center / contain no-repeat;
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+/* ── Cursor: same pixel arrow, dressed for the season ─────────────────────── */
+:root[data-skin] .pc-sprite::after {
+  content: '';
+  position: absolute;
+  top: -15px;
+  left: 3px;
+  width: 24px;
+  height: 22px;
+  background: center / contain no-repeat;
+  pointer-events: none;
+}
+:root[data-skin='halloween'] .pc-sprite::after {
+  background-image: var(--sprite-witch-hat);
+  transform: rotate(-12deg);
+}
+:root[data-skin='christmas'] .pc-sprite::after {
+  background-image: var(--sprite-santa-hat);
+  transform: rotate(-10deg);
+}
+/* Click sparks alternate between the accent and the skin's second color. */
+:root[data-skin] .pc-spark:nth-of-type(even) {
+  background: var(--skin-spark-2);
+}
+
+/* ── Backdrop: Halloween moon and bats ────────────────────────────────────── */
+.skin-moon {
+  position: absolute;
+  top: 72px;
+  right: 6vw;
+  width: 96px;
+  height: 96px;
+  background: var(--sprite-moon) center / contain no-repeat;
+  filter: drop-shadow(0 0 24px rgb(255 233 168 / 0.45));
+}
+.skin-star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: #fff3d1;
+  animation: skin-twinkle 2.4s steps(3, end) infinite;
+}
+@keyframes skin-twinkle {
+  50% {
+    opacity: 0.2;
+  }
+}
+/* Each bat crosses the screen; its wings flap with two frames. */
+.skin-bat {
+  position: absolute;
+  left: 0;
+  width: 32px;
+  height: 16px;
+  animation: skin-fly linear infinite;
+}
+.skin-bat::before,
+.skin-bat::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: center / contain no-repeat;
+  animation: skin-flap 0.36s steps(1, end) infinite;
+}
+.skin-bat::before {
+  background-image: var(--sprite-bat-a);
+}
+.skin-bat::after {
+  background-image: var(--sprite-bat-b);
+  animation-direction: reverse;
+}
+@keyframes skin-flap {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes skin-fly {
+  from {
+    transform: translate(-60px, 0);
+  }
+  25% {
+    transform: translate(25vw, -18px);
+  }
+  50% {
+    transform: translate(50vw, 10px);
+  }
+  75% {
+    transform: translate(75vw, -12px);
+  }
+  to {
+    transform: translate(calc(100vw + 60px), 0);
+  }
+}
+
+/* ── Backdrop: Navidad lights and snowfall ────────────────────────────────── */
+.skin-lights {
+  position: absolute;
+  top: 56px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-around;
+  height: 22px;
+  /* The wire, slightly sagging between bulbs. */
+  background: radial-gradient(
+      60% 100% at 50% -60%,
+      transparent 70%,
+      #2f5a3c 71% 76%,
+      transparent 77%
+    )
+    0 0 / 48px 22px repeat-x;
+}
+.skin-bulb {
+  margin-top: 9px;
+  width: 6px;
+  height: 9px;
+  border-radius: 2px 2px 4px 4px;
+  background: var(--bulb);
+  box-shadow: 0 0 10px var(--bulb);
+  animation: skin-blink 1.6s steps(1, end) infinite;
+}
+@keyframes skin-blink {
+  50% {
+    opacity: 0.35;
+    box-shadow: none;
+  }
+}
+.skin-flake {
+  position: absolute;
+  top: 0;
+  width: 14px;
+  height: 14px;
+  background: var(--sprite-flake) center / contain no-repeat;
+  animation: skin-snow linear infinite;
+}
+@keyframes skin-snow {
+  from {
+    transform: translate(0, -20px);
+  }
+  50% {
+    transform: translate(18px, 50vh);
+  }
+  to {
+    transform: translate(0, calc(100vh + 20px));
+  }
+}
+
+/* Lite motion: the scenery stays, nothing moves (bats and flakes rest in place). */
+html[data-motion='lite'] .skin-backdrop * {
+  animation: none !important;
+}
+html[data-motion='lite'] .skin-bat::after {
+  display: none;
+}
+html[data-motion='lite'] .skin-bat,
+html[data-motion='lite'] .skin-flake {
+  transform: translate(var(--rest-x, 0), var(--rest-y, 0));
+}

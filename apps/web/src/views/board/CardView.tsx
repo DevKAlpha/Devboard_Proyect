@@ -51,7 +51,7 @@ export function CardFace({
   return (
     <div
       className={cx(
-        'relative flex flex-col gap-2 rounded-lg border border-line-soft bg-card p-3 text-left shadow-card',
+        'kb-card relative flex flex-col gap-2 rounded-lg border border-line-soft bg-card p-3 text-left shadow-card',
         // Hover: lift 1px; press: sink back (tactile, transform only).
         'transition-[box-shadow,border-color,transform] duration-150 group-hover/card:-translate-y-px group-hover/card:border-line group-hover/card:shadow-lift group-active/card:translate-y-0',
         mood && `card-mood-${mood}`,

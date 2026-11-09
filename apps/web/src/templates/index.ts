@@ -11,6 +11,7 @@ import {
   createCard,
   type Board,
   type BoardMode,
+  type BoardSkin,
   type CardPatch,
   type LabelColor,
   type Profile,
@@ -29,6 +30,8 @@ export interface BoardTemplate {
   labels: { name: string; color: LabelColor }[];
   /** Description pre-filled in every new card of the board. */
   cardTemplate?: string;
+  /** Seasonal look the board starts with (design/skins.css). Offered to every profile. */
+  skin?: BoardSkin;
   /** `column` is an index into `columns`; `labels` are label names. */
   cards: { column: number; title: string; labels?: string[]; patch?: CardPatch }[];
 }
@@ -349,6 +352,44 @@ Principios ágiles y Lean aplicados:
     ],
   },
   {
+    id: 'halloween',
+    profile: 'simple',
+    skin: 'halloween',
+    name: 'Noche de Halloween',
+    description: 'Calabazas, murciélagos y telarañas. Con su propio aspecto.',
+    columns: ['Pendientes', 'En el caldero', 'Hechizo en revisión', 'Hecho'],
+    labels: [
+      { name: 'Disfraces', color: 'purple' },
+      { name: 'Dulces', color: 'orange' },
+      { name: 'Decoración', color: 'green' },
+    ],
+    cards: [
+      { column: 0, title: 'Tallar las calabazas', labels: ['Decoración'] },
+      { column: 0, title: 'Comprar dulces para la puerta', labels: ['Dulces'] },
+      { column: 1, title: 'Coser el disfraz de bruja', labels: ['Disfraces'] },
+      { column: 3, title: 'Colgar las telarañas', labels: ['Decoración'] },
+    ],
+  },
+  {
+    id: 'christmas',
+    profile: 'simple',
+    skin: 'christmas',
+    name: 'Taller de Navidad',
+    description: 'Regalos, decoración y cena bajo la nieve. Con su propio aspecto.',
+    columns: ['Lista de deseos', 'Por hacer', 'En el taller', 'Envuelto'],
+    labels: [
+      { name: 'Regalos', color: 'red' },
+      { name: 'Casa', color: 'green' },
+      { name: 'Cena', color: 'yellow' },
+    ],
+    cards: [
+      { column: 0, title: 'Ideas de regalo para la familia', labels: ['Regalos'] },
+      { column: 1, title: 'Decorar el árbol', labels: ['Casa'] },
+      { column: 1, title: 'Escribir las tarjetas', labels: ['Regalos'] },
+      { column: 2, title: 'Preparar el menú de Nochebuena', labels: ['Cena'] },
+    ],
+  },
+  {
     id: 'blank',
     profile: 'simple',
     name: 'En blanco',
@@ -359,8 +400,9 @@ Principios ágiles y Lean aplicados:
   },
 ];
 
+/** Templates for a profile; the blank and the seasonal ones suit everybody. */
 export const templatesFor = (profile: Profile) =>
-  TEMPLATES.filter((t) => t.profile === profile || t.id === 'blank');
+  TEMPLATES.filter((t) => t.profile === profile || t.id === 'blank' || t.skin);
 
 export const getTemplate = (id: string) => TEMPLATES.find((t) => t.id === id);
 
@@ -376,6 +418,7 @@ export function buildBoardFromTemplate(
     name: options.name?.trim() || template.name,
     profile: options.profile ?? template.profile,
     mode: options.mode,
+    skin: template.skin,
     templateId: template.id,
     columnTitles: template.columns,
     wipLimits: template.wipLimits,
