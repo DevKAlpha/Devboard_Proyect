@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router';
 import { PROFILE_INFO, ProfileSchema } from '@devbord/shared';
 import { Button, IconButton, PixelIcon, Select, confirm } from '../../design';
@@ -10,8 +10,12 @@ import { InlineEdit } from '../board/InlineEdit';
 import { AppShell } from '../components/AppShell';
 import { BoardSwitcher } from '../components/BoardSwitcher';
 import { useCollab } from '../../controllers/collabController';
+import { useSketch } from '../../controllers/sketchController';
 import { NamePrompt } from '../team/NamePrompt';
 import { TeamBar } from '../team/TeamBar';
+
+/** The whiteboard ships in its own chunk, loaded the first time it opens. */
+const Whiteboard = lazy(() => import('../sketch/Whiteboard'));
 
 /** A single board: page header (name, card count, profile, delete) + Kanban canvas. */
 export function BoardPage() {
@@ -21,6 +25,7 @@ export function BoardPage() {
   const { renameBoard, setProfile, deleteBoard } = useBoardController.getState();
   const [importing, setImporting] = useState(false);
   const team = board?.mode === 'team';
+  const sketchOpen = useSketch((s) => s.open && s.boardId === boardId);
 
   // Team boards go live while they are on screen; leaving the page disconnects.
   useEffect(() => {
@@ -29,6 +34,9 @@ export function BoardPage() {
     if (current) void useCollab.getState().open(current);
     return () => useCollab.getState().close();
   }, [team, boardId]);
+
+  // Leaving the board (or switching to another) closes its whiteboard.
+  useEffect(() => () => useSketch.getState().hide(), [boardId]);
 
   if (!board) return <Navigate to="/" replace />;
   const cardCount = board.columns.reduce((n, c) => n + c.cards.length, 0);
@@ -70,6 +78,10 @@ export function BoardPage() {
             </Select>
           </div>
           {team && <TeamBar board={board} />}
+          <Button size="sm" onClick={() => useSketch.getState().show(board.id, team)}>
+            <PixelIcon name="sketch" />
+            Pizarra
+          </Button>
           <ExportMenu board={board} />
           <Button size="sm" onClick={() => setImporting(true)}>
             <PixelIcon name="import" />
@@ -87,6 +99,7 @@ export function BoardPage() {
               );
               if (!ok) return;
               if (team) await useCollab.getState().forget(board.id);
+              else await useSketch.getState().forget(board.id);
               await deleteBoard(board.id);
               navigate('/', { replace: true });
             }}
@@ -99,6 +112,11 @@ export function BoardPage() {
         <BoardCanvas key={board.id} board={board} team={team} />
       </main>
       {team && <NamePrompt />}
+      {sketchOpen && (
+        <Suspense fallback={null}>
+          <Whiteboard boardName={board.name} team={team} />
+        </Suspense>
+      )}
       <ImportCardsModal open={importing} board={board} onClose={() => setImporting(false)} />
     </AppShell>
   );

@@ -80,6 +80,19 @@ export function animateLand(el: Element | null | undefined) {
   );
 }
 
+/** A sticky note slapped onto the board: drops in, squashes, settles. */
+export function animateStick(el: Element | null | undefined) {
+  if (!canAnimate(el)) return;
+  el.animate(
+    [
+      { opacity: 0, transform: 'translateY(-18px) scale(1.12) rotate(5deg)' },
+      { opacity: 1, transform: 'translateY(2px) scale(1.03, 0.95)', offset: 0.6 },
+      { opacity: 1, transform: 'none' },
+    ],
+    { duration: 300, easing: 'steps(6, end)' },
+  );
+}
+
 /** Accent flash when an item changes (local edit or a teammate's). */
 export function animateFlash(el: Element | null | undefined) {
   if (!canAnimate(el)) return;
