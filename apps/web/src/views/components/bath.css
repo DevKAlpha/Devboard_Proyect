@@ -1,0 +1,20 @@
+/*
+ * Bath scene (BathScene.tsx): a fixed canvas behind the whole home page.
+ * Scaled up without smoothing, so every cell stays a crisp pixel. It never
+ * takes pointer events itself: the scene listens on the window instead, so
+ * the page's own controls always win.
+ */
+.bath-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  width: 100vw;
+  height: 100vh;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+/* While the scene is on, the page frame is see-through (the header keeps its blur). */
+:root[data-scene='bath'] .app-shell {
+  background: transparent;
+}
