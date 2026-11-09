@@ -261,6 +261,44 @@ export function moveCard(board: Board, cardId: string, toColumnId: string, toInd
   return touch(board, columns);
 }
 
+/**
+ * Moves several cards at once (multi-select) into one column, as a block, in
+ * the order they appear on the board. `toIndex` is the position in the
+ * target column once the moved cards are taken out of it. Cards that change
+ * column record the move, like moveCard.
+ */
+export function moveCards(
+  board: Board,
+  cardIds: readonly string[],
+  toColumnId: string,
+  toIndex: number,
+): Board {
+  const wanted = new Set(cardIds);
+  if (wanted.size === 0 || !board.columns.some((c) => c.id === toColumnId)) return board;
+
+  const at = nowIso();
+  const moving: Card[] = [];
+  const without = board.columns.map((col) => {
+    const keep: Card[] = [];
+    for (const card of col.cards) {
+      if (!wanted.has(card.id)) keep.push(card);
+      else if (col.id === toColumnId) moving.push(card);
+      else
+        moving.push({ ...card, movedAt: at, moveLog: [...card.moveLog, at].slice(-MOVE_LOG_SIZE) });
+    }
+    return keep.length === col.cards.length ? col : { ...col, cards: keep };
+  });
+  if (moving.length === 0) return board;
+
+  const columns = without.map((col) => {
+    if (col.id !== toColumnId) return col;
+    const cards = [...col.cards];
+    cards.splice(clampIndex(toIndex, cards.length), 0, ...moving);
+    return { ...col, cards };
+  });
+  return touch(board, columns);
+}
+
 // ─── Cross-board ────────────────────────────────────────────────────────────
 
 /**

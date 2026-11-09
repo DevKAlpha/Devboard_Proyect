@@ -15,6 +15,7 @@ import {
   copyCardsInto,
   addNewCard,
   setColumnDescription,
+  moveCards,
 } from './board-ops';
 import { BoardSchema, CardSchema } from './schemas';
 
@@ -189,5 +190,28 @@ describe('GitHub-style numbering and columns', () => {
     const withDesc = setColumnDescription(board, a.id, '  En revisión ');
     expect(withDesc.columns[0]!.description).toBe('En revisión');
     expect(setColumnDescription(withDesc, a.id, ' ').columns[0]!.description).toBeNull();
+  });
+
+  it('moves several cards as a block, in board order, recording column changes', () => {
+    let board = createBoard({ name: 'B', profile: 'technical', columnTitles: ['A', 'B'] });
+    const [a, b] = board.columns.map((c) => c.id) as [string, string];
+    for (const t of ['a1', 'a2', 'a3']) board = addCard(board, a, createCard(t));
+    board = addCard(board, b, createCard('b1'));
+    board = addCard(board, b, createCard('b2'));
+    const id = (t: string) => board.columns.flatMap((c) => c.cards).find((c) => c.title === t)!.id;
+
+    // Picked out of order, from two columns: they land together in board order.
+    const moved = moveCards(board, [id('b2'), id('a3'), id('a1')], b, 1);
+    expect(moved.columns[0]!.cards.map((c) => c.title)).toEqual(['a2']);
+    expect(moved.columns[1]!.cards.map((c) => c.title)).toEqual(['b1', 'a1', 'a3', 'b2']);
+    const card = (t: string) => moved.columns[1]!.cards.find((c) => c.title === t)!;
+    expect(card('a1').moveLog).toHaveLength(1);
+    expect(card('b2').moveLog).toHaveLength(0);
+  });
+
+  it('ignores unknown columns and empty selections', () => {
+    const { board, a } = seed();
+    expect(moveCards(board, [], a.id, 0)).toBe(board);
+    expect(moveCards(board, ['x'], 'nope', 0)).toBe(board);
   });
 });

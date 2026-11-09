@@ -18,6 +18,7 @@ export interface ColumnViewProps {
   onRemove: (columnId: string) => void;
   onAddCard: (columnId: string, title: string) => void;
   onOpenCard: (cardId: string) => void;
+  onSelectCard: (cardId: string, mode: 'toggle' | 'range') => void;
   onWipLimit: (columnId: string, wipLimit: number | null) => void;
   onDescribe: (columnId: string, description: string) => void;
   /** Last column (Done): its cards never gather cobwebs. */
@@ -80,6 +81,7 @@ export const ColumnView = memo(function ColumnView({
   onRemove,
   onAddCard,
   onOpenCard,
+  onSelectCard,
   onWipLimit,
   onDescribe,
   isLastColumn = false,
@@ -201,6 +203,7 @@ export const ColumnView = memo(function ColumnView({
                 labels={labels}
                 features={features}
                 onOpen={onOpenCard}
+                onSelect={onSelectCard}
                 mood={mood}
                 moodLabel={describeMood(mood, card, now)}
               />
