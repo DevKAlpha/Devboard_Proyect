@@ -16,7 +16,10 @@ export interface Presence {
   /** Pointer position in board-content coordinates (scroll included); null when away. */
   cursor: { x: number; y: number } | null;
   /** Pointer over the open whiteboard, in sheet units; null/absent when not on it. */
-  pen?: { x: number; y: number } | null;
+  /** `laser`: the laser pointer is pressed (teammates draw a fading trail). */
+  pen?: { x: number; y: number; laser?: boolean } | null;
+  /** Sticky note this person is typing in, so others see who is writing where. */
+  editingNote?: string | null;
 }
 
 export interface CollabChannel {

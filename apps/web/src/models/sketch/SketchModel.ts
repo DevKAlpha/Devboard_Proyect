@@ -22,6 +22,7 @@ import {
   INK_COLORS,
   NOTE_COLORS,
   NOTE_TEXT_MAX,
+  MAIN_SHEET,
   STROKE_TOOLS,
   type Note,
   type SketchSnapshot,
@@ -29,6 +30,13 @@ import {
 } from './types';
 
 export * from './types';
+
+/**
+ * Root type names of one whiteboard. The first one keeps the original names
+ * ("sketch.strokes"), so sketches made before there were several stay put.
+ */
+export const rootName = (kind: 'strokes' | 'notes', sheetId: string) =>
+  sheetId === MAIN_SHEET ? `sketch.${kind}` : `sketch.${kind}/${sheetId}`;
 
 /** Every local change carries this origin: the undo manager tracks only these. */
 const ORIGIN = 'sketch';
@@ -81,9 +89,13 @@ export class SketchModel {
   private listeners = new Set<() => void>();
   private snapshot: SketchSnapshot;
 
-  constructor(readonly doc: Y.Doc) {
-    this.strokesArr = doc.getArray('sketch.strokes');
-    this.notesMap = doc.getMap('sketch.notes');
+  constructor(
+    readonly doc: Y.Doc,
+    /** Which whiteboard of the document (see SketchBook). */
+    readonly sheetId: string = MAIN_SHEET,
+  ) {
+    this.strokesArr = doc.getArray(rootName('strokes', sheetId));
+    this.notesMap = doc.getMap(rootName('notes', sheetId));
     this.undoManager = new Y.UndoManager([this.strokesArr, this.notesMap], {
       trackedOrigins: new Set([ORIGIN]),
       // Grouping is explicit (stopCapturing at the start of each gesture), so a

@@ -16,6 +16,7 @@ import {
   type NoteColor,
   type SketchModel,
 } from '../../controllers/sketchController';
+import { useCollab } from '../../controllers/collabController';
 import { PixelIcon, animateLand, animateOut, animateStick, cx } from '../../design';
 
 const COLOR_NAMES: Record<NoteColor, string> = {
@@ -46,6 +47,8 @@ interface StickyNoteProps {
   /** Put the caret in it on mount (a note you just placed). */
   autoFocus: boolean;
   team: boolean;
+  /** Teammate typing in this note right now (team boards). */
+  editor?: { name: string; color: string } | null;
 }
 
 export const StickyNote = memo(function StickyNote({
@@ -55,6 +58,7 @@ export const StickyNote = memo(function StickyNote({
   fresh,
   autoFocus,
   team,
+  editor = null,
 }: StickyNoteProps) {
   const paperRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLTextAreaElement>(null);
@@ -122,12 +126,17 @@ export const StickyNote = memo(function StickyNote({
       className="sk-note"
       data-kind={note.kind}
       data-dragging={drag ? '' : undefined}
-      style={{
-        transform: `translate(${x}px, ${y}px) rotate(${tilt}deg)${drag ? ' scale(1.04)' : ''}`,
-        zIndex: drag ? 9999 : note.z,
-      }}
+      data-editor={editor ? '' : undefined}
+      style={
+        {
+          transform: `translate(${x}px, ${y}px) rotate(${tilt}deg)${drag ? ' scale(1.04)' : ''}`,
+          zIndex: drag ? 9999 : note.z,
+          '--editor-color': editor?.color,
+        } as CSSProperties
+      }
       onPointerDown={() => model.raiseNote(note.id)}
     >
+      {editor && <span className="sk-editor-tag">{editor.name} escribe…</span>}
       <div
         ref={paperRef}
         className="sk-paper"
@@ -185,6 +194,7 @@ export const StickyNote = memo(function StickyNote({
           rows={isText ? 1 : undefined}
           value={draft ?? note.text}
           onFocus={() => {
+            if (team) useCollab.getState().setEditingNote(note.id);
             model.stopCapturing();
             setDraft(note.text);
           }}
@@ -194,6 +204,7 @@ export const StickyNote = memo(function StickyNote({
           }}
           onBlur={(e) => {
             setDraft(null);
+            if (team) useCollab.getState().setEditingNote(null);
             // An empty free text is a misclick: do not leave invisible items behind.
             if (isText && !e.target.value.trim()) model.removeNote(note.id);
           }}
