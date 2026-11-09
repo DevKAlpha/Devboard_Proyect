@@ -412,13 +412,13 @@ export const getTemplate = (id: string) => TEMPLATES.find((t) => t.id === id);
  */
 export function buildBoardFromTemplate(
   template: BoardTemplate,
-  options: { name?: string; profile?: Profile; mode?: BoardMode } = {},
+  options: { name?: string; profile?: Profile; mode?: BoardMode; skin?: BoardSkin } = {},
 ): Board {
   let board = createBoard({
     name: options.name?.trim() || template.name,
     profile: options.profile ?? template.profile,
     mode: options.mode,
-    skin: template.skin,
+    skin: options.skin ?? template.skin,
     templateId: template.id,
     columnTitles: template.columns,
     wipLimits: template.wipLimits,

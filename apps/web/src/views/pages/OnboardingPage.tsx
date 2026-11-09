@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import type { BoardMode, Profile } from '@devbord/shared';
+import type { BoardMode, BoardSkin, Profile } from '@devbord/shared';
 import { Button, Field, Input, cx } from '../../design';
 import { useBoardController } from '../../controllers/boardController';
 import { usePreferences } from '../../controllers/preferencesController';
 import { buildBoardFromTemplate, getTemplate, templatesFor } from '../../templates';
 import { Logo } from '../components/Logo';
-import { ModePicker, ProfilePicker, TemplatePicker } from '../components/Pickers';
+import { ModePicker, ProfilePicker, SkinPicker, TemplatePicker } from '../components/Pickers';
 
 const STEPS = ['Perfil', 'Plantilla', 'Tipo y nombre'] as const;
 
@@ -24,16 +24,22 @@ export function OnboardingPage() {
   const [templateId, setTemplateId] = useState(templatesFor('simple')[0]!.id);
   const [name, setName] = useState('');
   const [mode, setMode] = useState<BoardMode>('personal');
+  const [skin, setSkin] = useState<BoardSkin>('default');
+  // A seasonal template brings its look; it can still be changed.
+  const pickTemplate = (id: string) => {
+    setTemplateId(id);
+    setSkin(getTemplate(id)?.skin ?? 'default');
+  };
   const template = getTemplate(templateId);
 
   const changeProfile = (p: Profile) => {
     setProfile(p);
-    setTemplateId(templatesFor(p)[0]!.id);
+    pickTemplate(templatesFor(p)[0]!.id);
   };
 
   const finish = async () => {
     if (!template) return;
-    const board = await addBoard(buildBoardFromTemplate(template, { name, profile, mode }));
+    const board = await addBoard(buildBoardFromTemplate(template, { name, profile, mode, skin }));
     completeOnboarding(profile);
     navigate(`/b/${board.id}`, { replace: true });
   };
@@ -99,8 +105,12 @@ export function OnboardingPage() {
               <TemplatePicker
                 templates={templatesFor(profile)}
                 value={templateId}
-                onChange={setTemplateId}
+                onChange={pickTemplate}
               />
+              <h2 className="-mb-3 text-xs font-semibold tracking-wide text-muted uppercase">
+                Tema
+              </h2>
+              <SkinPicker value={skin} onChange={setSkin} />
             </>
           )}
 
