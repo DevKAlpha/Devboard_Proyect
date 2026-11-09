@@ -3,24 +3,28 @@
  * whiteboard opens, so Yjs stays out of the main bundle for personal boards.
  */
 import * as Y from 'yjs';
+import { newId } from '@devbord/shared';
 import { docStore } from '../collab/docStore';
+import { SketchBook } from './SketchBook';
 import { SketchModel } from './SketchModel';
 
 export * from './SketchModel';
+export { SketchBook } from './SketchBook';
 
 const SAVE_DEBOUNCE_MS = 400;
 const keyOf = (boardId: string) => `sketch:${boardId}`;
 
-/** A model over an existing document (the team board's collaboration doc). */
-export const sketchOnDoc = (doc: Y.Doc) => new SketchModel(doc);
+/** A model for one whiteboard of a document (the team doc, or a personal board's doc). */
+export const sketchOnDoc = (doc: Y.Doc, sheetId?: string) => new SketchModel(doc, sheetId);
 
 /**
- * Opens the private sketch of a personal board, stored in this browser.
- * `close` flushes pending changes and releases the document.
+ * Opens the whiteboards of a personal board, stored in this browser: the
+ * document plus its list of whiteboards. `close` flushes pending changes and
+ * releases the document.
  */
 export async function openLocalSketch(
   boardId: string,
-): Promise<{ model: SketchModel; close: () => void }> {
+): Promise<{ doc: Y.Doc; book: SketchBook; close: () => void }> {
   const doc = new Y.Doc();
   const stored = await docStore.get(keyOf(boardId));
   if (stored) Y.applyUpdate(doc, stored, 'load');
@@ -32,17 +36,18 @@ export async function openLocalSketch(
     timer = setTimeout(save, SAVE_DEBOUNCE_MS);
   });
 
-  const model = new SketchModel(doc);
+  const book = new SketchBook(doc, newId);
   return {
-    model,
+    doc,
+    book,
     close: () => {
       clearTimeout(timer);
       save();
-      model.destroy();
+      book.destroy();
       doc.destroy();
     },
   };
 }
 
-/** Deletes the stored sketch of a personal board (when the board is deleted). */
+/** Deletes the stored whiteboards of a personal board (when the board is deleted). */
 export const forgetLocalSketch = (boardId: string) => docStore.remove(keyOf(boardId));

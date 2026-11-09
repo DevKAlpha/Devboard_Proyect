@@ -46,6 +46,8 @@ interface CollabState {
   setCursor: (cursor: Presence['cursor']) => void;
   /** Our pointer over the whiteboard (sheet coordinates), or null when away. */
   setPen: (pen: Presence['pen']) => void;
+  /** The whiteboard note we are typing in, or null. */
+  setEditingNote: (noteId: string | null) => void;
 }
 
 /** If nobody answers in this time, show "solo tú" (peers may still join later). */
@@ -69,10 +71,11 @@ let generation = 0;
 export const useCollab = create<CollabState>((set, get) => {
   const me = (): Presence => {
     const { name, color } = useIdentity.getState();
-    return { name: name || 'Invitado', color, cursor, pen };
+    return { name: name || 'Invitado', color, cursor, pen, editingNote };
   };
   let cursor: Presence['cursor'] = null;
   let pen: Presence['pen'] = null;
+  let editingNote: string | null = null;
   let lastCursorSent = 0;
   let cursorTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -200,6 +203,12 @@ export const useCollab = create<CollabState>((set, get) => {
 
     setPen: (next) => {
       pen = next;
+      sendPresenceSoon();
+    },
+
+    setEditingNote: (noteId) => {
+      if (editingNote === noteId) return;
+      editingNote = noteId;
       sendPresenceSoon();
     },
   };

@@ -39,6 +39,7 @@ import {
   cx,
   type IconName,
 } from '../../design';
+import { SheetSwitcher } from './SheetSwitcher';
 import { SketchSheet, type SketchSheetHandle } from './SketchSheet';
 import './sketch.css';
 
@@ -51,6 +52,7 @@ const TOOLS: ReadonlyArray<{ tool: SketchTool; icon: IconName; label: string; ke
   { tool: 'text', icon: 'type', label: 'Texto', key: 't' },
   { tool: 'note', icon: 'note', label: 'Nota (arrástrala al tablero)', key: 'n' },
   { tool: 'eraser', icon: 'eraser', label: 'Borrador (o clic derecho)', key: 'e' },
+  { tool: 'laser', icon: 'laser', label: 'Puntero láser: señala sin dibujar', key: 'l' },
 ];
 
 const INK_NAMES: Record<InkColor, string> = {
@@ -81,7 +83,9 @@ export default function Whiteboard({ boardName, team }: { boardName: string; tea
   const sizeStep = useSketch((s) => s.sizeStep);
   const noteColor = useSketch((s) => s.noteColor);
   const { canUndo, canRedo, strokes, notes } = useSketchSnapshot();
-  const peers = useCollab((s) => Object.keys(s.peers).length);
+  const peerList = useCollab((s) => s.peers);
+  const peers = Object.keys(peerList).length;
+  const sheetId = useSketch((s) => s.sheetId);
   const status = useCollab((s) => s.status);
   /** Note being peeled off the pad (screen position), if any. */
   const [ghost, setGhost] = useState<{ x: number; y: number } | null>(null);
@@ -101,8 +105,9 @@ export default function Whiteboard({ boardName, team }: { boardName: string; tea
   // Keyboard shortcuts (never while typing in a note).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.closest('textarea, input, select, [contenteditable="true"]')) {
+      // Keys sent to window/document have no element target.
+      const target = e.target instanceof HTMLElement ? e.target : null;
+      if (target?.closest('textarea, input, select, [contenteditable="true"]')) {
         // The browser undo stack is page-wide: in an empty note it would edit another one.
         const field = target as HTMLTextAreaElement;
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !field.value)
@@ -166,7 +171,7 @@ export default function Whiteboard({ boardName, team }: { boardName: string; tea
       ref={dialogRef}
       aria-label="Pizarra"
       className={cx(
-        'sk-root m-auto max-h-none max-w-none flex-col overflow-hidden rounded-2xl border border-line-soft bg-surface p-0 text-ink shadow-lift open:flex',
+        'sk-root m-auto max-h-none max-w-none flex-col overflow-hidden rounded-2xl border border-line-soft bg-surface p-0 text-ink shadow-lift outline-none open:flex',
         'backdrop:bg-black/25 backdrop:backdrop-blur-[3px]',
         expanded
           ? 'h-[calc(100dvh-16px)] w-[calc(100vw-16px)]'
@@ -183,7 +188,10 @@ export default function Whiteboard({ boardName, team }: { boardName: string; tea
       <header className="flex h-12 shrink-0 items-center gap-2 border-b border-line-soft px-3">
         <PixelIcon name="sketch" className="text-accent" />
         <h2 className="text-lg">Pizarra</h2>
-        <span className="min-w-0 truncate text-sm text-muted">{boardName}</span>
+        <span className="hidden max-w-40 shrink-0 truncate text-sm text-muted sm:inline">
+          {boardName} ·
+        </span>
+        <SheetSwitcher key={sheetId} team={team} />
         {team && (
           <span
             className={cx(
@@ -195,6 +203,21 @@ export default function Whiteboard({ boardName, team }: { boardName: string; tea
           </span>
         )}
         <span className="flex-1" />
+        {/* Who is on the whiteboard with you (team boards). */}
+        {team && peers > 0 && (
+          <span className="flex shrink-0 -space-x-1" aria-label="Personas en la pizarra">
+            {Object.entries(peerList).map(([id, peer]) => (
+              <span
+                key={id}
+                title={peer.name}
+                className="grid size-6 place-items-center rounded-md text-[11px] text-white ring-2 ring-surface"
+                style={{ background: peer.color }}
+              >
+                {peer.name.slice(0, 1).toUpperCase()}
+              </span>
+            ))}
+          </span>
+        )}
         <IconButton
           icon={expanded ? 'shrink' : 'expand'}
           label={expanded ? 'Reducir pizarra' : 'Pantalla completa'}
@@ -208,7 +231,12 @@ export default function Whiteboard({ boardName, team }: { boardName: string; tea
 
       <div className="relative flex min-h-0 flex-1 flex-col p-3">
         {model ? (
-          <SketchSheet key={model.doc.guid} ref={sheetRef} model={model} team={team} />
+          <SketchSheet
+            key={`${model.doc.guid}:${model.sheetId}`}
+            ref={sheetRef}
+            model={model}
+            team={team}
+          />
         ) : (
           <div className="grid flex-1 place-items-center text-sm text-muted">
             {team ? 'Esperando la sesión del equipo…' : 'Preparando la pizarra…'}
@@ -216,7 +244,9 @@ export default function Whiteboard({ boardName, team }: { boardName: string; tea
         )}
         {model && empty && (
           <p className="pointer-events-none absolute inset-x-0 top-1/2 text-center text-sm text-faint">
-            Dibuja con el ratón · clic derecho borra · arrastra una nota desde la barra
+            {team
+              ? 'Todo el equipo dibuja aquí a la vez · L para señalar con el láser'
+              : 'Dibuja con el ratón · clic derecho borra · arrastra una nota desde la barra'}
           </p>
         )}
       </div>

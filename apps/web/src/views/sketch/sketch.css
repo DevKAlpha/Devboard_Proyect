@@ -295,3 +295,32 @@
 html[data-motion='lite'] .sk-brush[data-kind='text'] {
   animation: none;
 }
+
+/* Laser pointer: a red dot instead of the brush ring. */
+.sk-brush[data-kind='laser'] {
+  background: #ff3b30;
+  box-shadow: 0 0 0 4px rgb(255 59 48 / 0.25);
+}
+
+/* A teammate is typing in this note: their color around it and their name on top. */
+.sk-note[data-editor] .sk-paper {
+  outline: 3px solid var(--editor-color);
+  outline-offset: 3px;
+}
+.sk-editor-tag {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  margin-bottom: 10px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 18px;
+  white-space: nowrap;
+  background: var(--editor-color);
+}
+
+/* A teammate pointing with the laser: their arrow glows. */
+.sk-peer[data-laser] svg {
+  filter: drop-shadow(0 0 4px #ff3b30);
+}
