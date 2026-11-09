@@ -3,14 +3,16 @@
  * no state, so it is unit-tested on its own.
  *
  * Rules, applied to the nearest matching ancestor (the closest element wins):
- *  1. `data-cursor="default|pointer|grab|text"` on any element overrides everything.
+ *  1. `data-cursor="default|pointer|grab|text|none"` on any element overrides
+ *     everything. `none` hides the sprite where a view draws its own cursor
+ *     (the whiteboard brush).
  *  2. Text fields → `text` (the native I-beam is kept: precise caret placement
  *     matters more than style there).
  *  3. Draggables (dnd-kit sets `aria-roledescription`) → `grab`, with their
  *     `data-cursor-hint` (e.g. a card's mood) as hint.
  *  4. Enabled interactive elements → `pointer`, with a highlight around them.
  */
-export type CursorVariant = 'default' | 'pointer' | 'grab' | 'text';
+export type CursorVariant = 'default' | 'pointer' | 'grab' | 'text' | 'none';
 
 export interface CursorTarget {
   variant: CursorVariant;

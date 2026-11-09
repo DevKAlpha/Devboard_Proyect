@@ -5,6 +5,7 @@ Tableros Kanban para equipos técnicos y no técnicos. Estética pixel art moder
 - **Fácil de empezar**: eliges tu perfil y una plantilla, y en segundos tienes un tablero listo.
 - **Un tablero, dos lenguajes**: los campos avanzados (tipo, prioridad) solo aparecen si los necesitas.
 - **Individual o en equipo**: los tableros de equipo se editan a la vez entre varias personas (cursores en vivo, como Figma) con solo compartir un enlace.
+- **Pizarra**: una hoja cuadriculada sobre el tablero para explicar y bocetar con el ratón (lápiz, marcador, flechas, formas, texto) y pegar notas adhesivas con observaciones. En equipo se dibuja a la vez.
 - **Importar y exportar**: JSON para mover tableros y PNG para compartir una imagen.
 - **Preparado para crecer**: integraciones con GitHub, Google, Microsoft y agentes de IA en el roadmap.
 

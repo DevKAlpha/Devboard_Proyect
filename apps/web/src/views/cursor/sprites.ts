@@ -7,7 +7,7 @@
  */
 import type { CursorVariant } from './resolveCursor';
 
-export type SpriteName = Exclude<CursorVariant, 'text'> | 'grabbing';
+export type SpriteName = Exclude<CursorVariant, 'text' | 'none'> | 'grabbing';
 
 /** Screen pixels per sprite pixel. Integer on purpose: crisp edges, no blur. */
 export const SCALE = 2;

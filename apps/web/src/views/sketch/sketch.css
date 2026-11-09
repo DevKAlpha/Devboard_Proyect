@@ -1,0 +1,297 @@
+/*
+ * Whiteboard ("pizarra") styles. Plain CSS: sizes and positions come from JS
+ * per frame, and the paper/grid look needs a few gradients.
+ *
+ * Light theme: squared school paper (blue grid, red margin line).
+ * Dark theme: a green-black chalkboard with a faint chalk grid.
+ * Ink colors are resolved here per theme, so the same drawing reads well in both.
+ */
+/* Set on the whiteboard dialog, so the dock swatches and the canvas share the colors. */
+.sk-root {
+  --sk-paper: #fdfdf9;
+  --sk-grid: rgb(86 140 210 / 0.22);
+  --sk-grid-strong: rgb(86 140 210 / 0.38);
+  --sk-margin: rgb(230 80 80 / 0.45);
+  --sk-ink: #1d1d1f;
+  --sk-blue: var(--label-blue-ink);
+  --sk-red: var(--label-red-ink);
+  --sk-green: var(--label-green-ink);
+  --sk-orange: var(--label-orange-ink);
+  --sk-purple: var(--label-purple-ink);
+}
+[data-theme='dark'] .sk-root {
+  --sk-paper: #18221d;
+  --sk-grid: rgb(255 255 255 / 0.05);
+  --sk-grid-strong: rgb(255 255 255 / 0.1);
+  --sk-margin: rgb(255 120 120 / 0.25);
+  --sk-ink: #f1f1ea;
+}
+
+.sk-sheet {
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+  background-color: var(--sk-paper);
+  /* One cell = 40 sheet units, every 5th line a bit stronger. */
+  background-image:
+    linear-gradient(var(--sk-grid-strong) 1px, transparent 1px),
+    linear-gradient(90deg, var(--sk-grid-strong) 1px, transparent 1px),
+    linear-gradient(var(--sk-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--sk-grid) 1px, transparent 1px);
+  background-size:
+    calc(var(--sk-cell) * 5) calc(var(--sk-cell) * 5),
+    calc(var(--sk-cell) * 5) calc(var(--sk-cell) * 5),
+    var(--sk-cell) var(--sk-cell),
+    var(--sk-cell) var(--sk-cell);
+  box-shadow:
+    inset 0 0 0 1px var(--line-soft),
+    0 1px 2px rgb(16 16 24 / 0.06);
+  touch-action: none;
+  user-select: none;
+}
+/* The notebook margin line. */
+.sk-sheet::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--sk-cell) * 2);
+  width: 2px;
+  background: var(--sk-margin);
+  pointer-events: none;
+}
+
+.sk-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: none;
+}
+
+/* Notes and peers live in sheet units; this layer is scaled to fit. */
+.sk-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+
+/* Brush preview that replaces the pointer over the sheet. */
+.sk-brush {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 999px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 80ms steps(2, end);
+}
+.sk-brush[data-on] {
+  opacity: 1;
+}
+.sk-brush[data-kind='draw'] {
+  border: 1.5px solid var(--sk-color);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.7);
+}
+.sk-brush[data-kind='draw']::after {
+  /* Center dot: the exact point where ink lands. */
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 2px;
+  height: 2px;
+  margin: -1px 0 0 -1px;
+  background: var(--sk-color);
+}
+.sk-brush[data-kind='eraser'] {
+  border: 2px dashed var(--muted);
+  background: rgb(255 255 255 / 0.25);
+}
+.sk-brush[data-kind='note'] {
+  border-radius: 3px;
+  background: var(--note-yellow);
+  opacity: 0;
+  box-shadow: 3px 3px 0 rgb(0 0 0 / 0.12);
+}
+.sk-brush[data-kind='note'][data-on] {
+  opacity: 0.55;
+}
+.sk-brush[data-kind='text'] {
+  border-radius: 0;
+  width: 2px !important;
+  background: var(--sk-ink);
+  animation: sk-caret 1s steps(1, end) infinite;
+}
+@keyframes sk-caret {
+  50% {
+    opacity: 0.2;
+  }
+}
+
+/* Eraser crumbs: tiny pixels flying off where ink was rubbed out. */
+.sk-crumb {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  pointer-events: none;
+  background: var(--muted);
+}
+
+/* --- sticky notes ----------------------------------------------------- */
+:root {
+  --note-yellow: #fff1a6;
+  --note-pink: #ffd3e4;
+  --note-blue: #cde6ff;
+  --note-green: #d3f3cb;
+  --note-ink: #2b2b2e;
+}
+[data-theme='dark'] {
+  --note-yellow: #f1dc78;
+  --note-pink: #f2b8cf;
+  --note-blue: #a9cff5;
+  --note-green: #b2deaa;
+}
+
+.sk-note {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: auto;
+}
+.sk-paper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+  min-height: 240px;
+  background: var(--note-bg);
+  color: var(--note-ink);
+  /* Pixel drop shadow + a soft one: paper lying on the board. */
+  box-shadow:
+    4px 4px 0 rgb(0 0 0 / 0.14),
+    0 10px 18px -12px rgb(0 0 0 / 0.35);
+  transition: box-shadow 120ms steps(3, end);
+}
+.sk-note[data-dragging] .sk-paper {
+  box-shadow:
+    10px 12px 0 rgb(0 0 0 / 0.12),
+    0 24px 30px -14px rgb(0 0 0 / 0.4);
+}
+/* Strip of tape holding the note. */
+.sk-paper::before {
+  content: '';
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  width: 64px;
+  height: 18px;
+  margin-left: -32px;
+  background: rgb(255 255 255 / 0.55);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.05);
+  transform: rotate(-3deg);
+}
+.sk-note-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 40px;
+  padding: 0 8px 0 14px;
+  cursor: grab;
+  touch-action: none;
+}
+.sk-note[data-dragging] .sk-note-head {
+  cursor: grabbing;
+}
+.sk-note-tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity 100ms steps(2, end);
+}
+.sk-note:hover .sk-note-tools,
+.sk-note:focus-within .sk-note-tools {
+  opacity: 1;
+}
+.sk-note textarea {
+  flex: 1;
+  width: 100%;
+  min-height: 170px;
+  padding: 2px 12px 10px;
+  border: 0;
+  outline: none;
+  resize: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 26px;
+  line-height: 1.3;
+}
+.sk-note textarea::placeholder {
+  color: rgb(0 0 0 / 0.35);
+}
+
+/* Free text written straight on the board (no paper). */
+.sk-note[data-kind='text'] .sk-paper {
+  width: auto;
+  min-width: 160px;
+  min-height: 0;
+  background: transparent;
+  color: var(--sk-ink);
+  box-shadow: none;
+}
+.sk-note[data-kind='text'] .sk-paper::before {
+  display: none;
+}
+.sk-note[data-kind='text'] .sk-note-head {
+  height: 20px;
+  opacity: 0;
+}
+.sk-note[data-kind='text']:hover .sk-paper,
+.sk-note[data-kind='text']:focus-within .sk-paper {
+  outline: 1.5px dashed var(--faint);
+}
+.sk-note[data-kind='text']:hover .sk-note-head,
+.sk-note[data-kind='text']:focus-within .sk-note-head {
+  opacity: 1;
+}
+.sk-note[data-kind='text'] textarea {
+  min-height: 0;
+  font-size: 40px;
+  padding: 0 8px 4px;
+  field-sizing: content;
+  min-width: 160px;
+}
+.sk-note[data-kind='text'] textarea::placeholder {
+  color: var(--faint);
+}
+
+/* Teammates' pens on the sheet. */
+.sk-peer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transition: transform 60ms linear;
+}
+
+/* Note pad being dragged from the dock onto the board. */
+.sk-ghost {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  width: 88px;
+  height: 72px;
+  pointer-events: none;
+  background: var(--note-bg);
+  box-shadow: 6px 8px 0 rgb(0 0 0 / 0.15);
+  transform-origin: 8px 8px;
+}
+
+html[data-motion='lite'] .sk-brush[data-kind='text'] {
+  animation: none;
+}

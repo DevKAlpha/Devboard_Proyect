@@ -31,6 +31,7 @@ docker/         Dockerfiles. docker-compose.yml en la raíz.
 - `views/cursor/`: cursor pixel (sprites, halo, pistas y chispas). Su estado vive en `controllers/cursorController.ts`. Se monta solo con puntero fino y se puede apagar desde la barra lateral.
 - `models/collab/`: tiempo real de los tableros de **equipo**. `CollabTransport` es la interfaz; hoy usa `P2PTransport` (WebRTC con Trystero, sin servidor, funciona en Pages). El tablero vive en un CRDT de Yjs (`yBoard.ts`) que fusiona ediciones simultáneas. Para el servidor propio: implementar un transporte WebSocket en `apps/api` y elegirlo en `models/collab/index.ts` (`VITE_COLLAB_URL`). Yjs y Trystero se cargan solo al abrir un tablero de equipo.
 - `views/team/`: presencia (avatares, estado, Invitar), cursores remotos y petición de nombre.
+- `views/sketch/` + `models/sketch/` + `controllers/sketchController.ts`: **pizarra** superpuesta al tablero (trazos, formas, texto y notas adhesivas). Vive en un documento Yjs: local para tableros individuales (`docStore`, clave `sketch:<id>`) y dentro del documento de colaboración para los de equipo, así se sincroniza en vivo por la misma sesión. Deshacer con `Y.UndoManager` (solo lo propio). Se carga bajo demanda.
 - Tableros **individuales** y **de equipo** se eligen al crear (`Board.mode`) y nunca se mezclan: se listan por separado.
 
 ### MVC en `apps/api/src`
@@ -46,6 +47,7 @@ docker/         Dockerfiles. docker-compose.yml en la raíz.
   | `area/board` | `views/board`, `controllers/boardController`: tablero, columnas, tarjetas, DnD, estados |
   | `area/boards` | `views/pages`, `views/components`, `templates`, `models/boardFile`: inicio, onboarding, plantillas, importar/exportar |
   | `area/collab` | `models/collab`, `views/team`, `controllers/collab*`, `controllers/identity*`: tableros de equipo en tiempo real |
+  | `area/sketch` | `views/sketch`, `models/sketch`, `controllers/sketchController`: pizarra y notas adhesivas |
   | `area/api` | `apps/api` |
   | `area/infra` | Docker, CI/CD, configuración, documentación |
 - Un cambio que toca varias áreas va en la rama del área principal y se menciona en el commit.
