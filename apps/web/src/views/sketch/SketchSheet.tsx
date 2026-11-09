@@ -75,6 +75,15 @@ const MIN_STEP = 1.2;
 const FLUSH_MS = 40;
 /** A shape starts only after this much movement, so a click never leaves a dot-shape. */
 const SHAPE_SLOP = 3;
+/** How long a laser pointer trail stays visible (ms). */
+const LASER_FADE_MS = 700;
+const LASER_COLOR = '#ff3b30';
+
+/** A fading laser trail (ours or a teammate's), in sheet units. */
+interface Trail {
+  color: string;
+  pts: Array<{ x: number; y: number; t: number }>;
+}
 
 interface LiveStroke {
   stroke: Stroke & { points: number[] };
@@ -90,6 +99,15 @@ interface LiveStroke {
 }
 
 type Palette = Record<InkColor, string>;
+
+/**
+ * Every pointer sample since the last event. Some events (synthetic ones,
+ * some browsers) report an empty list: fall back to the event itself.
+ */
+const samplesOf = (e: globalThis.PointerEvent): globalThis.PointerEvent[] => {
+  const list = e.getCoalescedEvents?.();
+  return list && list.length ? list : [e];
+};
 
 function readPalette(el: Element): Palette {
   const css = getComputedStyle(el);
@@ -135,6 +153,8 @@ export function SketchSheet({ model, team, ref }: SketchSheetProps) {
   const paths = useRef(new WeakMap<Stroke, Path2D>());
   const frame = useRef(0);
   const flushTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const trails = useRef(new Map<string, Trail>());
+  const lasering = useRef(false);
 
   // Notes that exist when the sheet opens do not play the "stick" animation.
   const [known] = useState(() => new Set(model.getSnapshot().notes.map((n) => n.id)));
@@ -158,7 +178,8 @@ export function SketchSheet({ model, team, ref }: SketchSheetProps) {
   }, []);
 
   // --- painting --------------------------------------------------------------
-  const paint = useCallback(() => {
+  // Named so a frame can schedule the next one while laser trails fade.
+  const paint = useCallback(function paintFrame() {
     frame.current = 0;
     const canvas = canvasRef.current;
     // desynchronized: lower-latency canvas, ink appears closer to the pointer.
@@ -199,7 +220,38 @@ export function SketchSheet({ model, team, ref }: SketchSheetProps) {
       });
       draw(current.stroke, path);
     }
+
+    // Laser trails: a glow that fades from the tail, redrawn while any is alive.
+    const now = performance.now();
+    for (const [key, trail] of trails.current) {
+      trail.pts = trail.pts.filter((pt) => now - pt.t < LASER_FADE_MS);
+      if (trail.pts.length === 0) {
+        trails.current.delete(key);
+        continue;
+      }
+      const pts = trail.pts;
+      ctx.strokeStyle = trail.color;
+      for (let i = 1; i < pts.length; i++) {
+        const life = 1 - (now - pts[i]!.t) / LASER_FADE_MS;
+        ctx.beginPath();
+        ctx.moveTo(pts[i - 1]!.x, pts[i - 1]!.y);
+        ctx.lineTo(pts[i]!.x, pts[i]!.y);
+        ctx.globalAlpha = life * 0.3;
+        ctx.lineWidth = 16;
+        ctx.stroke();
+        ctx.globalAlpha = life;
+        ctx.lineWidth = 5;
+        ctx.stroke();
+      }
+      const head = pts[pts.length - 1]!;
+      ctx.globalAlpha = 1 - (now - head.t) / LASER_FADE_MS;
+      ctx.fillStyle = trail.color;
+      ctx.beginPath();
+      ctx.arc(head.x, head.y, 7, 0, Math.PI * 2);
+      ctx.fill();
+    }
     ctx.globalAlpha = 1;
+    if (trails.current.size > 0) frame.current = requestAnimationFrame(paintFrame);
   }, []);
 
   const requestPaint = useCallback(() => {
@@ -228,6 +280,23 @@ export function SketchSheet({ model, team, ref }: SketchSheetProps) {
   }, [theme, requestPaint]);
 
   useEffect(() => () => cancelAnimationFrame(frame.current), []);
+
+  const pushTrail = useCallback(
+    (key: string, color: string, x: number, y: number) => {
+      let trail = trails.current.get(key);
+      if (!trail) trails.current.set(key, (trail = { color, pts: [] }));
+      trail.pts.push({ x, y, t: performance.now() });
+      requestPaint();
+    },
+    [requestPaint],
+  );
+
+  // Teammates' laser pointers arrive with their presence (about 20 per second).
+  useEffect(() => {
+    for (const [id, peer] of Object.entries(peers)) {
+      if (peer.pen?.laser) pushTrail(id, peer.color, peer.pen.x, peer.pen.y);
+    }
+  }, [peers, pushTrail]);
 
   /** Picks up model changes right away (no flicker waiting for the React render). */
   const syncStrokes = () => {
@@ -338,6 +407,13 @@ export function SketchSheet({ model, team, ref }: SketchSheetProps) {
     }
     const p = pointOf(e);
 
+    if (tool === 'laser') {
+      lasering.current = true;
+      pushTrail('me', LASER_COLOR, p.x, p.y);
+      if (team)
+        useCollab.getState().setPen({ x: Math.round(p.x), y: Math.round(p.y), laser: true });
+      return;
+    }
     if (tool === 'eraser' || eraseButton) {
       erasing.current = true;
       model.stopCapturing();
@@ -374,11 +450,21 @@ export function SketchSheet({ model, team, ref }: SketchSheetProps) {
   const onPointerMove = (e: PointerEvent<HTMLCanvasElement>) => {
     const p = pointOf(e);
     moveBrush(p);
-    if (team) useCollab.getState().setPen({ x: Math.round(p.x), y: Math.round(p.y) });
+    if (team)
+      useCollab
+        .getState()
+        .setPen({ x: Math.round(p.x), y: Math.round(p.y), laser: lasering.current });
+
+    if (lasering.current) {
+      for (const ev of samplesOf(e.nativeEvent)) {
+        const q = pointOf(ev);
+        pushTrail('me', LASER_COLOR, q.x, q.y);
+      }
+      return;
+    }
 
     if (erasing.current) {
-      for (const ev of e.nativeEvent.getCoalescedEvents?.() ?? [e.nativeEvent])
-        eraseAt(pointOf(ev));
+      for (const ev of samplesOf(e.nativeEvent)) eraseAt(pointOf(ev));
       return;
     }
     const current = live.current;
@@ -388,7 +474,7 @@ export function SketchSheet({ model, team, ref }: SketchSheetProps) {
       // A stylus is already precise: smooth it less than a mouse.
       const amount = e.pointerType === 'pen' ? 0.2 : current.stroke.tool === 'marker' ? 0.5 : 0.4;
       const pts = current.stroke.points;
-      for (const ev of e.nativeEvent.getCoalescedEvents?.() ?? [e.nativeEvent]) {
+      for (const ev of samplesOf(e.nativeEvent)) {
         current.pos = smoothTowards(current.pos, pointOf(ev), amount);
         const x = snap(current.pos.x);
         const y = snap(current.pos.y);
@@ -418,6 +504,11 @@ export function SketchSheet({ model, team, ref }: SketchSheetProps) {
 
   const finish = (e: PointerEvent<HTMLCanvasElement>) => {
     erasing.current = false;
+    if (lasering.current) {
+      lasering.current = false;
+      const p = pointOf(e);
+      if (team) useCollab.getState().setPen({ x: Math.round(p.x), y: Math.round(p.y) });
+    }
     const current = live.current;
     if (!current) return;
     if (isFreehand(current.stroke.tool)) {
@@ -441,21 +532,36 @@ export function SketchSheet({ model, team, ref }: SketchSheetProps) {
     if (team) useCollab.getState().setPen(null);
   };
 
+  // Who is typing in which note (first teammate wins if two type in the same one).
+  const editors = new Map<string, { name: string; color: string }>();
+  for (const peer of Object.values(peers)) {
+    if (peer.editingNote && !editors.has(peer.editingNote))
+      editors.set(peer.editingNote, { name: peer.name, color: peer.color });
+  }
+
   // --- brush preview look ------------------------------------------------------
   const width = SIZE_STEPS[sizeStep] * (tool === 'marker' ? 3 : 1);
   const brushKind =
-    tool === 'eraser' ? 'eraser' : tool === 'note' ? 'note' : tool === 'text' ? 'text' : 'draw';
+    tool === 'eraser' || tool === 'laser'
+      ? tool
+      : tool === 'note'
+        ? 'note'
+        : tool === 'text'
+          ? 'text'
+          : 'draw';
   const brushPx =
-    brushKind === 'eraser'
-      ? ERASER_RADIUS * 2 * scale
-      : brushKind === 'note'
-        ? NOTE_SIZE.width * scale * 0.5
-        : brushKind === 'text'
-          ? 30 * scale
-          : Math.max(6, width * scale);
+    brushKind === 'laser'
+      ? 12
+      : brushKind === 'eraser'
+        ? ERASER_RADIUS * 2 * scale
+        : brushKind === 'note'
+          ? NOTE_SIZE.width * scale * 0.5
+          : brushKind === 'text'
+            ? 30 * scale
+            : Math.max(6, width * scale);
 
   return (
-    <div ref={frameRef} className="grid min-h-0 flex-1 place-items-center">
+    <div ref={frameRef} className="grid min-h-0 flex-1 animate-page-in place-items-center">
       <div
         ref={sheetRef}
         className="sk-sheet"
@@ -507,6 +613,7 @@ export function SketchSheet({ model, team, ref }: SketchSheetProps) {
               fresh={!known.has(note.id)}
               autoFocus={note.id === focusId}
               team={team}
+              editor={editors.get(note.id) ?? null}
             />
           ))}
           {team &&
@@ -515,6 +622,7 @@ export function SketchSheet({ model, team, ref }: SketchSheetProps) {
                 <div
                   key={id}
                   className="sk-peer"
+                  data-laser={peer.pen.laser ? '' : undefined}
                   style={{ transform: `translate(${peer.pen.x}px, ${peer.pen.y}px)` }}
                 >
                   <div

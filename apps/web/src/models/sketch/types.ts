@@ -51,3 +51,15 @@ export const NOTE_TEXT_MAX = 600;
 
 /** Sticky note paper size (sheet units). */
 export const NOTE_SIZE = { width: 300, height: 240 } as const;
+
+/** Id of the first whiteboard of a board (and the only one on team boards). */
+export const MAIN_SHEET = 'main';
+
+/** One whiteboard in a board's list. */
+export interface SheetInfo {
+  id: string;
+  name: string;
+  createdAt: number;
+}
+
+export const SHEET_NAME_MAX = 40;
