@@ -6,12 +6,15 @@
 import type { ReactNode } from 'react';
 import {
   BoardModeSchema,
+  BoardSkinSchema,
   PROFILE_INFO,
   ProfileSchema,
   type BoardMode,
+  type BoardSkin,
   type Profile,
 } from '@devbord/shared';
 import { cx } from '../../design';
+import { SKINS } from '../../controllers/themeController';
 import type { BoardTemplate } from '../../templates';
 
 interface OptionCardProps {
@@ -83,6 +86,63 @@ export function ProfilePicker({
   );
 }
 
+/** A tiny board painted in a skin's colors: page, three columns, cards and the accent. */
+export function SkinPreview({ skin, className }: { skin: BoardSkin; className?: string }) {
+  const { swatch } = SKINS[skin];
+  return (
+    <span
+      aria-hidden
+      className={cx('flex gap-1 rounded-md p-1', className ?? 'mb-1 h-12')}
+      style={{ background: swatch.bg }}
+    >
+      {[3, 2, 1].map((cards, i) => (
+        <span
+          key={i}
+          className="flex flex-1 flex-col gap-0.5 rounded-[3px] p-0.5"
+          style={{ background: swatch.column }}
+        >
+          {Array.from({ length: cards }, (_, j) => (
+            <span
+              key={j}
+              className="h-1.5 rounded-[1px]"
+              style={{
+                background: swatch.card,
+                boxShadow: j === 0 ? `inset 2px 0 0 ${swatch.accent}` : undefined,
+              }}
+            />
+          ))}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+/** The look of the board (any template can wear any skin). */
+export function SkinPicker({
+  value,
+  onChange,
+}: {
+  value: BoardSkin;
+  onChange: (skin: BoardSkin) => void;
+}) {
+  return (
+    <div role="radiogroup" aria-label="Tema" className="grid gap-3 sm:grid-cols-3">
+      {BoardSkinSchema.options.map((s) => (
+        <OptionCard
+          key={s}
+          name="skin"
+          value={s}
+          checked={value === s}
+          onSelect={() => onChange(s)}
+          title={SKINS[s].title}
+          description={SKINS[s].description}
+          preview={<SkinPreview skin={s} />}
+        />
+      ))}
+    </div>
+  );
+}
+
 /** Column-count preview bars, so templates are recognisable at a glance. */
 const ColumnsPreview = ({ count }: { count: number }) => (
   <span className="mb-1 flex h-6 gap-1" aria-hidden>
@@ -116,7 +176,13 @@ export function TemplatePicker({
           onSelect={() => onChange(t.id)}
           title={t.name}
           description={t.description}
-          preview={<ColumnsPreview count={t.columns.length} />}
+          preview={
+            t.skin ? (
+              <SkinPreview skin={t.skin} className="mb-1 h-6" />
+            ) : (
+              <ColumnsPreview count={t.columns.length} />
+            )
+          }
         />
       ))}
     </div>
