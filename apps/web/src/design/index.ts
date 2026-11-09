@@ -14,6 +14,7 @@ export {
   animateLand,
   animateOut,
   animateShake,
+  animateStick,
   flip,
   initMotion,
   isMotionLite,

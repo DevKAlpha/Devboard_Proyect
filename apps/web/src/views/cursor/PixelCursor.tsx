@@ -74,7 +74,7 @@ function CursorLayer() {
 
   const sprite: SpriteName = dragging
     ? 'grabbing'
-    : target.variant === 'text'
+    : target.variant === 'text' || target.variant === 'none'
       ? 'default'
       : target.variant;
   const hotspot = SPRITES[sprite].hotspot;
@@ -130,6 +130,8 @@ function CursorLayer() {
     };
     const onDown = (e: PointerEvent) => {
       if (e.pointerType !== 'mouse') return;
+      // No sparks where a view draws its own cursor (they would cover the ink).
+      if (resolveCursor(e.target as Element).variant === 'none') return;
       layer.dataset.pressed = '';
       if (!isMotionLite()) burst(layer, e.clientX, e.clientY);
     };
@@ -228,7 +230,7 @@ function CursorLayer() {
 
   const hoverHint = shownHint && shownHint.el === target.element ? shownHint.text : null;
   const hint = dragging ? dragHint : hoverHint;
-  const hideSprite = target.variant === 'text' && !dragging;
+  const hideSprite = (target.variant === 'text' || target.variant === 'none') && !dragging;
 
   return (
     <div ref={layerRef} popover="manual" className="pc-layer" aria-hidden data-hidden="">

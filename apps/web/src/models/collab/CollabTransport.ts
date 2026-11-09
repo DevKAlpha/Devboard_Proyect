@@ -15,6 +15,8 @@ export interface Presence {
   color: string;
   /** Pointer position in board-content coordinates (scroll included); null when away. */
   cursor: { x: number; y: number } | null;
+  /** Pointer over the open whiteboard, in sheet units; null/absent when not on it. */
+  pen?: { x: number; y: number } | null;
 }
 
 export interface CollabChannel {

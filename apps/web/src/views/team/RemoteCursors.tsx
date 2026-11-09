@@ -10,7 +10,7 @@ import { SCALE, SPRITES } from '../cursor/sprites';
 
 const ARROW = SPRITES.default.grid;
 
-function TintedArrow({ color }: { color: string }) {
+export function TintedArrow({ color }: { color: string }) {
   const w = Math.max(...ARROW.map((r) => r.length));
   return (
     <svg

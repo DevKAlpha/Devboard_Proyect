@@ -30,6 +30,11 @@ interface CollabState {
   status: CollabStatus;
   /** Other people in the room, by peer id. */
   peers: Record<string, Presence>;
+  /**
+   * The live document of the open team board. The whiteboard stores its
+   * strokes and notes in it, so they sync over the same session.
+   */
+  doc: Y.Doc | null;
   /** Starts syncing a team board (seeded from the local copy if this browser has no history yet). */
   open: (board: Board) => Promise<void>;
   /** Joins a team board from an invite link; the board arrives from a teammate. */
@@ -39,6 +44,8 @@ interface CollabState {
   forget: (boardId: string) => Promise<void>;
   /** Our pointer over the board (content coordinates), or null when it leaves. */
   setCursor: (cursor: Presence['cursor']) => void;
+  /** Our pointer over the whiteboard (sheet coordinates), or null when away. */
+  setPen: (pen: Presence['pen']) => void;
 }
 
 /** If nobody answers in this time, show "solo tú" (peers may still join later). */
@@ -62,9 +69,10 @@ let generation = 0;
 export const useCollab = create<CollabState>((set, get) => {
   const me = (): Presence => {
     const { name, color } = useIdentity.getState();
-    return { name: name || 'Invitado', color, cursor: cursor };
+    return { name: name || 'Invitado', color, cursor, pen };
   };
   let cursor: Presence['cursor'] = null;
+  let pen: Presence['pen'] = null;
   let lastCursorSent = 0;
   let cursorTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -83,18 +91,24 @@ export const useCollab = create<CollabState>((set, get) => {
     const channel = collabTransport.join(boardId, shareKey);
     const current: Session = { boardId, doc, channel, lastFromDoc: null, cleanups: [] };
     session = current;
-    set({ boardId, status: 'connecting', peers: {} });
+    set({ boardId, status: 'connecting', peers: {}, doc });
 
     // Doc → network, storage and (for remote changes) the app.
     let saveTimer: ReturnType<typeof setTimeout> | undefined;
-    const onDocUpdate = (update: Uint8Array, origin: unknown) => {
+    // Typed as the generic parent type: Yjs keys transaction maps by AbstractType.
+    const boardRoot = doc.getMap('board') as unknown as Parameters<
+      Y.Transaction['changed']['has']
+    >[0];
+    const onDocUpdate = (update: Uint8Array, origin: unknown, _doc: Y.Doc, tr: Y.Transaction) => {
       if (origin !== 'remote' && origin !== 'load') channel.sendUpdate(update);
       clearTimeout(saveTimer);
       saveTimer = setTimeout(
         () => void docStore.put(boardId, Y.encodeStateAsUpdate(doc)),
         SAVE_DEBOUNCE_MS,
       );
-      if (origin === 'remote') {
+      // Whiteboard-only updates leave the board untouched: skip the re-read.
+      const touchesBoard = tr.changed.has(boardRoot) || tr.changedParentTypes.has(boardRoot);
+      if (origin === 'remote' && touchesBoard) {
         const board = readBoard(doc);
         if (board) {
           current.lastFromDoc = board;
@@ -152,6 +166,7 @@ export const useCollab = create<CollabState>((set, get) => {
     boardId: null,
     status: 'idle',
     peers: {},
+    doc: null,
 
     open: (board) =>
       board.mode === 'team' && board.shareKey
@@ -169,7 +184,7 @@ export const useCollab = create<CollabState>((set, get) => {
       clearTimeout(cursorTimer);
       channel.leave();
       doc.destroy();
-      set({ boardId: null, status: 'idle', peers: {} });
+      set({ boardId: null, status: 'idle', peers: {}, doc: null });
     },
 
     forget: async (boardId) => {
@@ -180,18 +195,28 @@ export const useCollab = create<CollabState>((set, get) => {
 
     setCursor: (next) => {
       cursor = next;
-      if (!session) return;
-      // Throttle: at most one cursor message every CURSOR_INTERVAL_MS.
-      const wait = CURSOR_INTERVAL_MS - (Date.now() - lastCursorSent);
-      clearTimeout(cursorTimer);
-      const send = () => {
-        lastCursorSent = Date.now();
-        session?.channel.sendPresence(me());
-      };
-      if (wait <= 0) send();
-      else cursorTimer = setTimeout(send, wait);
+      sendPresenceSoon();
+    },
+
+    setPen: (next) => {
+      pen = next;
+      sendPresenceSoon();
     },
   };
+
+  /** Throttled presence: at most one message every CURSOR_INTERVAL_MS. */
+  function sendPresenceSoon() {
+    if (!session) return;
+    // Throttle: at most one cursor message every CURSOR_INTERVAL_MS.
+    const wait = CURSOR_INTERVAL_MS - (Date.now() - lastCursorSent);
+    clearTimeout(cursorTimer);
+    const send = () => {
+      lastCursorSent = Date.now();
+      session?.channel.sendPresence(me());
+    };
+    if (wait <= 0) send();
+    else cursorTimer = setTimeout(send, wait);
+  }
 });
 
 /** Invite link for a team board (the share key travels in the URL fragment, never to a server). */
