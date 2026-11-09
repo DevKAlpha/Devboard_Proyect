@@ -19,6 +19,14 @@ export type Profile = z.infer<typeof ProfileSchema>;
 export const BoardModeSchema = z.enum(['personal', 'team']);
 export type BoardMode = z.infer<typeof BoardModeSchema>;
 
+/**
+ * Look of a board. "default" is the app's own dark design; the seasonal skins
+ * restyle everything (columns, cards, cursor) with one fixed palette, so they
+ * have no light or dark variant.
+ */
+export const BoardSkinSchema = z.enum(['default', 'halloween', 'christmas']);
+export type BoardSkin = z.infer<typeof BoardSkinSchema>;
+
 /** Card categories used by technical boards (hidden for the "simple" profile). */
 export const CardTypeSchema = z.enum(['task', 'feature', 'bug']);
 export type CardType = z.infer<typeof CardTypeSchema>;
@@ -107,6 +115,7 @@ export const BoardSchema = z.object({
   name: z.string().trim().min(1).max(80),
   profile: ProfileSchema,
   mode: BoardModeSchema.default('personal'),
+  skin: BoardSkinSchema.default('default'),
   /**
    * Team boards only: secret shared through the invite link. It names and
    * encrypts the real-time room, so only people with the link can join.

@@ -10,7 +10,7 @@
  * stale UI events (e.g. a double click on a deleted card) harmless.
  */
 import { MOVE_LOG_SIZE } from './schemas';
-import type { Board, BoardMode, Card, CardPatch, Column, Label, Profile } from './schemas';
+import type { Board, BoardMode, BoardSkin, Card, CardPatch, Column, Label, Profile } from './schemas';
 
 /** Collision-safe id. `crypto.randomUUID` exists in modern browsers (secure context) and Node >= 19. */
 // Typed locally so this package needs neither DOM nor Node type libs.
@@ -39,6 +39,8 @@ export interface NewBoardInput {
   profile: Profile;
   /** Default "personal". Team boards get a random share key. */
   mode?: BoardMode;
+  /** Default "default" (the app's own look). */
+  skin?: BoardSkin;
   templateId?: string | null;
   columnTitles?: string[];
   /** WIP limit per column, aligned with `columnTitles` (missing = unlimited). */
@@ -56,6 +58,7 @@ export function createBoard(input: NewBoardInput): Board {
     name: input.name.trim(),
     profile: input.profile,
     mode: input.mode ?? 'personal',
+    skin: input.skin ?? 'default',
     shareKey: input.mode === 'team' ? newShareKey() : null,
     templateId: input.templateId ?? null,
     labels: (input.labels ?? []).map((l) => ({ ...l, id: newId() })),
@@ -100,6 +103,10 @@ export function renameBoard(board: Board, name: string): Board {
 
 export function setBoardProfile(board: Board, profile: Profile): Board {
   return { ...touch(board), profile };
+}
+
+export function setBoardSkin(board: Board, skin: BoardSkin): Board {
+  return { ...touch(board), skin };
 }
 
 // ─── Columns ────────────────────────────────────────────────────────────────
