@@ -9,7 +9,7 @@
  */
 import { create } from 'zustand';
 import * as ops from '@devbord/shared';
-import type { Board, CardPatch, NewBoardInput, Profile } from '@devbord/shared';
+import type { Board, BoardSkin, CardPatch, NewBoardInput, Profile } from '@devbord/shared';
 import { boardRepository, type BoardRepository } from '../models/repositories';
 
 type Status = 'idle' | 'loading' | 'ready' | 'error';
@@ -32,6 +32,8 @@ export interface BoardState {
   deleteBoard: (boardId: string) => Promise<void>;
   renameBoard: (boardId: string, name: string) => void;
   setProfile: (boardId: string, profile: Profile) => void;
+  /** Seasonal look of the board (columns, cards, cursor, backdrop). */
+  setSkin: (boardId: string, skin: BoardSkin) => void;
 
   addColumn: (boardId: string, title: string) => void;
   renameColumn: (boardId: string, columnId: string, title: string) => void;
@@ -125,6 +127,7 @@ export function createBoardController(repo: BoardRepository) {
 
       renameBoard: (id, name) => name.trim() && mutate(id, (b) => ops.renameBoard(b, name)),
       setProfile: (id, profile) => mutate(id, (b) => ops.setBoardProfile(b, profile)),
+      setSkin: (id, skin) => mutate(id, (b) => ops.setBoardSkin(b, skin)),
 
       addColumn: (id, title) => title.trim() && mutate(id, (b) => ops.addColumn(b, title)),
       renameColumn: (id, columnId, title) =>

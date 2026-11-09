@@ -1,66 +1,43 @@
 /**
- * Theme controller: light / dark / system preference.
+ * Appearance controller: the app is dark only; a board can wear a seasonal skin.
  *
- * The resolved theme is written to `<html data-theme>`, which the design
- * tokens read. index.html applies the stored theme before first paint, so
- * there is no flash of the wrong theme.
+ * `<html data-theme>` is the color base the tokens read (always "dark" except
+ * for skins built on a light base), and `<html data-skin>` selects the skin's
+ * own palette and decorations (design/skins.css). Seasonal skins have one
+ * fixed look on purpose: no light or dark variant.
  */
 import { create } from 'zustand';
+import type { BoardSkin } from '@devbord/shared';
 
-export type ThemePreference = 'light' | 'dark' | 'system';
-export const THEME_STORAGE_KEY = 'devbord:theme';
+export type ThemeBase = 'light' | 'dark';
 
-const media = () => window.matchMedia?.('(prefers-color-scheme: dark)');
-
-const resolve = (pref: ThemePreference): 'light' | 'dark' =>
-  pref === 'system' ? (media()?.matches ? 'dark' : 'light') : pref;
-
-const apply = (pref: ThemePreference) => {
-  document.documentElement.dataset.theme = resolve(pref);
+/** Skin catalog: name shown in the picker and the color base it is drawn on. */
+export const SKINS: Record<BoardSkin, { title: string; base: ThemeBase }> = {
+  default: { title: 'Devbord', base: 'dark' },
+  halloween: { title: 'Halloween', base: 'dark' },
+  christmas: { title: 'Navidad', base: 'light' },
 };
 
-const readStored = (): ThemePreference => {
-  try {
-    const value = localStorage.getItem(THEME_STORAGE_KEY);
-    return value === 'light' || value === 'dark' ? value : 'system';
-  } catch {
-    // Storage can be blocked (private mode); fall back to the OS preference.
-    return 'system';
-  }
+const apply = (skin: BoardSkin) => {
+  const root = document.documentElement;
+  root.dataset.theme = SKINS[skin].base;
+  if (skin === 'default') delete root.dataset.skin;
+  else root.dataset.skin = skin;
 };
 
 interface ThemeState {
-  preference: ThemePreference;
-  resolved: 'light' | 'dark';
-  /** Cycles light and dark explicitly (the toggle in the top bar). */
-  toggle: () => void;
-  setPreference: (pref: ThemePreference) => void;
+  skin: BoardSkin;
+  /** Color base of the current skin (canvas views re-read their colors when it changes). */
+  resolved: ThemeBase;
+  /** Dresses the page in a board's skin; "default" goes back to the app's look. */
+  setSkin: (skin: BoardSkin) => void;
 }
 
-export const useThemeController = create<ThemeState>((set, get) => {
-  const initial = readStored();
-
-  // Keep "system" in sync when the OS theme changes.
-  media()?.addEventListener?.('change', () => {
-    if (get().preference === 'system') {
-      apply('system');
-      set({ resolved: resolve('system') });
-    }
-  });
-
-  return {
-    preference: initial,
-    resolved: resolve(initial),
-    toggle: () => get().setPreference(get().resolved === 'dark' ? 'light' : 'dark'),
-    setPreference: (preference) => {
-      try {
-        if (preference === 'system') localStorage.removeItem(THEME_STORAGE_KEY);
-        else localStorage.setItem(THEME_STORAGE_KEY, preference);
-      } catch {
-        /* non-fatal: preference just won't persist */
-      }
-      apply(preference);
-      set({ preference, resolved: resolve(preference) });
-    },
-  };
-});
+export const useThemeController = create<ThemeState>((set) => ({
+  skin: 'default',
+  resolved: 'dark',
+  setSkin: (skin) => {
+    apply(skin);
+    set({ skin, resolved: SKINS[skin].base });
+  },
+}));

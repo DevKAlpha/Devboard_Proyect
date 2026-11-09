@@ -1,32 +1,23 @@
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router';
 import { IconButton } from '../../design';
-import { useThemeController } from '../../controllers/themeController';
-import { useCursorController } from '../../controllers/cursorController';
+import { useMotion } from '../../controllers/motionController';
 import { Logo } from './Logo';
 
-function ThemeToggle() {
-  const { resolved, toggle } = useThemeController();
+/**
+ * Animations on or reduced. For machines where Devbord feels heavy: lite mode
+ * keeps every state visible but drops the decorative loops.
+ */
+function MotionToggle() {
+  const lite = useMotion((s) => s.lite);
+  const toggle = useMotion((s) => s.toggle);
   return (
     <IconButton
-      icon={resolved === 'dark' ? 'sun' : 'moon'}
-      label={resolved === 'dark' ? 'Tema claro' : 'Tema oscuro'}
+      icon="motion"
+      label={lite ? 'Activar animaciones' : 'Reducir animaciones'}
+      aria-pressed={!lite}
+      className={lite ? 'text-faint' : 'text-accent'}
       onClick={toggle}
-    />
-  );
-}
-
-/** Turns the pixel cursor on or off (some users prefer their system pointer). */
-function CursorToggle() {
-  const enabled = useCursorController((s) => s.enabled);
-  const setEnabled = useCursorController((s) => s.setEnabled);
-  return (
-    <IconButton
-      icon="cursor"
-      label={enabled ? 'Usar cursor del sistema' : 'Usar cursor pixel'}
-      aria-pressed={enabled}
-      className={enabled ? 'text-accent' : undefined}
-      onClick={() => setEnabled(!enabled)}
     />
   );
 }
@@ -38,7 +29,7 @@ function CursorToggle() {
  */
 export function AppShell({ children }: { children: ReactNode }) {
   return (
-    <div className="flex h-full flex-col bg-surface">
+    <div className="app-shell flex h-full flex-col bg-surface">
       <header className="sticky top-0 z-20 shrink-0 border-b border-line-soft bg-surface/80 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-[1600px] items-center gap-3 px-4">
           {/* The logo is the way home: always back to the start screen (board list). */}
@@ -46,8 +37,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Logo />
           </NavLink>
           <span className="flex-1" />
-          <CursorToggle />
-          <ThemeToggle />
+          <MotionToggle />
         </div>
       </header>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>

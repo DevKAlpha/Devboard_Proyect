@@ -16,6 +16,7 @@ import {
   addNewCard,
   setColumnDescription,
   moveCards,
+  setBoardSkin,
 } from './board-ops';
 import { BoardSchema, CardSchema } from './schemas';
 
@@ -33,6 +34,18 @@ describe('board-ops', () => {
   it('creates a board that passes schema validation', () => {
     const { board } = seed();
     expect(BoardSchema.safeParse(board).success).toBe(true);
+  });
+
+  it('boards start with the default skin and can switch to a seasonal one', () => {
+    const { board } = seed();
+    expect(board.skin).toBe('default');
+    const spooky = setBoardSkin(board, 'halloween');
+    expect(spooky.skin).toBe('halloween');
+    expect(BoardSchema.safeParse(spooky).success).toBe(true);
+    // Boards saved before skins existed still parse (and get the default look).
+    const legacy: Partial<typeof board> = { ...board };
+    delete legacy.skin;
+    expect(BoardSchema.parse(legacy).skin).toBe('default');
   });
 
   it('never mutates the input board', () => {
