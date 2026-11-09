@@ -2,14 +2,17 @@ import { describe, expect, it } from 'vitest';
 import { DUCK_RADIUS, Pond } from './pondPhysics';
 
 /** Deterministic randomness, so the ducks paddle the same way every run. */
-const seeded = (seed = 1) => () => {
-  seed = (seed * 16807) % 2147483647;
-  return seed / 2147483647;
-};
+const seeded =
+  (seed = 1) =>
+  () => {
+    seed = (seed * 16807) % 2147483647;
+    return seed / 2147483647;
+  };
 
 const energy = (pond: Pond) => {
   let sum = 0;
-  for (let y = 0; y < pond.h; y++) for (let x = 0; x < pond.w; x++) sum += Math.abs(pond.height(x, y));
+  for (let y = 0; y < pond.h; y++)
+    for (let x = 0; x < pond.w; x++) sum += Math.abs(pond.height(x, y));
   return sum;
 };
 
