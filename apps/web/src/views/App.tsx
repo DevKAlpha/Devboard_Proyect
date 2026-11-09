@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { HashRouter, Navigate, Route, Routes } from 'react-router';
 import { useBoardController } from '../controllers/boardController';
+import { useLobby } from '../controllers/lobbyController';
 import { usePreferences } from '../controllers/preferencesController';
 import { ConfirmHost } from '../design';
 import { PixelCursor } from './cursor/PixelCursor';
@@ -27,6 +28,8 @@ export function App() {
 
   useEffect(() => {
     void useBoardController.getState().load();
+    // Say hello to the lobby: every open Devbord is a duck on the home page.
+    void useLobby.getState().start();
   }, []);
 
   if (status === 'idle' || status === 'loading') {

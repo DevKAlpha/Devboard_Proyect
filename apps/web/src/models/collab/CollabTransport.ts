@@ -20,6 +20,8 @@ export interface Presence {
   pen?: { x: number; y: number; laser?: boolean } | null;
   /** Sticky note this person is typing in, so others see who is writing where. */
   editingNote?: string | null;
+  /** Lobby only: a person or an agent (AI helper, integration). Absent means person. */
+  kind?: 'user' | 'agent';
 }
 
 export interface CollabChannel {

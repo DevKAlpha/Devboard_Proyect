@@ -5,6 +5,7 @@ import { Badge, Button, PixelIcon } from '../../design';
 import { useBoardController } from '../../controllers/boardController';
 import { AppShell } from '../components/AppShell';
 import { NewBoardModal } from '../components/NewBoardModal';
+import { DuckPond } from '../components/DuckPond';
 import { BoardFileError, parseBoardFile } from '../../models/boardFile';
 
 const updatedFormat = new Intl.DateTimeFormat('es', { day: 'numeric', month: 'short' });
@@ -69,6 +70,9 @@ export function BoardsPage() {
       </header>
 
       <main className="min-h-0 flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-5xl px-4 pb-8">
+          <DuckPond />
+        </div>
         {(['personal', 'team'] as const).map((mode) => {
           const list = boards.filter((b) => b.mode === mode);
           if (!list.length) return null;
