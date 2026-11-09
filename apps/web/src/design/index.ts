@@ -19,4 +19,5 @@ export {
   flip,
   initMotion,
   isMotionLite,
+  setMotionLite,
 } from './motion';

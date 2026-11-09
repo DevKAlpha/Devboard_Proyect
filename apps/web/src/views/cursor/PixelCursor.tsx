@@ -33,11 +33,10 @@ const subscribeFine = (cb: () => void) => {
 };
 const isFinePointer = () => window.matchMedia?.(FINE_POINTER).matches ?? false;
 
-/** Mount point. Renders nothing on touch devices or when disabled. */
+/** Mount point. Always on with a mouse or trackpad; renders nothing on touch devices. */
 export function PixelCursor() {
-  const enabled = useCursorController((s) => s.enabled);
   const fine = useSyncExternalStore(subscribeFine, isFinePointer, () => false);
-  return enabled && fine ? <CursorLayer /> : null;
+  return fine ? <CursorLayer /> : null;
 }
 
 /** Hover hints wait a moment so they don't flash while the pointer travels. */

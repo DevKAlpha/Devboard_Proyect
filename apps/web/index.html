@@ -1,10 +1,9 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#F0F0F4" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0E0E10" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#0E0E10" />
     <meta
       name="description"
       content="Devbord — tableros Kanban para equipos técnicos y no técnicos."
@@ -17,19 +16,6 @@
       rel="stylesheet"
     />
     <title>Devbord</title>
-    <script>
-      // Apply the saved theme before first paint (no flash). Mirrors themeController.ts.
-      (function () {
-        var t = null;
-        try {
-          t = localStorage.getItem('devbord:theme');
-        } catch (e) {}
-        if (t !== 'light' && t !== 'dark') {
-          t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        }
-        document.documentElement.dataset.theme = t;
-      })();
-    </script>
   </head>
   <body>
     <div id="root"></div>

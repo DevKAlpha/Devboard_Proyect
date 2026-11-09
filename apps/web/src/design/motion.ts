@@ -2,7 +2,8 @@
  * Motion system: one place decides how much animation the device gets.
  *
  * `<html data-motion="full|lite">`
- *  - lite only on modest devices (≤ 2 CPU cores, ≤ 2 GB RAM, or data saver on).
+ *  - lite on modest devices (≤ 2 CPU cores, ≤ 2 GB RAM, or data saver on), or
+ *    when the user turns animations down from the top bar (remembered).
  *    Lite keeps every state visible (cobwebs, frost…) but drops decorative
  *    loops, so the app stays smooth on any hardware.
  *  - The OS "reduce motion" setting does NOT turn animations off: product
@@ -26,9 +27,32 @@ function modestDevice(): boolean {
   );
 }
 
-/** Sets `data-motion` on <html> once, from the device capabilities. */
+const MOTION_STORAGE_KEY = 'devbord:motion';
+
+/** The user's explicit choice, or null to follow the device. */
+function storedMotion(): 'lite' | 'full' | null {
+  try {
+    const value = localStorage.getItem(MOTION_STORAGE_KEY);
+    return value === 'lite' || value === 'full' ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Sets `data-motion` on <html> once: the user's choice, else the device capabilities. */
 export function initMotion() {
-  document.documentElement.dataset.motion = modestDevice() ? 'lite' : 'full';
+  document.documentElement.dataset.motion = storedMotion() ?? (modestDevice() ? 'lite' : 'full');
+}
+
+/** The top bar switch: forces lite (or full) motion and remembers it. */
+export function setMotionLite(lite: boolean) {
+  const level = lite ? 'lite' : 'full';
+  document.documentElement.dataset.motion = level;
+  try {
+    localStorage.setItem(MOTION_STORAGE_KEY, level);
+  } catch {
+    /* non-fatal: the choice lasts for this session only */
+  }
 }
 
 /** True when animations should be minimal (see initMotion). */

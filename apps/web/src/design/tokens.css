@@ -15,7 +15,11 @@
  */
 @import 'tailwindcss';
 
-/* Dark mode is driven by `data-theme` on <html> (see controllers/themeController). */
+/*
+ * Devbord is dark only: <html data-theme="dark"> is set in index.html. The
+ * light palette below stays as the base of light seasonal skins (Navidad);
+ * see controllers/themeController and design/skins.css.
+ */
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 :root {
