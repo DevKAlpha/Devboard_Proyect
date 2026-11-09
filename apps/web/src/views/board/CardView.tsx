@@ -6,12 +6,18 @@ import { Badge, PixelIcon, animateFlash, cx } from '../../design';
 import { CARD_TYPE_META, PRIORITY_META, describeDueDate, previewText } from './cardMeta';
 import type { CardMood } from './cardMood';
 import { MoodDecor } from './MoodDecor';
+import { useIsSelected } from '../../controllers/selectionController';
 
 export interface CardViewProps {
   card: Card;
   labels: Label[];
   features: ProfileFeatures;
   onOpen?: (cardId: string) => void;
+  /**
+   * Ctrl/Cmd+click toggles the card in the selection; Shift+click selects a
+   * range from the last clicked card.
+   */
+  onSelect?: (cardId: string, mode: 'toggle' | 'range') => void;
   /** Rendered inside the DragOverlay (no sortable wiring, lifted look). */
   overlay?: boolean;
   /** Flow state shown as pixel decorations (cobwebs, flames, frost). */
@@ -31,7 +37,7 @@ export function CardFace({
   features,
   overlay,
   mood = null,
-}: Omit<CardViewProps, 'onOpen' | 'moodLabel'>) {
+}: Omit<CardViewProps, 'onOpen' | 'onSelect' | 'moodLabel'>) {
   const cardLabels = labels.filter((l) => card.labelIds.includes(l.id));
   const due = card.dueDate ? describeDueDate(card.dueDate) : null;
   const showType = features.cardTypes && card.type !== 'task';
@@ -127,9 +133,11 @@ export const CardView = memo(function CardView({
   labels,
   features,
   onOpen,
+  onSelect,
   mood = null,
   moodLabel = null,
 }: CardViewProps) {
+  const selected = useIsSelected(card.id);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: card.id,
     data: { type: 'card' },
@@ -156,16 +164,26 @@ export const CardView = memo(function CardView({
         {...listeners}
         aria-roledescription="tarjeta"
         aria-label={moodLabel ? `${card.title}. ${moodLabel}` : card.title}
+        aria-selected={selected}
         // Shown by the pixel cursor as a pixel tooltip (native titles use the system font).
         data-cursor-hint={moodLabel ?? undefined}
-        onClick={() => !isDragging && onOpen?.(card.id)}
+        onClick={(e) => {
+          if (isDragging) return;
+          if (e.ctrlKey || e.metaKey) onSelect?.(card.id, 'toggle');
+          else if (e.shiftKey) onSelect?.(card.id, 'range');
+          else onOpen?.(card.id);
+        }}
         onKeyDown={(e) => {
           // Enter also drops a keyboard drag; only open when not dragging.
           if (e.key === 'Enter') {
             if (!isDragging) onOpen?.(card.id);
           } else listeners?.onKeyDown?.(e);
         }}
-        className="relative cursor-grab touch-manipulation rounded-lg"
+        className={cx(
+          'relative cursor-grab touch-manipulation rounded-lg',
+          // Selected: accent ring around the card, like a selected file in Finder.
+          selected && 'card-selected',
+        )}
       >
         {/* While lifted, the slot shows an empty "drop here" shape of the same size. */}
         <div ref={faceRef} className={cx(isDragging && 'invisible')}>

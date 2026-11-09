@@ -25,3 +25,60 @@
 html[data-motion='lite'] .drag-jitter {
   animation: none;
 }
+
+/* Selected card (multi-select): accent ring and a pixel check in the corner. */
+.card-selected {
+  /* Offset stays within the list padding, so it never causes a scrollbar. */
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.card-selected::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 3;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: var(--accent)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white' shape-rendering='crispEdges'%3E%3Crect x='3' y='8' width='2' height='2'/%3E%3Crect x='5' y='10' width='2' height='2'/%3E%3Crect x='7' y='8' width='2' height='2'/%3E%3Crect x='9' y='6' width='2' height='2'/%3E%3Crect x='11' y='4' width='2' height='2'/%3E%3C/svg%3E")
+    center / 12px no-repeat;
+  animation: pixel-pop 160ms steps(4) both;
+}
+
+/* Lasso rectangle while selecting cards with the pointer. */
+.board-lasso {
+  position: absolute;
+  z-index: 15;
+  pointer-events: none;
+  border: 1.5px dashed var(--accent);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+/* Several cards lifted together: paper sheets fanned out behind the top one. */
+.drag-stack {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: var(--card);
+  box-shadow: var(--shadow-card-v);
+}
+.drag-count {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 13px;
+  box-shadow: 2px 2px 0 rgb(0 0 0 / 0.2);
+}
