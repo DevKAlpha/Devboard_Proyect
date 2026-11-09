@@ -29,7 +29,7 @@ function MotionToggle() {
  */
 export function AppShell({ children }: { children: ReactNode }) {
   return (
-    <div className="flex h-full flex-col bg-surface">
+    <div className="app-shell flex h-full flex-col bg-surface">
       <header className="sticky top-0 z-20 shrink-0 border-b border-line-soft bg-surface/80 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-[1600px] items-center gap-3 px-4">
           {/* The logo is the way home: always back to the start screen (board list). */}

@@ -25,6 +25,14 @@ describe('templates', () => {
     }
   });
 
+  it('seasonal templates start the board with their skin, for every profile', () => {
+    for (const id of ['halloween', 'christmas'] as const) {
+      expect(buildBoardFromTemplate(getTemplate(id)!).skin).toBe(id);
+      expect(templatesFor('technical').some((t) => t.id === id)).toBe(true);
+    }
+    expect(buildBoardFromTemplate(getTemplate('scrum')!).skin).toBe('default');
+  });
+
   it('offers the blank template to every profile', () => {
     expect(templatesFor('technical').some((t) => t.id === 'blank')).toBe(true);
     expect(templatesFor('simple').some((t) => t.id === 'blank')).toBe(true);
