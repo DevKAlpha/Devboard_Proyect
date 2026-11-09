@@ -1,11 +1,12 @@
 import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { PROFILE_INFO, type Board } from '@devbord/shared';
+import { BoardSkinSchema, PROFILE_INFO, type Board } from '@devbord/shared';
 import { Badge, Button, PixelIcon } from '../../design';
 import { useBoardController } from '../../controllers/boardController';
 import { AppShell } from '../components/AppShell';
 import { NewBoardModal } from '../components/NewBoardModal';
-import { DuckPond } from '../components/DuckPond';
+import { BathCaption, BathScene } from '../components/BathScene';
+import { SKINS } from '../../controllers/themeController';
 import { BoardFileError, parseBoardFile } from '../../models/boardFile';
 
 const updatedFormat = new Intl.DateTimeFormat('es', { day: 'numeric', month: 'short' });
@@ -20,10 +21,13 @@ export function BoardsPage() {
 
   return (
     <AppShell>
+      {/* The bathtub with everyone's rubber ducks, behind the whole page. */}
+      <BathScene />
       <header className="mx-auto flex w-full max-w-5xl flex-wrap items-end justify-between gap-4 px-4 pt-8 pb-6">
         <div>
           <h1 className="text-3xl">Tus tableros</h1>
           <p className="mt-1 text-muted">Todo lo que tienes entre manos, en un vistazo.</p>
+          <BathCaption />
         </div>
         <div className="flex gap-2">
           <Button onClick={() => fileRef.current?.click()}>
@@ -70,9 +74,6 @@ export function BoardsPage() {
       </header>
 
       <main className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-5xl px-4 pb-8">
-          <DuckPond />
-        </div>
         {(['personal', 'team'] as const).map((mode) => {
           const list = boards.filter((b) => b.mode === mode);
           if (!list.length) return null;
@@ -109,21 +110,33 @@ export function BoardsPage() {
   );
 }
 
-/** One board in the home grid: mini preview, name, profile and activity. */
+/** One board in the home grid: mini preview, name, profile, activity and its look. */
 function BoardTile({ board: b }: { board: Board }) {
   const cards = b.columns.reduce((n, c) => n + c.cards.length, 0);
   return (
-    <li>
+    <li className="relative">
+      <SkinChip board={b} />
       <Link
         to={`/b/${b.id}`}
         className="flex h-full flex-col gap-3 rounded-xl border border-line-soft bg-card p-4 shadow-card transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-lift"
       >
-        {/* Mini preview: one column per bar, filled with pixel blocks (one per card). */}
-        <div className="flex h-14 gap-1.5 rounded-lg bg-surface-2 p-1.5" aria-hidden>
+        {/* Mini preview in the board's own colors: one bar per column, one block per card. */}
+        <div
+          className="flex h-14 gap-1.5 rounded-lg p-1.5"
+          style={{ background: SKINS[b.skin].swatch.bg }}
+          aria-hidden
+        >
           {b.columns.slice(0, 6).map((c) => (
             <span key={c.id} className="flex flex-1 flex-col gap-1">
               {Array.from({ length: Math.min(4, c.cards.length) }, (_, i) => (
-                <span key={i} className="h-2 rounded-[2px] bg-card shadow-card" />
+                <span
+                  key={i}
+                  className="h-2 rounded-[2px] shadow-card"
+                  style={{
+                    background: SKINS[b.skin].swatch.card,
+                    boxShadow: `inset 2px 0 0 ${SKINS[b.skin].swatch.accent}`,
+                  }}
+                />
               ))}
             </span>
           ))}
@@ -139,5 +152,37 @@ function BoardTile({ board: b }: { board: Board }) {
         </div>
       </Link>
     </li>
+  );
+}
+
+/**
+ * The board's look, changeable right from the home page. A chip over the tile
+ * with a transparent native <select> on top (keyboard and screen-reader
+ * friendly), kept outside the tile link so choosing does not open the board.
+ */
+function SkinChip({ board }: { board: Board }) {
+  return (
+    <span className="absolute top-6 right-6 z-10 inline-flex h-6 items-center gap-1 rounded-md border border-line-soft bg-surface/90 px-1.5 text-[11px] text-muted backdrop-blur hover:text-ink">
+      <span
+        aria-hidden
+        className="size-2 rounded-[2px]"
+        style={{ background: SKINS[board.skin].swatch.accent }}
+      />
+      {SKINS[board.skin].title}
+      <select
+        aria-label={`Tema del tablero ${board.name}`}
+        className="absolute inset-0 cursor-pointer opacity-0"
+        value={board.skin}
+        onChange={(e) =>
+          useBoardController.getState().setSkin(board.id, BoardSkinSchema.parse(e.target.value))
+        }
+      >
+        {BoardSkinSchema.options.map((s) => (
+          <option key={s} value={s}>
+            {SKINS[s].title}
+          </option>
+        ))}
+      </select>
+    </span>
   );
 }
