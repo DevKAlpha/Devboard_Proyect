@@ -16,6 +16,8 @@ export {
   animateLand,
   animateOut,
   animateShake,
+  pixelBurst,
+  type FlipPositions,
   animateStick,
   flip,
   initMotion,

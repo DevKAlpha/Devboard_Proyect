@@ -52,8 +52,9 @@ export function CardFace({
     <div
       className={cx(
         'kb-card relative flex flex-col gap-2 rounded-lg border border-line-soft bg-card p-3 text-left shadow-card',
-        // Hover: lift 1px; press: sink back (tactile, transform only).
-        'transition-[box-shadow,border-color,transform] duration-150 group-hover/card:-translate-y-px group-hover/card:border-line group-hover/card:shadow-lift group-active/card:translate-y-0',
+        // Hover: lift 1px over a hard pixel shadow (small enough to stay inside the
+        // list's padding); press: sink back. Stepped, like a sprite.
+        'transition-[box-shadow,border-color,transform] duration-150 ease-[steps(2,end)] group-hover/card:-translate-y-px group-hover/card:border-line group-hover/card:shadow-pixel group-active/card:translate-y-0',
         mood && `card-mood-${mood}`,
         // Lifted card: tilted and floating, like picking up a paper card.
         overlay && 'scale-[1.02] rotate-[2.5deg] shadow-lift',

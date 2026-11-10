@@ -60,7 +60,9 @@
   --label-gray-ink: #5c5c63;
 
   --shadow-card-v: 0 1px 2px rgb(16 16 24 / 0.05), 0 1px 1px rgb(16 16 24 / 0.03);
-  --shadow-lift-v: 0 18px 36px -10px rgb(16 16 24 / 0.22), 0 6px 12px -4px rgb(16 16 24 / 0.08);
+  /* Pixel shadows: hard offsets, no blur (the brand look; nothing bleeds out of a box). */
+  --shadow-lift-v: 4px 4px 0 rgb(16 16 24 / 0.12);
+  --shadow-pixel-v: 2px 2px 0 rgb(16 16 24 / 0.14);
 
   /* Pixel step for pixel-art details (icons, progress blocks, cursor). */
   --px: 2px;
@@ -102,7 +104,8 @@
   --label-gray-ink: #b4b4bb;
 
   --shadow-card-v: 0 1px 2px rgb(0 0 0 / 0.4);
-  --shadow-lift-v: 0 22px 40px -10px rgb(0 0 0 / 0.7), 0 6px 14px -4px rgb(0 0 0 / 0.5);
+  --shadow-lift-v: 4px 4px 0 rgb(0 0 0 / 0.55);
+  --shadow-pixel-v: 2px 2px 0 rgb(0 0 0 / 0.55);
 
   color-scheme: dark;
 }
@@ -125,6 +128,7 @@
 
   --shadow-card: var(--shadow-card-v);
   --shadow-lift: var(--shadow-lift-v);
+  --shadow-pixel: var(--shadow-pixel-v);
 
   --font-pixel: 'Pixelify Sans', ui-monospace, monospace;
   /* All UI text is pixel type: it is the brand. System fonts are only the
