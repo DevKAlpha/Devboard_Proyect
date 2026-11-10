@@ -16,9 +16,9 @@
 @import 'tailwindcss';
 
 /*
- * Devbord is dark only: <html data-theme="dark"> is set in index.html. The
- * light palette below stays as the base of light seasonal skins (Navidad);
- * see controllers/themeController and design/skins.css.
+ * Light or dark is driven by `data-theme` on <html>: the top bar switch
+ * (controllers/themeController, dark by default). Seasonal skins pick their own
+ * fixed base (Navidad is light); see design/skins.css.
  */
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
