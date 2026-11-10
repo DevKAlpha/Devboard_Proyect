@@ -35,7 +35,7 @@ import { useBoardController } from '../../controllers/boardController';
 import { useCursorController } from '../../controllers/cursorController';
 import { useCollab } from '../../controllers/collabController';
 import { orderedSelection, useSelection } from '../../controllers/selectionController';
-import { animateLand, animateOut, flip } from '../../design';
+import { animateLand, animateOut, flip, pixelBurst, type FlipPositions } from '../../design';
 import { RemoteCursors } from '../team/RemoteCursors';
 import { useNow } from './useNow';
 import './drag.css';
@@ -143,7 +143,7 @@ export function BoardCanvas({ board, team = false }: { board: Board; team?: bool
   // new ones pop in. This animates local actions and teammates' changes alike.
   // Skipped mid-drag: dnd-kit animates the drag itself.
   const scrollRef = useRef<HTMLDivElement>(null);
-  const positions = useRef(new Map<string, DOMRect>());
+  const positions = useRef<FlipPositions>(new Map());
   useLayoutEffect(() => {
     if (!scrollRef.current) return;
     positions.current = flip(scrollRef.current, positions.current, { animate: activeId === null });
@@ -253,8 +253,14 @@ export function BoardCanvas({ board, team = false }: { board: Board; team?: bool
         );
       } else if (final) {
         ctrl().moveCard(board.id, id, final.column.id, final.index);
-        // Squash when it lands (after React commits the new position).
-        requestAnimationFrame(() => animateLand(flipNode(id)?.firstElementChild));
+        // Squash when it lands (after React commits the new position); a card
+        // reaching the last column (done) also gets a little burst of gold pixels.
+        const done = final.column.id === b.columns.at(-1)?.id && from.id !== to.id;
+        requestAnimationFrame(() => {
+          const face = flipNode(id)?.querySelector('.kb-card');
+          animateLand(flipNode(id)?.firstElementChild);
+          if (done) pixelBurst(face, ['#ffd84a', '#ffb02e', 'var(--accent)']);
+        });
       }
     }
     reset();
