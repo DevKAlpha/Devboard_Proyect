@@ -13,6 +13,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useLobby } from '../../controllers/lobbyController';
 import { useMotion } from '../../controllers/motionController';
+import { useThemeController } from '../../controllers/themeController';
 import { useCursorController } from '../../controllers/cursorController';
 import { DUCK_COLORS, DUCK_GRID } from '../../design/duck';
 import {
@@ -36,12 +37,25 @@ const TILE = 14;
 const CONTROLS =
   'a, button, input, select, textarea, label, dialog, [role="dialog"], [contenteditable="true"], header';
 
+/** Wall and tub, per light/dark mode (the water reads well on both). */
+const WALL = {
+  dark: {
+    tileA: '#161a23',
+    tileB: '#1a1f2b',
+    tub: '#1d2535',
+    tubRim: '#2e3a52',
+    tubShine: '#3d4b68',
+  },
+  light: {
+    tileA: '#e9eff5',
+    tileB: '#dfe7ef',
+    tub: '#d3dee9',
+    tubRim: '#b8c8d8',
+    tubShine: '#f6f9fc',
+  },
+};
+
 const COLORS = {
-  tileA: '#161a23',
-  tileB: '#1a1f2b',
-  tub: '#1d2535',
-  tubRim: '#2e3a52',
-  tubShine: '#3d4b68',
   water: 'rgb(62 190 220 / 0.6)',
   deep: 'rgb(6 36 64 / 0.22)',
   surface: '#b9f3ff',
@@ -87,24 +101,29 @@ function sprite(kind: DuckKind, facing: 1 | -1): HTMLCanvasElement {
 }
 
 /** The still part of the scene (tiled wall and tub), drawn once per size. */
-function backdrop(w: number, h: number, level: number): HTMLCanvasElement {
+function backdrop(
+  w: number,
+  h: number,
+  level: number,
+  wall: (typeof WALL)['dark'],
+): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
   canvas.width = w;
   canvas.height = h;
   const ctx = canvas.getContext('2d')!;
   for (let ty = 0; ty * TILE < h; ty++) {
     for (let tx = 0; tx * TILE < w; tx++) {
-      ctx.fillStyle = (tx + ty) % 2 ? COLORS.tileA : COLORS.tileB;
+      ctx.fillStyle = (tx + ty) % 2 ? wall.tileA : wall.tileB;
       ctx.fillRect(tx * TILE, ty * TILE, TILE, TILE);
     }
   }
   // The inside of the tub, above and behind the water, with its rim.
   const rim = level - 22;
-  ctx.fillStyle = COLORS.tub;
+  ctx.fillStyle = wall.tub;
   ctx.fillRect(0, rim, w, h - rim);
-  ctx.fillStyle = COLORS.tubRim;
+  ctx.fillStyle = wall.tubRim;
   ctx.fillRect(0, rim, w, 3);
-  ctx.fillStyle = COLORS.tubShine;
+  ctx.fillStyle = wall.tubShine;
   ctx.fillRect(0, rim, w, 1);
   return canvas;
 }
@@ -141,6 +160,7 @@ export function BathScene() {
   const everyone = useDucks();
   const shown = useMemo(() => everyone.slice(0, MAX_DUCKS), [everyone]);
   const lite = useMotion((s) => s.lite);
+  const theme = useThemeController((s) => s.resolved);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const bathRef = useRef<Bath | null>(null);
   const seedsRef = useRef<DuckSeed[]>([]);
@@ -184,7 +204,7 @@ export function BathScene() {
       // Start with the ducks already afloat (no drop-in on every page visit).
       for (const d of bath.ducks) d.y = bath.level + 1;
       bathRef.current = bath;
-      const still = backdrop(w, h, bath.level);
+      const still = backdrop(w, h, bath.level, WALL[theme]);
 
       drawRef.current = () => {
         ctx.drawImage(still, 0, 0);
@@ -232,7 +252,7 @@ export function BathScene() {
       window.removeEventListener('resize', build);
       bathRef.current = null;
     };
-  }, []);
+  }, [theme]);
 
   // The loop: fixed 60 steps per second, drawn once per frame. Off in lite mode.
   useEffect(() => {
