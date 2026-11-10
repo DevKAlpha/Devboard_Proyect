@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { NavLink } from 'react-router';
 import { IconButton } from '../../design';
 import { useMotion } from '../../controllers/motionController';
+import { useThemeController } from '../../controllers/themeController';
 import { Logo } from './Logo';
 
 /**
@@ -23,6 +24,23 @@ function MotionToggle() {
 }
 
 /**
+ * Light or dark. Hidden on a seasonal skin: those have one fixed look.
+ */
+function ThemeToggle() {
+  const mode = useThemeController((s) => s.mode);
+  const skin = useThemeController((s) => s.skin);
+  const toggle = useThemeController((s) => s.toggleMode);
+  if (skin !== 'default') return null;
+  return (
+    <IconButton
+      icon={mode === 'dark' ? 'sun' : 'moon'}
+      label={mode === 'dark' ? 'Tema claro' : 'Tema oscuro'}
+      onClick={toggle}
+    />
+  );
+}
+
+/**
  * Application frame: a slim translucent top bar (logo + appearance toggles)
  * above the page content. No sidebar on purpose: the board gets the full
  * width and nothing competes with it for attention.
@@ -38,6 +56,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </NavLink>
           <span className="flex-1" />
           <MotionToggle />
+          <ThemeToggle />
         </div>
       </header>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>

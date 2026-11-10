@@ -1,10 +1,12 @@
 /**
- * Appearance controller: the app is dark only; a board can wear a seasonal skin.
+ * Appearance controller: light or dark mode, and the seasonal skin of a board.
  *
- * `<html data-theme>` is the color base the tokens read (always "dark" except
- * for skins built on a light base), and `<html data-skin>` selects the skin's
- * own palette and decorations (design/skins.css). Seasonal skins have one
- * fixed look on purpose: no light or dark variant.
+ * `<html data-theme>` is the color base the tokens read: the user's mode (top
+ * bar switch, dark by default, remembered) for the app and the default skin,
+ * or the skin's own base. `<html data-skin>` selects the skin's palette and
+ * decorations (design/skins.css). Seasonal skins have one fixed look on
+ * purpose: the mode switch does not apply to them. index.html applies the
+ * stored mode before first paint, so there is no flash.
  */
 import { create } from 'zustand';
 import type { BoardSkin } from '@devbord/shared';
@@ -24,7 +26,7 @@ export interface SkinInfo {
 export const SKINS: Record<BoardSkin, SkinInfo> = {
   default: {
     title: 'Devbord',
-    description: 'El aspecto de siempre: oscuro y sobrio.',
+    description: 'El aspecto de siempre: sobrio, claro u oscuro.',
     base: 'dark',
     swatch: { bg: '#161618', column: '#1c1c1f', card: '#2a2a2e', accent: '#7d7aff' },
   },
@@ -42,26 +44,58 @@ export const SKINS: Record<BoardSkin, SkinInfo> = {
   },
 };
 
-const apply = (skin: BoardSkin) => {
+export const THEME_STORAGE_KEY = 'devbord:theme';
+
+const readMode = (): ThemeBase => {
+  try {
+    return localStorage.getItem(THEME_STORAGE_KEY) === 'light' ? 'light' : 'dark';
+  } catch {
+    return 'dark'; // storage blocked (private mode): the default look
+  }
+};
+
+/** Base actually drawn: seasonal skins keep their own, the default one follows the mode. */
+const baseOf = (skin: BoardSkin, mode: ThemeBase): ThemeBase =>
+  skin === 'default' ? mode : SKINS[skin].base;
+
+const apply = (skin: BoardSkin, mode: ThemeBase) => {
   const root = document.documentElement;
-  root.dataset.theme = SKINS[skin].base;
+  root.dataset.theme = baseOf(skin, mode);
   if (skin === 'default') delete root.dataset.skin;
   else root.dataset.skin = skin;
 };
 
 interface ThemeState {
   skin: BoardSkin;
-  /** Color base of the current skin (canvas views re-read their colors when it changes). */
+  /** The user's light/dark choice (applies outside seasonal skins). */
+  mode: ThemeBase;
+  /** Color base on screen now (canvas views re-read their colors when it changes). */
   resolved: ThemeBase;
   /** Dresses the page in a board's skin; "default" goes back to the app's look. */
   setSkin: (skin: BoardSkin) => void;
+  /** Flips light and dark (the switch in the top bar), and remembers it. */
+  toggleMode: () => void;
 }
 
-export const useThemeController = create<ThemeState>((set) => ({
-  skin: 'default',
-  resolved: 'dark',
-  setSkin: (skin) => {
-    apply(skin);
-    set({ skin, resolved: SKINS[skin].base });
-  },
-}));
+export const useThemeController = create<ThemeState>((set, get) => {
+  const mode = readMode();
+  return {
+    skin: 'default',
+    mode,
+    resolved: mode,
+    setSkin: (skin) => {
+      apply(skin, get().mode);
+      set({ skin, resolved: baseOf(skin, get().mode) });
+    },
+    toggleMode: () => {
+      const next: ThemeBase = get().mode === 'dark' ? 'light' : 'dark';
+      try {
+        localStorage.setItem(THEME_STORAGE_KEY, next);
+      } catch {
+        /* non-fatal: the choice just won't persist */
+      }
+      apply(get().skin, next);
+      set({ mode: next, resolved: baseOf(get().skin, next) });
+    },
+  };
+});
