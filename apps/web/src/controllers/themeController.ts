@@ -10,6 +10,7 @@
  */
 import { create } from 'zustand';
 import type { BoardSkin } from '@devbord/shared';
+import { duckFaviconUri, type DuckHat } from '../design';
 
 export type ThemeBase = 'light' | 'dark';
 
@@ -58,7 +59,24 @@ const readMode = (): ThemeBase => {
 const baseOf = (skin: BoardSkin, mode: ThemeBase): ThemeBase =>
   skin === 'default' ? mode : SKINS[skin].base;
 
+/** The favicon duck dresses up for the skin too (default: the plain duck). */
+const FAVICON_HAT: Record<BoardSkin, DuckHat | null> = {
+  default: null,
+  halloween: 'witch',
+  christmas: 'santa',
+};
+
+const setFavicon = (skin: BoardSkin) => {
+  const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+  if (!link) return;
+  // Remember the plain favicon (its URL depends on the deploy base) to go back to it.
+  const plain = (link.dataset.plain ??= link.href);
+  const hat = FAVICON_HAT[skin];
+  link.href = hat ? duckFaviconUri(hat) : plain;
+};
+
 const apply = (skin: BoardSkin, mode: ThemeBase) => {
+  setFavicon(skin);
   const root = document.documentElement;
   root.dataset.theme = baseOf(skin, mode);
   if (skin === 'default') delete root.dataset.skin;
