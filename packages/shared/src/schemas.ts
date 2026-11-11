@@ -54,6 +54,16 @@ export type LabelColor = z.infer<typeof LabelColorSchema>;
 /** How many recent column changes a card remembers. */
 export const MOVE_LOG_SIZE = 5;
 
+/** How many stops of a card's journey are kept (older ones drop off the start). */
+export const TRAIL_SIZE = 50;
+
+/** One stop of a card's journey: it entered `columnId` at `at`. */
+export const TrailStepSchema = z.object({
+  columnId: z.string().min(1),
+  at: z.iso.datetime(),
+});
+export type TrailStep = z.infer<typeof TrailStepSchema>;
+
 export const STORY_POINTS = [1, 2, 3, 5, 8, 13] as const;
 export const StoryPointsSchema = z.literal(STORY_POINTS);
 export type StoryPoints = z.infer<typeof StoryPointsSchema>;
@@ -81,6 +91,11 @@ export const CardSchema = z.object({
   movedAt: z.iso.datetime().nullable().default(null),
   /** Last cross-column moves (newest last, max 5). Drives the "hot" look. */
   moveLog: z.array(z.iso.datetime()).max(MOVE_LOG_SIZE).default([]),
+  /**
+   * The columns the card went through, oldest first (see cardTrail). Empty on
+   * cards from before it existed. Drives the board's "Recorrido" diagram.
+   */
+  trail: z.array(TrailStepSchema).max(TRAIL_SIZE).default([]),
   /** Board-scoped sequential number shown as "#12" (like a GitHub issue). Null on legacy cards. */
   number: z.number().int().positive().nullable().default(null),
   /** Iteration the card is planned for, e.g. "Sprint 1" (GitHub Projects "Iteration"). */

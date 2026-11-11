@@ -6,6 +6,7 @@ import { useBoard, useBoardController } from '../../controllers/boardController'
 import { BoardCanvas } from '../board/BoardCanvas';
 import { ExportMenu } from '../board/ExportMenu';
 import { ImportCardsModal } from '../board/ImportCardsModal';
+import { JourneyModal } from '../board/JourneyModal';
 import { InlineEdit } from '../board/InlineEdit';
 import { AppShell } from '../components/AppShell';
 import { BoardSwitcher } from '../components/BoardSwitcher';
@@ -26,6 +27,7 @@ export function BoardPage() {
   const navigate = useNavigate();
   const { renameBoard, setProfile, setSkin, deleteBoard } = useBoardController.getState();
   const [importing, setImporting] = useState(false);
+  const [journey, setJourney] = useState(false);
   const team = board?.mode === 'team';
   const sketchOpen = useSketch((s) => s.open && s.boardId === boardId);
 
@@ -107,6 +109,10 @@ export function BoardPage() {
             <PixelIcon name="sketch" />
             Pizarra
           </Button>
+          <Button size="sm" onClick={() => setJourney(true)}>
+            <PixelIcon name="route" />
+            Recorrido
+          </Button>
           <ExportMenu board={board} />
           <Button size="sm" onClick={() => setImporting(true)}>
             <PixelIcon name="import" />
@@ -143,6 +149,7 @@ export function BoardPage() {
         </Suspense>
       )}
       <ImportCardsModal open={importing} board={board} onClose={() => setImporting(false)} />
+      <JourneyModal open={journey} board={board} onClose={() => setJourney(false)} />
     </AppShell>
   );
 }

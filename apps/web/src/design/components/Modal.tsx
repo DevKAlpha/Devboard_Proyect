@@ -6,13 +6,15 @@ export interface ModalProps {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  /** "lg" for content that needs room (diagrams). */
+  size?: 'md' | 'lg';
 }
 
 /**
  * Modal built on the native <dialog> element: focus trapping, Esc to close
  * and top-layer stacking come from the browser, so no extra library is needed.
  */
-export function Modal({ open, title, onClose, children }: ModalProps) {
+export function Modal({ open, title, onClose, children, size = 'md' }: ModalProps) {
   const ref = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -35,7 +37,7 @@ export function Modal({ open, title, onClose, children }: ModalProps) {
       onClose={onClose}
       // A click on the dialog element itself is a click on the backdrop.
       onClick={(e) => e.target === e.currentTarget && onClose()}
-      className="m-auto w-[min(560px,calc(100vw-32px))] animate-pixel-pop rounded-2xl border border-line-soft bg-surface p-0 text-ink shadow-lift backdrop:bg-black/30 backdrop:backdrop-blur-sm"
+      className={`m-auto ${size === 'lg' ? 'w-[min(900px,calc(100vw-32px))]' : 'w-[min(560px,calc(100vw-32px))]'} animate-pixel-pop rounded-2xl border border-line-soft bg-surface p-0 text-ink shadow-lift backdrop:bg-black/30 backdrop:backdrop-blur-sm`}
     >
       {open && (
         <div className="flex flex-col gap-4 p-5">

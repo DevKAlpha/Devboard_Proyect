@@ -9,7 +9,7 @@
  * Unknown ids are a no-op (the board is returned unchanged). That keeps
  * stale UI events (e.g. a double click on a deleted card) harmless.
  */
-import { MOVE_LOG_SIZE } from './schemas';
+import { MOVE_LOG_SIZE, TRAIL_SIZE, type TrailStep } from './schemas';
 import type {
   Board,
   BoardMode,
@@ -96,6 +96,7 @@ export function createCard(title: string, patch: CardPatch = {}): Card {
     storyPoints: null,
     movedAt: null,
     moveLog: [],
+    trail: [],
     number: null,
     sprint: null,
     ...patch,
@@ -199,14 +200,36 @@ export function findCard(
   return null;
 }
 
+/**
+ * A card's journey, oldest stop first. Cards from before the trail existed (or
+ * built straight into a column, like template cards) get their known part: the
+ * column they are in now, since they entered it.
+ */
+export function cardTrail(card: Card, columnId: string): TrailStep[] {
+  return card.trail.length > 0 ? card.trail : [{ columnId, at: card.movedAt ?? card.createdAt }];
+}
+
+/** The card after entering `to` from `from`: a new stop at the end of its trail. */
+function enter(card: Card, fromColumnId: string, toColumnId: string, at: string): Card {
+  return {
+    ...card,
+    movedAt: at,
+    moveLog: [...card.moveLog, at].slice(-MOVE_LOG_SIZE),
+    trail: [...cardTrail(card, fromColumnId), { columnId: toColumnId, at }].slice(-TRAIL_SIZE),
+  };
+}
+
 export function addCard(board: Board, columnId: string, card: Card, index?: number): Board {
   if (!board.columns.some((c) => c.id === columnId)) return board;
+  // The first stop of the journey: where the card was created.
+  const placed: Card =
+    card.trail.length > 0 ? card : { ...card, trail: [{ columnId, at: card.createdAt }] };
   return touch(
     board,
     board.columns.map((c) => {
       if (c.id !== columnId) return c;
       const cards = [...c.cards];
-      cards.splice(clampIndex(index ?? cards.length, cards.length), 0, card);
+      cards.splice(clampIndex(index ?? cards.length, cards.length), 0, placed);
       return { ...c, cards };
     }),
   );
@@ -263,14 +286,7 @@ export function moveCard(board: Board, cardId: string, toColumnId: string, toInd
     const card =
       found.column.id === toColumnId
         ? found.card
-        : (() => {
-            const at = nowIso();
-            return {
-              ...found.card,
-              movedAt: at,
-              moveLog: [...found.card.moveLog, at].slice(-MOVE_LOG_SIZE),
-            };
-          })();
+        : enter(found.card, found.column.id, toColumnId, nowIso());
     cards.splice(clampIndex(toIndex, cards.length), 0, card);
     return { ...col, cards };
   });
@@ -299,8 +315,7 @@ export function moveCards(
     for (const card of col.cards) {
       if (!wanted.has(card.id)) keep.push(card);
       else if (col.id === toColumnId) moving.push(card);
-      else
-        moving.push({ ...card, movedAt: at, moveLog: [...card.moveLog, at].slice(-MOVE_LOG_SIZE) });
+      else moving.push(enter(card, col.id, toColumnId, at));
     }
     return keep.length === col.cards.length ? col : { ...col, cards: keep };
   });
@@ -363,6 +378,7 @@ export function copyCardsInto(
     // A copy starts fresh on the target board: no inherited "stale" or "hot" state.
     movedAt: null,
     moveLog: [],
+    trail: [{ columnId, at }],
     createdAt: at,
     updatedAt: at,
   }));

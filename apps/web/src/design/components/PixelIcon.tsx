@@ -299,6 +299,14 @@ const ICONS = {
   ],
   undo: UNDO,
   redo: UNDO.map(([x, y, w, h]) => [16 - x - w, y, w, h] as const),
+  /** A path between two stops: the board's journey diagram. */
+  route: [
+    [1, 10, 4, 4],
+    [5, 11, 4, 2],
+    [7, 5, 2, 6],
+    [9, 5, 3, 2],
+    [11, 2, 4, 4],
+  ],
   expand: [
     [2, 2, 5, 2],
     [2, 4, 2, 3],

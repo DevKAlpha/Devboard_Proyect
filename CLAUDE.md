@@ -65,6 +65,8 @@ docker/         Dockerfiles. docker-compose.yml en la raíz.
 - Accesibilidad: todo lo arrastrable también se opera con teclado (dnd-kit KeyboardSensor). Usar labels y foco visible.
 - Mobile-first.
 - Animaciones: usar los helpers de `design/motion.ts` (`animateIn/Out/Land/Flash/Shake`, `flip`). Solo `transform`/`opacity`/`clip-path` y `steps()`. **Todo efecto queda dentro de la caja de su elemento** (las listas hacen scroll y recortan): nada de escalar hacia fuera, brillos ni sombras difusas; para chispas o destellos usar `pixelBurst`/`animateFlash`, que dibujan en una capa recortada a la tarjeta. Sombras pixel duras (`shadow-pixel`, `shadow-lift`). Respetar `html[data-motion="lite"]` (solo hardware modesto; el ajuste "reducir movimiento" del SO no las apaga, decisión de producto): nada de bucles decorativos ni filtros en lite.
+- **Recorrido** (botón en el tablero): cada tarjeta guarda las columnas por las que pasa (`Card.trail`, últimas 50; `cardTrail` en shared rellena las antiguas). `views/board/journey.ts` calcula los movimientos (puro, con tests) y `JourneyModal` dibuja el diagrama pixel (adelante arriba, atrás abajo) y el recorrido de cada tarjeta.
+- **Favicon por tema**: `themeController` pone el pato con sombrero del tema (`duckFaviconUri` en `design/duck.ts`) y vuelve a `favicon.svg` en el tema por defecto.
 - Estados de tarjeta (telaraña, caliente, congelada): lógica pura en `views/board/cardMood.ts`, sprites en `MoodDecor.tsx`.
 
 ## Comandos
