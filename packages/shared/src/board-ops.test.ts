@@ -17,6 +17,7 @@ import {
   setColumnDescription,
   moveCards,
   setBoardSkin,
+  cardTrail,
 } from './board-ops';
 import { BoardSchema, CardSchema } from './schemas';
 
@@ -156,6 +157,28 @@ describe('copyCardsInto', () => {
     const { board } = seed();
     expect(copyCardsInto(board, 'nope', board, ['x'])).toBe(board);
     expect(copyCardsInto(board, board.columns[0]!.id, board, [])).toBe(board);
+  });
+});
+
+describe('card trail', () => {
+  it('starts where the card is created and adds a stop per column change', () => {
+    const { board, a, b } = seed();
+    const card = createCard('Viaje');
+    let next = addCard(board, a.id, card);
+    expect(findCard(next, card.id)!.card.trail.map((s) => s.columnId)).toEqual([a.id]);
+    next = moveCard(next, card.id, b.id, 0);
+    next = moveCard(next, card.id, b.id, 1); // reorder: no new stop
+    next = moveCards(next, [card.id], a.id, 0);
+    expect(findCard(next, card.id)!.card.trail.map((s) => s.columnId)).toEqual([a.id, b.id, a.id]);
+    expect(BoardSchema.safeParse(next).success).toBe(true);
+  });
+
+  it('gives legacy cards their known part and keeps it on the first move', () => {
+    const { board, a, b, c1 } = seed();
+    const legacy = { ...c1, trail: [] };
+    expect(cardTrail(legacy, a.id)).toEqual([{ columnId: a.id, at: c1.createdAt }]);
+    const moved = findCard(moveCard(board, c1.id, b.id, 0), c1.id)!.card;
+    expect(moved.trail.map((s) => s.columnId)).toEqual([a.id, b.id]);
   });
 });
 
