@@ -11,6 +11,8 @@ import {
 } from '@devbord/shared';
 import { Badge, Button, Field, Input, Modal, Select, Textarea, confirm, cx } from '../../design';
 import { CARD_TYPE_META, PRIORITY_META } from './cardMeta';
+import { CardCalendar } from '../connections/CardCalendar';
+import { CardLinks } from '../connections/CardLinks';
 
 export interface CardDetailModalProps {
   card: Card | null;
@@ -53,6 +55,7 @@ function CardForm({
     priority: card.priority,
     storyPoints: card.storyPoints,
     sprint: card.sprint,
+    links: card.links,
   });
   const set = (patch: CardPatch) => setDraft((d) => ({ ...d, ...patch }));
   const labelIds = draft.labelIds ?? [];
@@ -200,6 +203,17 @@ function CardForm({
           </Field>
         )}
       </div>
+
+      {draft.dueDate && (
+        <CardCalendar
+          cardId={card.id}
+          title={draft.title?.trim() || card.title}
+          date={draft.dueDate}
+          description={draft.description ?? ''}
+        />
+      )}
+
+      <CardLinks links={draft.links ?? []} onChange={(links) => set({ links })} />
 
       <footer className="mt-2 flex items-center justify-between gap-2">
         <Button

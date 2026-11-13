@@ -34,6 +34,10 @@ jobs:
       - run: npm run build -w @devbord/web
         env:
           VITE_BASE: /${{ github.event.repository.name }}/
+          # Repo variables (Settings > Secrets and variables > Actions > Variables).
+          # Empty is fine: the Conexiones panel shows the account as not set up.
+          VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
+          VITE_MS_CLIENT_ID: ${{ vars.VITE_MS_CLIENT_ID }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:

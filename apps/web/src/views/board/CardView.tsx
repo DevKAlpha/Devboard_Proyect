@@ -44,7 +44,8 @@ export function CardFace({
   const showPriority = features.priority && card.priority;
   const showPoints = features.agile && card.storyPoints !== null;
   const showSprint = features.agile && card.sprint;
-  const showMeta = showType || showPriority || showPoints || showSprint || due;
+  const showLinks = card.links.length > 0;
+  const showMeta = showType || showPriority || showPoints || showSprint || showLinks || due;
   // GitHub-style issue reference ("#12") for technical boards.
   const showRef = features.devVocabulary && card.number !== null;
 
@@ -106,6 +107,15 @@ export function CardFace({
             <span className="inline-flex h-5 items-center gap-1 rounded-full border border-line px-1.5 text-[11px] text-muted">
               <PixelIcon name="iteration" size={10} />
               {card.sprint}
+            </span>
+          )}
+          {showLinks && (
+            <span
+              className="inline-flex items-center gap-1 text-muted tabular-nums"
+              aria-label={`${card.links.length} archivos o enlaces`}
+            >
+              <PixelIcon name="link" size={12} />
+              {card.links.length}
             </span>
           )}
           {due && (
