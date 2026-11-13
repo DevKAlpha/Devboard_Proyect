@@ -19,7 +19,10 @@ COPY apps/web apps/web
 # Served from the domain root by default. Set VITE_API_URL to use apps/api.
 ARG VITE_BASE=/
 ARG VITE_API_URL=
-ENV VITE_BASE=$VITE_BASE VITE_API_URL=$VITE_API_URL
+ARG VITE_GOOGLE_CLIENT_ID=
+ARG VITE_MS_CLIENT_ID=
+ENV VITE_BASE=$VITE_BASE VITE_API_URL=$VITE_API_URL \
+    VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID VITE_MS_CLIENT_ID=$VITE_MS_CLIENT_ID
 RUN npm run build -w @devbord/web
 
 # ── Runtime stage ─────────────────────────────────────────────────────────────

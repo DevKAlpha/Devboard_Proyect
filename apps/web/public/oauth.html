@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="robots" content="noindex" />
+    <title>Devbord · Conectando…</title>
+    <style>
+      body {
+        margin: 0;
+        display: grid;
+        place-items: center;
+        min-height: 100vh;
+        background: #0e0e10;
+        color: #e8e8ea;
+        font: 15px -apple-system, system-ui, sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <p>Conectando con Devbord… puedes cerrar esta ventana.</p>
+    <script>
+      // Sign-in popups land here. Hand the URL (token or code) back to the app
+      // tab: the providers' pages cut window.opener, so a channel is used.
+      // The URL is wiped from history right away so the token is not kept.
+      (function () {
+        var url = location.href;
+        history.replaceState(null, '', location.pathname);
+        try {
+          var channel = new BroadcastChannel('devbord-oauth');
+          channel.postMessage(url);
+          channel.close();
+        } catch (e) {}
+        setTimeout(function () {
+          window.close();
+        }, 300);
+      })();
+    </script>
+  </body>
+</html>

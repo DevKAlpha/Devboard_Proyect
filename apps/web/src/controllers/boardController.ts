@@ -11,6 +11,7 @@ import { create } from 'zustand';
 import * as ops from '@devbord/shared';
 import type { Board, BoardSkin, CardPatch, NewBoardInput, Profile } from '@devbord/shared';
 import { boardRepository, type BoardRepository } from '../models/repositories';
+import { announceMove } from './connectionsController';
 
 type Status = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -149,9 +150,15 @@ export function createBoardController(repo: BoardRepository) {
       updateCard: (id, cardId, patch) => mutate(id, (b) => ops.updateCard(b, cardId, patch)),
       removeCard: (id, cardId) => mutate(id, (b) => ops.removeCard(b, cardId)),
       moveCard: (id, cardId, toColumnId, toIndex) =>
-        mutate(id, (b) => ops.moveCard(b, cardId, toColumnId, toIndex)),
+        mutate(id, (b) => {
+          announceMove(b, [cardId], toColumnId);
+          return ops.moveCard(b, cardId, toColumnId, toIndex);
+        }),
       moveCards: (id, cardIds, toColumnId, toIndex) =>
-        mutate(id, (b) => ops.moveCards(b, cardIds, toColumnId, toIndex)),
+        mutate(id, (b) => {
+          announceMove(b, cardIds, toColumnId);
+          return ops.moveCards(b, cardIds, toColumnId, toIndex);
+        }),
       importCards: ({ boardId, columnId, sourceBoardId, cardIds, move }) => {
         const source = get().boards.find((b) => b.id === sourceBoardId);
         if (!source || sourceBoardId === boardId) return;
