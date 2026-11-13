@@ -97,6 +97,7 @@ export function createCard(title: string, patch: CardPatch = {}): Card {
     movedAt: null,
     moveLog: [],
     trail: [],
+    links: [],
     number: null,
     sprint: null,
     ...patch,

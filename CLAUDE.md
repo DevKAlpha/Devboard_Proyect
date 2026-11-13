@@ -27,7 +27,7 @@ docker/         Dockerfiles. docker-compose.yml en la raíz.
 - `views/`: componentes React **presentacionales**. Nunca importan repositorios ni Dexie.
 - `design/`: tokens y componentes UI base (pixel + Apple).
 - `templates/`: plantillas de tablero por perfil.
-- `integrations/`: contratos de proveedores externos (GitHub, Google, Microsoft).
+- `integrations/`: conexiones con suites de trabajo (Google, Microsoft, Slack). Cada conexión declara **herramientas con forma MCP** (`connections.ts`: nombre, descripción, JSON Schema, `run`), para que un agente o un servidor MCP en `apps/api` las use después. Las cuentas de Google y Microsoft usan OAuth en popup (`accounts.ts`: token para Google, PKCE para Microsoft; vuelve por `public/oauth.html`). El token va en `sessionStorage`, nunca en el tablero. Los Client ID salen de `VITE_GOOGLE_CLIENT_ID` y `VITE_MS_CLIENT_ID` (guía en `docs/integraciones.md`). Slack usa un webhook por tablero, guardado solo en `localStorage`. Los enlaces adjuntos (`Card.links`, solo http(s)) se reconocen por URL sin conectar nada. El estado vive en `controllers/connectionsController.ts` y las vistas en `views/connections/`.
 - `views/cursor/`: cursor pixel (sprites, halo, pistas y chispas). Su estado vive en `controllers/cursorController.ts`. Se monta siempre con puntero fino: no se puede apagar (es parte de la marca).
 - `models/collab/`: tiempo real de los tableros de **equipo**. `CollabTransport` es la interfaz; hoy usa `P2PTransport` (WebRTC con Trystero, sin servidor, funciona en Pages). El tablero vive en un CRDT de Yjs (`yBoard.ts`) que fusiona ediciones simultáneas. Para el servidor propio: implementar un transporte WebSocket en `apps/api` y elegirlo en `models/collab/index.ts` (`VITE_COLLAB_URL`). Yjs y Trystero se cargan solo al abrir un tablero de equipo.
 - **Apariencia**: modo **oscuro por defecto** con botón claro/oscuro en la barra superior (`themeController.toggleMode`, guarda en `devbord:theme`; index.html lo aplica antes de pintar). El botón se oculta en temas de temporada. Los tableros pueden llevar un **tema de temporada** (`Board.skin`: halloween, christmas) con aspecto fijo, sin claro/oscuro: `controllers/themeController` pone `data-skin`, `design/skins.css` cambia tokens, columnas (`.kb-col`), tarjetas (`.kb-card`) y cursor, `views/board/SkinBackdrop` dibuja el fondo y los sprites son rejillas de texto en `design/skinSprites.ts`. El botón de la barra superior reduce animaciones (`controllers/motionController`, guarda la elección).
@@ -50,7 +50,8 @@ docker/         Dockerfiles. docker-compose.yml en la raíz.
   | `area/boards` | `views/pages`, `views/components`, `templates`, `models/boardFile`: inicio, onboarding, plantillas, importar/exportar |
   | `area/collab` | `models/collab`, `views/team`, `controllers/collab*`, `controllers/identity*`: tableros de equipo en tiempo real |
   | `area/sketch` | `views/sketch`, `models/sketch`, `controllers/sketchController`: pizarra y notas adhesivas |
-  | `area/api` | `apps/api` |
+  | `area/integrations` | `integrations/`, `controllers/connections*`, `views/connections`: Google, Microsoft, Slack |
+| `area/api` | `apps/api` |
   | `area/infra` | Docker, CI/CD, configuración, documentación |
 - Un cambio que toca varias áreas va en la rama del área principal y se menciona en el commit.
 - Flujo: `area/*` (push directo) → merge `--no-ff` a **`develop`** (integración; el CI corre en cada push) → **`main` = producción**.

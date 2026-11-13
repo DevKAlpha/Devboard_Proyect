@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { CardLinkSchema } from './schemas';
 import {
   addCard,
   addColumn,
@@ -249,5 +250,15 @@ describe('GitHub-style numbering and columns', () => {
     const { board, a } = seed();
     expect(moveCards(board, [], a.id, 0)).toBe(board);
     expect(moveCards(board, ['x'], 'nope', 0)).toBe(board);
+  });
+});
+
+describe('card links', () => {
+  it('accept only http(s) URLs and default to none', () => {
+    const ok = { url: 'https://docs.google.com/document/d/abc/edit', title: 'Acta' };
+    expect(CardLinkSchema.safeParse(ok).success).toBe(true);
+    expect(CardLinkSchema.safeParse({ ...ok, url: 'javascript:alert(1)' }).success).toBe(false);
+    const legacy = { ...createCard('Vieja'), links: undefined };
+    expect(CardSchema.parse(legacy).links).toEqual([]);
   });
 });
