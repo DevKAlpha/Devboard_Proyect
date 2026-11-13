@@ -68,6 +68,20 @@ export const STORY_POINTS = [1, 2, 3, 5, 8, 13] as const;
 export const StoryPointsSchema = z.literal(STORY_POINTS);
 export type StoryPoints = z.infer<typeof StoryPointsSchema>;
 
+/** How many files or links a card can hold. */
+export const CARD_LINKS_SIZE = 20;
+
+/**
+ * A file or page attached to a card by its URL (a Google Doc, an Excel in
+ * OneDrive, a Slack thread...). Only http(s): links come from teammates too,
+ * and other schemes (javascript:) would run code when clicked.
+ */
+export const CardLinkSchema = z.object({
+  url: z.httpUrl().max(2_000),
+  title: z.string().trim().min(1).max(200),
+});
+export type CardLink = z.infer<typeof CardLinkSchema>;
+
 export const LabelSchema = z.object({
   id: z.string().min(1),
   name: z.string().trim().min(1).max(30),
@@ -96,6 +110,8 @@ export const CardSchema = z.object({
    * cards from before it existed. Drives the board's "Recorrido" diagram.
    */
   trail: z.array(TrailStepSchema).max(TRAIL_SIZE).default([]),
+  /** Files and pages attached to the card (see CardLinkSchema). */
+  links: z.array(CardLinkSchema).max(CARD_LINKS_SIZE).default([]),
   /** Board-scoped sequential number shown as "#12" (like a GitHub issue). Null on legacy cards. */
   number: z.number().int().positive().nullable().default(null),
   /** Iteration the card is planned for, e.g. "Sprint 1" (GitHub Projects "Iteration"). */
