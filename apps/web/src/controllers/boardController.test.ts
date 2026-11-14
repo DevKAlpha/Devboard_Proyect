@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { findCard } from '@devbord/shared';
+import {
+  BoardSchema,
+  addCard,
+  createBoard,
+  createCard,
+  findCard,
+  type GithubOp,
+} from '@devbord/shared';
 import { IndexedDbBoardRepository } from '../models/repositories';
-import { createBoardController } from './boardController';
+import { createBoardController, setGithubSink } from './boardController';
 
 let n = 0;
 const setup = () => {
@@ -94,5 +101,34 @@ describe('boardController.importCards', () => {
     });
     expect(board(target.id).columns[0]!.cards).toHaveLength(1);
     expect(board(source.id).columns[0]!.cards).toHaveLength(0);
+  });
+});
+
+describe('boardController on boards linked to GitHub', () => {
+  it('sends GitHub only what changed, and blocks column edits', async () => {
+    const { store } = setup();
+    const sent: GithubOp[] = [];
+    setGithubSink((_board, ops) => sent.push(...ops));
+    const base = createBoard({ name: 'P', profile: 'technical', columnTitles: ['Todo', 'Done'] });
+    const [todo, done] = base.columns.map((c) => c.id) as [string, string];
+    const a = createCard('A');
+    const b = createCard('B');
+    const linked = {
+      ...addCard(addCard(base, todo, a), done, b),
+      github: { projectId: 'PVT', number: 1, owner: 'o', url: 'https://github.com/o' },
+    };
+    const board = await store.getState().addBoard(BoardSchema.parse(linked));
+    const s = store.getState();
+
+    s.updateCard(board.id, a.id, { title: 'A', description: 'nueva', links: [] });
+    s.moveCard(board.id, a.id, done, 1);
+    s.addColumn(board.id, 'Nueva');
+    setGithubSink(null);
+
+    expect(sent).toEqual([
+      { type: 'updateCard', cardId: a.id, patch: { description: 'nueva' } },
+      { type: 'moveCard', cardId: a.id, columnId: done, afterCardId: b.id },
+    ]);
+    expect(store.getState().boards[0]!.columns).toHaveLength(2);
   });
 });

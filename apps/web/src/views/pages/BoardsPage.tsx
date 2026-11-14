@@ -5,6 +5,7 @@ import { Badge, Button, PixelIcon } from '../../design';
 import { useBoardController } from '../../controllers/boardController';
 import { AppShell } from '../components/AppShell';
 import { NewBoardModal } from '../components/NewBoardModal';
+import { GithubProjectsModal } from '../connections/GithubProjectsModal';
 import { BathCaption, BathScene } from '../components/BathScene';
 import { SKINS } from '../../controllers/themeController';
 import { BoardFileError, parseBoardFile } from '../../models/boardFile';
@@ -15,6 +16,7 @@ const updatedFormat = new Intl.DateTimeFormat('es', { day: 'numeric', month: 'sh
 export function BoardsPage() {
   const boards = useBoardController((s) => s.boards);
   const [creating, setCreating] = useState(false);
+  const [fromGithub, setFromGithub] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
@@ -29,7 +31,11 @@ export function BoardsPage() {
           <p className="mt-1 text-muted">Todo lo que tienes entre manos, en un vistazo.</p>
           <BathCaption />
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => setFromGithub(true)}>
+            <PixelIcon name="issue" />
+            Conectar Project de GitHub
+          </Button>
           <Button onClick={() => fileRef.current?.click()}>
             <PixelIcon name="upload" />
             Importar JSON
@@ -106,6 +112,7 @@ export function BoardsPage() {
         onClose={() => setCreating(false)}
         onCreated={(id) => navigate(`/b/${id}`)}
       />
+      <GithubProjectsModal open={fromGithub} onClose={() => setFromGithub(false)} />
     </AppShell>
   );
 }

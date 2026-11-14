@@ -4,6 +4,7 @@ import {
   PrioritySchema,
   STORY_POINTS,
   StoryPointsSchema,
+  type Board,
   type Card,
   type CardPatch,
   type Label,
@@ -13,6 +14,7 @@ import { Badge, Button, Field, Input, Modal, Select, Textarea, confirm, cx } fro
 import { CARD_TYPE_META, PRIORITY_META } from './cardMeta';
 import { CardCalendar } from '../connections/CardCalendar';
 import { CardLinks } from '../connections/CardLinks';
+import { GithubCardPanel } from '../connections/GithubCardPanel';
 
 export interface CardDetailModalProps {
   card: Card | null;
@@ -22,6 +24,8 @@ export interface CardDetailModalProps {
   onClose: () => void;
   onSave: (cardId: string, patch: CardPatch) => void;
   onDelete: (cardId: string) => void;
+  /** The board, when it mirrors a GitHub Project: adds the GitHub panel and field rules. */
+  board?: Board;
 }
 
 /**
@@ -45,7 +49,12 @@ function CardForm({
   onClose,
   onSave,
   onDelete,
+  board,
 }: Omit<CardDetailModalProps, 'card'> & { card: Card }) {
+  const link = board?.github ?? null;
+  /** On linked boards a field only exists if the Project has it. */
+  const missing = (has: boolean) =>
+    link && !has ? 'Añade este campo al Project en GitHub' : undefined;
   const [draft, setDraft] = useState<CardPatch>({
     title: card.title,
     description: card.description,
@@ -132,6 +141,8 @@ function CardForm({
           <Input
             id="card-due"
             type="date"
+            disabled={Boolean(missing(link?.fields.dueDate ?? true))}
+            title={missing(link?.fields.dueDate ?? true)}
             value={draft.dueDate ?? ''}
             onChange={(e) => set({ dueDate: e.target.value || null })}
           />
@@ -155,6 +166,8 @@ function CardForm({
           <Field label="Prioridad" htmlFor="card-priority">
             <Select
               id="card-priority"
+              disabled={Boolean(missing(link?.fields.priority ?? true))}
+              title={missing(link?.fields.priority ?? true)}
               value={draft.priority ?? ''}
               onChange={(e) =>
                 set({ priority: e.target.value ? PrioritySchema.parse(e.target.value) : null })
@@ -171,19 +184,42 @@ function CardForm({
         )}
         {features.agile && (
           <Field label="Sprint" htmlFor="card-sprint">
-            <Input
-              id="card-sprint"
-              maxLength={30}
-              placeholder="Ej. Sprint 1"
-              value={draft.sprint ?? ''}
-              onChange={(e) => set({ sprint: e.target.value.trim() ? e.target.value : null })}
-            />
+            {link ? (
+              // GitHub: the Project's iterations.
+              <Select
+                id="card-sprint"
+                disabled={!link.fields.iteration}
+                title={missing(link.fields.iteration)}
+                value={draft.sprint ?? ''}
+                onChange={(e) => set({ sprint: e.target.value || null })}
+              >
+                <option value="">Sin sprint</option>
+                {draft.sprint && !link.iterations.some((i) => i.title === draft.sprint) && (
+                  <option value={draft.sprint}>{draft.sprint}</option>
+                )}
+                {link.iterations.map((i) => (
+                  <option key={i.id} value={i.title}>
+                    {i.title}
+                  </option>
+                ))}
+              </Select>
+            ) : (
+              <Input
+                id="card-sprint"
+                maxLength={30}
+                placeholder="Ej. Sprint 1"
+                value={draft.sprint ?? ''}
+                onChange={(e) => set({ sprint: e.target.value.trim() ? e.target.value : null })}
+              />
+            )}
           </Field>
         )}
         {features.agile && (
           <Field label="Story points" htmlFor="card-points">
             <Select
               id="card-points"
+              disabled={Boolean(missing(link?.fields.estimate ?? true))}
+              title={missing(link?.fields.estimate ?? true)}
               value={draft.storyPoints ?? ''}
               onChange={(e) =>
                 set({
@@ -212,6 +248,8 @@ function CardForm({
           description={draft.description ?? ''}
         />
       )}
+
+      {board?.github && <GithubCardPanel board={board} card={card} />}
 
       <CardLinks links={draft.links ?? []} onChange={(links) => set({ links })} />
 

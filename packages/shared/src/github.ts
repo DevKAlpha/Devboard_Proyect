@@ -9,6 +9,7 @@
  * This file only depends on zod, so schemas.ts can import it without cycles.
  */
 import { z } from 'zod';
+import type { Card } from './schemas';
 
 /** Column that holds the Project items with no Status yet (Zenhub's "New Issues"). */
 export const NO_STATUS_COLUMN = 'none';
@@ -96,3 +97,28 @@ export const CardGithubSchema = z.object({
   pullRequests: z.array(PullRequestRefSchema).default([]),
 });
 export type CardGithub = z.infer<typeof CardGithubSchema>;
+
+/** Card fields a GitHub Project holds (the rest, like links and type, stay in Devbord). */
+export const GITHUB_CARD_FIELDS = [
+  'title',
+  'description',
+  'labelIds',
+  'storyPoints',
+  'sprint',
+  'dueDate',
+  'priority',
+] as const;
+export type GithubCardPatch = Partial<Pick<Card, (typeof GITHUB_CARD_FIELDS)[number]>>;
+
+/**
+ * A board intent sent to the API (POST /api/github/projects/:id/ops), which
+ * writes it to GitHub. The API validates the same shape with zod.
+ */
+export type GithubOp =
+  | { type: 'createCard'; columnId: string; title: string; description?: string }
+  | { type: 'updateCard'; cardId: string; patch: GithubCardPatch }
+  | { type: 'moveCard'; cardId: string; columnId: string; afterCardId: string | null }
+  | { type: 'removeCard'; cardId: string }
+  | { type: 'setAssignees'; cardId: string; logins: string[] }
+  | { type: 'setParent'; cardId: string; parentCardId: string | null }
+  | { type: 'renameBoard'; name: string };

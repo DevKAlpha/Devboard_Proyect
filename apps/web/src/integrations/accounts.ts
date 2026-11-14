@@ -92,7 +92,8 @@ export const redirectUri = () =>
 
 const CHANNEL = 'devbord-oauth';
 
-const randomString = (bytes = 32) => base64url(crypto.getRandomValues(new Uint8Array(bytes)));
+export const randomString = (bytes = 32) =>
+  base64url(crypto.getRandomValues(new Uint8Array(bytes)));
 
 function base64url(bytes: Uint8Array) {
   let s = '';
@@ -101,7 +102,7 @@ function base64url(bytes: Uint8Array) {
 }
 
 /** Opens the sign-in popup and resolves with the parameters it came back with. */
-function popupSignIn(authUrl: string, state: string): Promise<URLSearchParams> {
+export function popupSignIn(authUrl: string, state: string): Promise<URLSearchParams> {
   return new Promise((resolve, reject) => {
     const popup = window.open(authUrl, 'devbord-oauth', 'popup,width=520,height=680');
     if (!popup) {

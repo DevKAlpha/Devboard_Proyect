@@ -8,6 +8,8 @@ import { ExportMenu } from '../board/ExportMenu';
 import { ImportCardsModal } from '../board/ImportCardsModal';
 import { JourneyModal } from '../board/JourneyModal';
 import { ConnectionsModal } from '../connections/ConnectionsModal';
+import { GithubBadge } from '../connections/GithubBadge';
+import { useGithub } from '../../controllers/githubController';
 import { InlineEdit } from '../board/InlineEdit';
 import { AppShell } from '../components/AppShell';
 import { BoardSwitcher } from '../components/BoardSwitcher';
@@ -41,6 +43,13 @@ export function BoardPage() {
     return () => useCollab.getState().close();
   }, [team, boardId]);
 
+  // Boards linked to a GitHub Project stay in sync while they are on screen.
+  const linked = Boolean(board?.github);
+  useEffect(() => {
+    if (!linked || !boardId) return;
+    return useGithub.getState().watch(boardId);
+  }, [linked, boardId]);
+
   // The board's skin dresses the whole page while it is open; leaving restores the app look.
   const skin = board?.skin ?? 'default';
   useEffect(() => useThemeController.getState().setSkin(skin), [skin]);
@@ -68,6 +77,7 @@ export function BoardPage() {
             <span className="shrink-0 rounded-full bg-surface-3 px-2 py-0.5 text-xs text-muted tabular-nums">
               {cardCount}
             </span>
+            {board.github && <GithubBadge link={board.github} />}
           </div>
         </div>
 
@@ -120,10 +130,13 @@ export function BoardPage() {
             Conexiones
           </Button>
           <ExportMenu board={board} />
-          <Button size="sm" onClick={() => setImporting(true)}>
-            <PixelIcon name="import" />
-            Traer historias
-          </Button>
+          {/* Linked boards get their cards from GitHub, not from other boards. */}
+          {!board.github && (
+            <Button size="sm" onClick={() => setImporting(true)}>
+              <PixelIcon name="import" />
+              Traer historias
+            </Button>
+          )}
           <IconButton
             icon="trash"
             label="Eliminar tablero"
@@ -131,7 +144,9 @@ export function BoardPage() {
               const ok = await confirm(
                 team
                   ? `¿Salir del tablero de equipo "${board.name}"? Se borra solo de este navegador; tu equipo lo conserva.`
-                  : `¿Eliminar el tablero "${board.name}"? No se puede deshacer.`,
+                  : board.github
+                    ? `¿Quitar "${board.name}" de Devbord? El Project y sus issues siguen en GitHub.`
+                    : `¿Eliminar el tablero "${board.name}"? No se puede deshacer.`,
                 { confirmLabel: 'Eliminar', danger: true },
               );
               if (!ok) return;
