@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { BoardSchema } from '@devbord/shared';
 import {
   TEMPLATES,
+  NETWORK_CHANGE_TEMPLATE,
   USER_STORY_TEMPLATE,
   buildBoardFromTemplate,
   getTemplate,
@@ -18,19 +19,30 @@ describe('templates', () => {
   });
 
   it('resolves label names to label ids', () => {
-    const board = buildBoardFromTemplate(TEMPLATES.find((t) => t.id === 'dev-sprint')!);
+    const board = buildBoardFromTemplate(TEMPLATES.find((t) => t.id === 'network')!);
     const ids = new Set(board.labels.map((l) => l.id));
     for (const card of board.columns.flatMap((c) => c.cards)) {
       card.labelIds.forEach((id) => expect(ids.has(id)).toBe(true));
     }
   });
 
-  it('seasonal templates start the board with their skin, for every profile', () => {
-    for (const id of ['halloween', 'christmas'] as const) {
-      expect(buildBoardFromTemplate(getTemplate(id)!).skin).toBe(id);
-      expect(templatesFor('technical').some((t) => t.id === id)).toBe(true);
-    }
+  it('offers technical boards Scrum, incidents, networks and blank; the look is a separate choice', () => {
+    expect(templatesFor('technical').map((t) => t.id)).toEqual([
+      'scrum',
+      'bug-tracker',
+      'network',
+      'blank',
+    ]);
     expect(buildBoardFromTemplate(getTemplate('scrum')!).skin).toBe('default');
+    expect(buildBoardFromTemplate(getTemplate('network')!, { skin: 'halloween' }).skin).toBe(
+      'halloween',
+    );
+  });
+
+  it('network cards start from the change request template', () => {
+    const board = buildBoardFromTemplate(getTemplate('network')!);
+    expect(board.cardTemplate).toBe(NETWORK_CHANGE_TEMPLATE);
+    expect(board.columns.find((c) => c.title === 'Implementación')!.wipLimit).toBe(2);
   });
 
   it('offers the blank template to every profile', () => {

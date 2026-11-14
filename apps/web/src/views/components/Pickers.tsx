@@ -176,13 +176,7 @@ export function TemplatePicker({
           onSelect={() => onChange(t.id)}
           title={t.name}
           description={t.description}
-          preview={
-            t.skin ? (
-              <SkinPreview skin={t.skin} className="mb-1 h-6" />
-            ) : (
-              <ColumnsPreview count={t.columns.length} />
-            )
-          }
+          preview={<ColumnsPreview count={t.columns.length} />}
         />
       ))}
     </div>

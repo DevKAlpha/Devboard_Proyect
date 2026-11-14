@@ -12,7 +12,10 @@ export interface NewBoardModalProps {
   onCreated: (boardId: string) => void;
 }
 
-/** Board creation: personal or team, profile, template, look and optional name. Sensible defaults everywhere. */
+/**
+ * Board creation: personal or team, profile, template, then the look and the
+ * name (required) at the bottom. Sensible defaults everywhere else.
+ */
 export function NewBoardModal({ open, onClose, onCreated }: NewBoardModalProps) {
   return (
     <Modal open={open} title="Nuevo tablero" onClose={onClose}>
@@ -30,11 +33,7 @@ function NewBoardForm({ onClose, onCreated }: Omit<NewBoardModalProps, 'open'>) 
   const [name, setName] = useState('');
   const [mode, setMode] = useState<BoardMode>('personal');
   const [skin, setSkin] = useState<BoardSkin>('default');
-  // A seasonal template brings its look; it can still be changed below.
-  const pickTemplate = (id: string) => {
-    setTemplateId(id);
-    setSkin(getTemplate(id)?.skin ?? 'default');
-  };
+  const pickTemplate = setTemplateId;
 
   const changeProfile = (p: Profile) => {
     setProfile(p);
@@ -47,7 +46,7 @@ function NewBoardForm({ onClose, onCreated }: Omit<NewBoardModalProps, 'open'>) 
       className="flex flex-col gap-5"
       onSubmit={async (e) => {
         e.preventDefault();
-        if (!template) return;
+        if (!template || !name.trim()) return;
         const board = await addBoard(
           buildBoardFromTemplate(template, { name, profile, mode, skin }),
         );
@@ -69,18 +68,19 @@ function NewBoardForm({ onClose, onCreated }: Omit<NewBoardModalProps, 'open'>) 
       />
       <h3 className="-mb-3 text-xs font-semibold tracking-wide text-muted uppercase">Tema</h3>
       <SkinPicker value={skin} onChange={setSkin} />
-      <Field label="Nombre (opcional)" htmlFor="board-name">
+      <Field label="Nombre" htmlFor="board-name">
         <Input
           id="board-name"
+          required
           maxLength={80}
-          placeholder={template?.name}
+          placeholder={`Ej. ${template?.name ?? 'Mi tablero'}`}
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
       </Field>
       <div className="flex justify-end gap-2">
         <Button onClick={onClose}>Cancelar</Button>
-        <Button type="submit" variant="primary">
+        <Button type="submit" variant="primary" disabled={!name.trim()}>
           Crear tablero
         </Button>
       </div>
