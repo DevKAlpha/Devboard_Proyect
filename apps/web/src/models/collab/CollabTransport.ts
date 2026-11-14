@@ -22,6 +22,8 @@ export interface Presence {
   editingNote?: string | null;
   /** Lobby only: a person or an agent (AI helper, integration). Absent means person. */
   kind?: 'user' | 'agent';
+  /** Lobby only: theme of the person's last board (their duck's costume). Nothing else of it. */
+  skin?: string;
 }
 
 export interface CollabChannel {

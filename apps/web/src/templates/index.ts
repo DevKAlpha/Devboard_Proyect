@@ -30,8 +30,6 @@ export interface BoardTemplate {
   labels: { name: string; color: LabelColor }[];
   /** Description pre-filled in every new card of the board. */
   cardTemplate?: string;
-  /** Seasonal look the board starts with (design/skins.css). Offered to every profile. */
-  skin?: BoardSkin;
   /** `column` is an index into `columns`; `labels` are label names. */
   cards: { column: number; title: string; labels?: string[]; patch?: CardPatch }[];
 }
@@ -73,6 +71,55 @@ ${s.details.map((d) => `* ${d}`).join('\n')}
 \`\`\`gherkin
 ${s.gherkin.join('\n')}
 \`\`\``;
+
+/**
+ * Network change request (RFC), the usual form of network change management:
+ * what changes and where, its impact, the step-by-step plan (MOP), how to
+ * undo it and how to prove it worked.
+ */
+export const NETWORK_CHANGE_TEMPLATE = `**Tipo de cambio:** Estándar / Normal / Emergencia
+**Equipos afectados:** [hostname, IP, sitio]
+**Impacto:** [servicios, usuarios, VLANs o enlaces afectados]
+
+### Plan de implementación (MOP)
+1. Respaldar la configuración actual
+2. [paso o comando]
+
+### Plan de rollback
+1. [cómo volver al estado anterior]
+
+### Verificación
+- [ ] ping / traceroute a [destino]
+- [ ] show ip route / show interfaces [interfaz]
+- [ ] Monitoreo sin alarmas durante 30 min
+
+### Ventana de mantenimiento
+[fecha, hora y duración]`;
+
+/** Builds a filled-in network change in the same format as the template. */
+const networkChange = (c: {
+  kind: string;
+  devices: string;
+  impact: string;
+  steps: string[];
+  rollback: string[];
+  checks: string[];
+}) => `**Tipo de cambio:** ${c.kind}
+**Equipos afectados:** ${c.devices}
+**Impacto:** ${c.impact}
+
+### Plan de implementación (MOP)
+1. Respaldar la configuración actual
+${c.steps.map((s, i) => `${i + 2}. ${s}`).join('\n')}
+
+### Plan de rollback
+${c.rollback.map((s, i) => `${i + 1}. ${s}`).join('\n')}
+
+### Verificación
+${c.checks.map((s) => `- [ ] ${s}`).join('\n')}
+
+### Ventana de mantenimiento
+Por definir`;
 
 /**
  * Column structure of a GitHub Projects board (agile-planning reference repos):
@@ -236,47 +283,6 @@ Principios ágiles y Lean aplicados:
     ],
   },
   {
-    id: 'dev-sprint',
-    profile: 'technical',
-    name: 'Sprint de desarrollo',
-    description: 'Tablero estilo GitHub Projects: del issue nuevo a Done, con bugs y features.',
-    ...GITHUB_BOARD,
-    labels: [
-      { name: 'frontend', color: 'blue' },
-      { name: 'backend', color: 'purple' },
-      { name: 'infra', color: 'orange' },
-    ],
-    cards: [
-      {
-        column: 2,
-        title: 'Conectar repositorio de GitHub',
-        labels: ['infra'],
-        patch: { type: 'feature', priority: 'medium' },
-      },
-      {
-        column: 3,
-        title: 'Arrastra esta tarjeta a "In progress"',
-        labels: ['frontend'],
-        patch: { type: 'task', priority: 'low', sprint: 'Sprint 1' },
-      },
-      {
-        column: 4,
-        title: 'Corregir login en Safari',
-        labels: ['frontend'],
-        patch: { type: 'bug', priority: 'high', sprint: 'Sprint 1' },
-      },
-      {
-        column: 5,
-        title: 'Abre esta tarjeta para ver sus detalles',
-        labels: ['backend'],
-        patch: {
-          sprint: 'Sprint 1',
-          description: 'Aquí puedes escribir criterios de aceptación, notas o enlaces.',
-        },
-      },
-    ],
-  },
-  {
     id: 'bug-tracker',
     profile: 'technical',
     name: 'Incidencias y DevOps',
@@ -299,6 +305,122 @@ Principios ágiles y Lean aplicados:
         title: 'Pipeline lento en tests e2e',
         labels: ['CI/CD'],
         patch: { type: 'task', priority: 'medium' },
+      },
+    ],
+  },
+  {
+    // Network engineering: change management (RFC → CAB → maintenance window →
+    // implementation → verification), plus incidents, as NOC/NetOps teams work.
+    id: 'network',
+    profile: 'technical',
+    name: 'Redes',
+    description:
+      'Cambios de red con plan de rollback, aprobación y ventana de mantenimiento. Routing, VLANs, firewall, VPN y Wi-Fi.',
+    columns: [
+      'Solicitudes',
+      'Diseño',
+      'Aprobación (CAB)',
+      'Ventana programada',
+      'Implementación',
+      'Verificación',
+      'Cerrado',
+    ],
+    columnDescriptions: [
+      'Cambios e incidencias recién llegados',
+      'Topología, direccionamiento y plan (MOP)',
+      'Esperando el visto bueno del comité de cambios',
+      'Aprobado, con fecha y hora de mantenimiento',
+      'Aplicándose en los equipos ahora',
+      'Pruebas y monitoreo después del cambio',
+      'Verificado y documentado',
+    ],
+    // Few changes in the network at once: every one is a risk of outage.
+    wipLimits: [null, 4, null, null, 2, 3, null],
+    labels: [
+      { name: 'Routing', color: 'blue' },
+      { name: 'Switching/VLAN', color: 'green' },
+      { name: 'Firewall', color: 'red' },
+      { name: 'VPN', color: 'purple' },
+      { name: 'Wi-Fi', color: 'yellow' },
+      { name: 'Monitoreo', color: 'orange' },
+    ],
+    cardTemplate: NETWORK_CHANGE_TEMPLATE,
+    cards: [
+      {
+        column: 0,
+        title: 'Cómo usar este tablero',
+        patch: {
+          description: `Flujo de gestión de cambios de red:
+* **Solicitudes**: cada cambio o incidencia entra como tarjeta. Las incidencias son tipo *bug*.
+* **Diseño**: completa la plantilla (equipos, impacto, MOP, rollback y pruebas).
+* **Aprobación (CAB)**: sin plan de rollback no se aprueba.
+* **Ventana programada**: pon la fecha de la ventana en la tarjeta.
+* **Implementación**: límite WIP 2. Pocos cambios a la vez = menos riesgo de caída.
+* **Verificación**: ejecuta las pruebas y deja el monitoreo mirando antes de cerrar.
+
+Consejos:
+* Respalda la configuración (running-config) antes de tocar un equipo.
+* Usa las etiquetas para saber qué capa afecta cada cambio.
+* Story points = riesgo y esfuerzo del cambio.`,
+        },
+      },
+      {
+        column: 0,
+        title: 'Pérdida de paquetes en el enlace WAN de la sede Norte',
+        labels: ['Monitoreo', 'Routing'],
+        patch: { type: 'bug', priority: 'high' },
+      },
+      {
+        column: 1,
+        title: 'Nueva VLAN 30 para la red de invitados',
+        labels: ['Switching/VLAN', 'Wi-Fi'],
+        patch: {
+          type: 'feature',
+          priority: 'medium',
+          storyPoints: 3,
+          description: networkChange({
+            kind: 'Normal',
+            devices: 'SW-CORE-01, SW-ACC-03/04, WLC-01',
+            impact: 'Ninguno para usuarios actuales; nueva red aislada para invitados',
+            steps: [
+              'Crear VLAN 30 (INVITADOS) en el core y en los switches de acceso',
+              'Configurar la SVI 10.30.0.1/24 con DHCP relay',
+              'Añadir la VLAN a los troncales hacia los AP',
+              'Crear el SSID "Invitados" mapeado a la VLAN 30 en la controladora',
+              'ACL: la VLAN 30 solo sale a Internet, sin acceso a redes internas',
+            ],
+            rollback: ['Borrar el SSID y la VLAN 30', 'Restaurar running-config del respaldo'],
+            checks: [
+              'Un cliente en "Invitados" recibe IP 10.30.0.x',
+              'ping 8.8.8.8 desde la VLAN 30: OK',
+              'ping a 10.10.0.0/16 desde la VLAN 30: bloqueado',
+            ],
+          }),
+        },
+      },
+      {
+        column: 2,
+        title: 'Abrir 443/TCP hacia el nuevo servidor web en la DMZ',
+        labels: ['Firewall'],
+        patch: { type: 'task', priority: 'medium', storyPoints: 2 },
+      },
+      {
+        column: 3,
+        title: 'Actualizar el sistema operativo del router de borde',
+        labels: ['Routing'],
+        patch: { type: 'task', priority: 'high', storyPoints: 5, sprint: 'Ventana sábado' },
+      },
+      {
+        column: 4,
+        title: 'Túnel IPsec con la sucursal Sur',
+        labels: ['VPN'],
+        patch: { type: 'feature', priority: 'medium', storyPoints: 5 },
+      },
+      {
+        column: 5,
+        title: 'Cobertura Wi-Fi en la planta 2',
+        labels: ['Wi-Fi', 'Monitoreo'],
+        patch: { type: 'task', priority: 'low', storyPoints: 2 },
       },
     ],
   },
@@ -352,44 +474,6 @@ Principios ágiles y Lean aplicados:
     ],
   },
   {
-    id: 'halloween',
-    profile: 'simple',
-    skin: 'halloween',
-    name: 'Noche de Halloween',
-    description: 'Calabazas, murciélagos y telarañas. Con su propio aspecto.',
-    columns: ['Pendientes', 'En el caldero', 'Hechizo en revisión', 'Hecho'],
-    labels: [
-      { name: 'Disfraces', color: 'purple' },
-      { name: 'Dulces', color: 'orange' },
-      { name: 'Decoración', color: 'green' },
-    ],
-    cards: [
-      { column: 0, title: 'Tallar las calabazas', labels: ['Decoración'] },
-      { column: 0, title: 'Comprar dulces para la puerta', labels: ['Dulces'] },
-      { column: 1, title: 'Coser el disfraz de bruja', labels: ['Disfraces'] },
-      { column: 3, title: 'Colgar las telarañas', labels: ['Decoración'] },
-    ],
-  },
-  {
-    id: 'christmas',
-    profile: 'simple',
-    skin: 'christmas',
-    name: 'Taller de Navidad',
-    description: 'Regalos, decoración y cena bajo la nieve. Con su propio aspecto.',
-    columns: ['Lista de deseos', 'Por hacer', 'En el taller', 'Envuelto'],
-    labels: [
-      { name: 'Regalos', color: 'red' },
-      { name: 'Casa', color: 'green' },
-      { name: 'Cena', color: 'yellow' },
-    ],
-    cards: [
-      { column: 0, title: 'Ideas de regalo para la familia', labels: ['Regalos'] },
-      { column: 1, title: 'Decorar el árbol', labels: ['Casa'] },
-      { column: 1, title: 'Escribir las tarjetas', labels: ['Regalos'] },
-      { column: 2, title: 'Preparar el menú de Nochebuena', labels: ['Cena'] },
-    ],
-  },
-  {
     id: 'blank',
     profile: 'simple',
     name: 'En blanco',
@@ -400,9 +484,12 @@ Principios ágiles y Lean aplicados:
   },
 ];
 
-/** Templates for a profile; the blank and the seasonal ones suit everybody. */
+/**
+ * Templates for a profile; the blank one suits everybody. Seasonal looks are
+ * not templates: they are the "Tema" picked below the templates.
+ */
 export const templatesFor = (profile: Profile) =>
-  TEMPLATES.filter((t) => t.profile === profile || t.id === 'blank' || t.skin);
+  TEMPLATES.filter((t) => t.profile === profile || t.id === 'blank');
 
 export const getTemplate = (id: string) => TEMPLATES.find((t) => t.id === id);
 
@@ -418,7 +505,7 @@ export function buildBoardFromTemplate(
     name: options.name?.trim() || template.name,
     profile: options.profile ?? template.profile,
     mode: options.mode,
-    skin: options.skin ?? template.skin,
+    skin: options.skin,
     templateId: template.id,
     columnTitles: template.columns,
     wipLimits: template.wipLimits,

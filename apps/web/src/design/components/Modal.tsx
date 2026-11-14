@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { IconButton } from './IconButton';
+import { PixelScroll } from './PixelScroll';
 
 export interface ModalProps {
   open: boolean;
@@ -13,6 +14,10 @@ export interface ModalProps {
 /**
  * Modal built on the native <dialog> element: focus trapping, Esc to close
  * and top-layer stacking come from the browser, so no extra library is needed.
+ *
+ * Pixel frame: stepped corners (two clipped layers, see pixel.css) with a
+ * hard drop shadow, and a PixelScroll body so long content scrolls with the
+ * app's own scrollbar and the pixel cursor never turns into the system one.
  */
 export function Modal({ open, title, onClose, children, size = 'md' }: ModalProps) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -37,15 +42,21 @@ export function Modal({ open, title, onClose, children, size = 'md' }: ModalProp
       onClose={onClose}
       // A click on the dialog element itself is a click on the backdrop.
       onClick={(e) => e.target === e.currentTarget && onClose()}
-      className={`m-auto ${size === 'lg' ? 'w-[min(900px,calc(100vw-32px))]' : 'w-[min(560px,calc(100vw-32px))]'} animate-pixel-pop rounded-2xl border border-line-soft bg-surface p-0 text-ink shadow-lift backdrop:bg-black/30 backdrop:backdrop-blur-sm`}
+      className={`m-auto ${size === 'lg' ? 'w-[min(900px,calc(100vw-32px))]' : 'w-[min(560px,calc(100vw-32px))]'} pixel-drop max-h-none animate-pixel-pop overflow-visible border-0 bg-transparent p-0 text-ink backdrop:bg-black/30 backdrop:backdrop-blur-sm`}
     >
       {open && (
-        <div className="flex flex-col gap-4 p-5">
-          <header className="flex items-start justify-between gap-4">
-            <h2 className="text-xl">{title}</h2>
-            <IconButton icon="close" label="Cerrar" onClick={onClose} />
-          </header>
-          {children}
+        <div className="pixel-corners flex max-h-[calc(100dvh-32px)] flex-col bg-line p-[2px]">
+          <div className="pixel-corners flex min-h-0 flex-1 flex-col bg-surface">
+            <PixelScroll className="p-5">
+              <div className="flex flex-col gap-4">
+                <header className="flex items-start justify-between gap-4">
+                  <h2 className="text-xl">{title}</h2>
+                  <IconButton icon="close" label="Cerrar" onClick={onClose} />
+                </header>
+                {children}
+              </div>
+            </PixelScroll>
+          </div>
         </div>
       )}
     </dialog>
