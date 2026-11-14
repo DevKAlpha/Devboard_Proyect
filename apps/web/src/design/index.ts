@@ -4,7 +4,7 @@ export { IconButton } from './components/IconButton';
 export { PixelIcon, type IconName } from './components/PixelIcon';
 export { PixelDuck } from './components/PixelDuck';
 export { installSkinSprites } from './skinSprites';
-export { duckFaviconUri, type DuckHat } from './duck';
+export { SKIN_HAT, duckFaviconUri, hatRects, type DuckHat } from './duck';
 export { Input, Textarea, Select, Field } from './components/Field';
 export { Modal } from './components/Modal';
 export { PixelScroll } from './components/PixelScroll';

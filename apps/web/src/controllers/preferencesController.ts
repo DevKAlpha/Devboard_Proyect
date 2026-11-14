@@ -6,16 +6,18 @@
  * behind the same hook API.
  */
 import { create } from 'zustand';
-import { ProfileSchema, type Profile } from '@devbord/shared';
+import { BoardSkinSchema, ProfileSchema, type BoardSkin, type Profile } from '@devbord/shared';
 
 const KEY = 'devbord:prefs';
 
 interface Prefs {
   onboarded: boolean;
   profile: Profile;
+  /** Theme of the last board opened: the costume of our duck in the home bath. */
+  lastSkin: BoardSkin;
 }
 
-const DEFAULTS: Prefs = { onboarded: false, profile: 'simple' };
+const DEFAULTS: Prefs = { onboarded: false, profile: 'simple', lastSkin: 'default' };
 
 const read = (): Prefs => {
   try {
@@ -23,6 +25,7 @@ const read = (): Prefs => {
     return {
       onboarded: raw.onboarded === true,
       profile: ProfileSchema.catch(DEFAULTS.profile).parse(raw.profile),
+      lastSkin: BoardSkinSchema.catch(DEFAULTS.lastSkin).parse(raw.lastSkin),
     };
   } catch {
     return DEFAULTS;
@@ -40,11 +43,13 @@ const write = (prefs: Prefs) => {
 interface PreferencesState extends Prefs {
   completeOnboarding: (profile: Profile) => void;
   setProfile: (profile: Profile) => void;
+  setLastSkin: (skin: BoardSkin) => void;
 }
 
 export const usePreferences = create<PreferencesState>((set, get) => {
   const save = (patch: Partial<Prefs>) => {
-    const next = { onboarded: get().onboarded, profile: get().profile, ...patch };
+    const { onboarded, profile, lastSkin } = get();
+    const next = { onboarded, profile, lastSkin, ...patch };
     write(next);
     set(next);
   };
@@ -52,5 +57,6 @@ export const usePreferences = create<PreferencesState>((set, get) => {
     ...read(),
     completeOnboarding: (profile) => save({ onboarded: true, profile }),
     setProfile: (profile) => save({ profile }),
+    setLastSkin: (lastSkin) => get().lastSkin !== lastSkin && save({ lastSkin }),
   };
 });
