@@ -3,6 +3,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './design/tokens.css';
 import './design/skins.css';
+import './design/pixel.css';
 import { initMotion, installSkinSprites } from './design';
 import { App } from './views/App';
 

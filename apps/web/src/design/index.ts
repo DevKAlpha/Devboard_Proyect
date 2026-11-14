@@ -7,6 +7,7 @@ export { installSkinSprites } from './skinSprites';
 export { duckFaviconUri, type DuckHat } from './duck';
 export { Input, Textarea, Select, Field } from './components/Field';
 export { Modal } from './components/Modal';
+export { PixelScroll } from './components/PixelScroll';
 export { Badge } from './components/Badge';
 export { cx } from './cx';
 export { ConfirmHost } from './components/ConfirmDialog';
