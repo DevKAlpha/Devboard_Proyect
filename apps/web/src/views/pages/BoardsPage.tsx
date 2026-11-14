@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { BoardSkinSchema, PROFILE_INFO, type Board } from '@devbord/shared';
+import { PROFILE_INFO, type Board } from '@devbord/shared';
 import { Badge, Button, PixelIcon } from '../../design';
 import { useBoardController } from '../../controllers/boardController';
 import { AppShell } from '../components/AppShell';
@@ -163,33 +163,18 @@ function BoardTile({ board: b }: { board: Board }) {
 }
 
 /**
- * The board's look, changeable right from the home page. A chip over the tile
- * with a transparent native <select> on top (keyboard and screen-reader
- * friendly), kept outside the tile link so choosing does not open the board.
+ * The board's look, as a chip over the tile. Read-only: profile and look are
+ * chosen once, when the board is created.
  */
 function SkinChip({ board }: { board: Board }) {
   return (
-    <span className="absolute top-6 right-6 z-10 inline-flex h-6 items-center gap-1 rounded-md border border-line-soft bg-surface/90 px-1.5 text-[11px] text-muted backdrop-blur hover:text-ink">
+    <span className="pointer-events-none absolute top-6 right-6 z-10 inline-flex h-6 items-center gap-1 rounded-md border border-line-soft bg-surface/90 px-1.5 text-[11px] text-muted backdrop-blur">
       <span
         aria-hidden
         className="size-2 rounded-[2px]"
         style={{ background: SKINS[board.skin].swatch.accent }}
       />
       {SKINS[board.skin].title}
-      <select
-        aria-label={`Tema del tablero ${board.name}`}
-        className="absolute inset-0 cursor-pointer opacity-0"
-        value={board.skin}
-        onChange={(e) =>
-          useBoardController.getState().setSkin(board.id, BoardSkinSchema.parse(e.target.value))
-        }
-      >
-        {BoardSkinSchema.options.map((s) => (
-          <option key={s} value={s}>
-            {SKINS[s].title}
-          </option>
-        ))}
-      </select>
     </span>
   );
 }
