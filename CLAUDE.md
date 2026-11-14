@@ -39,6 +39,20 @@ docker/         Dockerfiles. docker-compose.yml en la raíz.
 ### MVC en `apps/api/src`
 `routes → controllers → services → models`. La validación usa los schemas de `@devbord/shared`.
 
+### GitHub Projects (estilo Zenhub)
+- Un tablero con `Board.github` es **espejo de un Project v2**, y GitHub es la fuente de verdad. Los ids se reutilizan: `Column.id` = opción de Status (`none` = sin estado), `Card.id` = item del Project, `Label.id` = etiqueta del repo.
+- API (`apps/api/src/github`):
+  - Inicia sesión con la GitHub App (OAuth de usuario). La web solo guarda un id de sesión opaco; los tokens se guardan cifrados en SQLite (`node:sqlite`, `DATA_DIR`).
+  - `ProjectMapper` convierte el Project en un Board.
+  - `ProjectOps` valida las ops con zod y las escribe por GraphQL como el usuario.
+  - `LiveHub` avisa por SSE. Lo disparan los webhooks firmados y un sondeo de los Projects abiertos.
+  - `GITHUB_FAKE=1` levanta un GitHub en memoria para tests y pruebas locales.
+- Web:
+  - `controllers/githubController` hace el sign-in en popup, encola las ops en orden y aplica los snapshots con `mergeSnapshot` (shared), que conserva lo que solo existe en Devbord.
+  - `boardController` le pasa las ops de cada intent mediante `setGithubSink`. Solo manda los campos que cambiaron.
+  - Las columnas de un tablero vinculado no se editan en Devbord (son el campo Status y se editan en GitHub).
+- Guía de configuración (GitHub App, variables, despliegue): `docs/github.md`.
+
 ## Git
 - Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`, `ci:`).
 - **Ramas por apartado** (permanentes, una por área de la app). Todo cambio se hace en la rama de su área y **se hace push a esa rama directamente**, sin preguntar:
@@ -51,7 +65,7 @@ docker/         Dockerfiles. docker-compose.yml en la raíz.
   | `area/collab` | `models/collab`, `views/team`, `controllers/collab*`, `controllers/identity*`: tableros de equipo en tiempo real |
   | `area/sketch` | `views/sketch`, `models/sketch`, `controllers/sketchController`: pizarra y notas adhesivas |
   | `area/integrations` | `integrations/`, `controllers/connections*`, `views/connections`: Google, Microsoft, Slack |
-| `area/api` | `apps/api` |
+  | `area/api` | `apps/api` (incluye el módulo GitHub `apps/api/src/github`) |
   | `area/infra` | Docker, CI/CD, configuración, documentación |
 - Un cambio que toca varias áreas va en la rama del área principal y se menciona en el commit.
 - Flujo: `area/*` (push directo) → merge `--no-ff` a **`develop`** (integración; el CI corre en cada push) → **`main` = producción**.

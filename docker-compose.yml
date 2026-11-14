@@ -14,6 +14,8 @@ services:
         # OAuth client ids for Conexiones (optional, see docs/integraciones.md).
         VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
         VITE_MS_CLIENT_ID: ${VITE_MS_CLIENT_ID:-}
+        # Where the browser reaches the GitHub sync (this API, see docs/github.md).
+        VITE_GITHUB_API_URL: ${VITE_GITHUB_API_URL:-http://localhost:3000}
     ports:
       - '8080:80'
     depends_on:
@@ -27,6 +29,21 @@ services:
     environment:
       PORT: 3000
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080,http://localhost:5173}
+      # GitHub App (docs/github.md). Leave empty to turn GitHub sync off;
+      # GITHUB_FAKE=1 serves an in-memory GitHub for trying it locally.
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET:-}
+      GITHUB_APP_SLUG: ${GITHUB_APP_SLUG:-}
+      SESSION_SECRET: ${SESSION_SECRET:-}
+      WEB_URL: ${WEB_URL:-http://localhost:8080}
+      API_URL: ${API_URL:-http://localhost:3000}
+      GITHUB_FAKE: ${GITHUB_FAKE:-}
+    volumes:
+      - devbord-data:/data
     ports:
       - '3000:3000'
     restart: unless-stopped
+
+volumes:
+  devbord-data:
