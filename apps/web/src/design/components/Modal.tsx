@@ -45,8 +45,8 @@ export function Modal({ open, title, onClose, children, size = 'md' }: ModalProp
       className={`m-auto ${size === 'lg' ? 'w-[min(900px,calc(100vw-32px))]' : 'w-[min(560px,calc(100vw-32px))]'} pixel-drop max-h-none animate-pixel-pop overflow-visible border-0 bg-transparent p-0 text-ink backdrop:bg-black/30 backdrop:backdrop-blur-sm`}
     >
       {open && (
-        <div className="pixel-corners-8 flex max-h-[calc(100dvh-32px)] flex-col bg-line p-[2px]">
-          <div className="pixel-corners-6 flex min-h-0 flex-1 flex-col bg-surface">
+        <div className="pixel-corners flex max-h-[calc(100dvh-32px)] flex-col bg-line p-[2px]">
+          <div className="pixel-corners flex min-h-0 flex-1 flex-col bg-surface">
             <PixelScroll className="p-5">
               <div className="flex flex-col gap-4">
                 <header className="flex items-start justify-between gap-4">

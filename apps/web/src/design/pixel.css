@@ -4,81 +4,40 @@
  */
 
 /*
- * Stepped corners (2px stairs). A frame is two layers: the outer one is the
- * border color with 4 stairs (8px), the inner one, inset 2px, is the surface
- * with 3 stairs (6px), so the border keeps 2px all along the stairs.
+ * Stepped corners: three 4px stairs per corner. A frame is two layers with
+ * this same shape: the outer one in the border color, the inner one (the
+ * surface) inset 2px, so the border stays 2px thick along the stairs too.
  */
-.pixel-corners-8 {
+.pixel-corners {
   clip-path: polygon(
-    0 8px,
-    2px 8px,
-    2px 6px,
-    4px 6px,
-    4px 4px,
-    6px 4px,
-    6px 2px,
-    8px 2px,
-    8px 0,
-    calc(100% - 8px) 0,
-    calc(100% - 8px) 2px,
-    calc(100% - 6px) 2px,
-    calc(100% - 6px) 4px,
-    calc(100% - 4px) 4px,
-    calc(100% - 4px) 6px,
-    calc(100% - 2px) 6px,
-    calc(100% - 2px) 8px,
-    100% 8px,
-    100% calc(100% - 8px),
-    calc(100% - 2px) calc(100% - 8px),
-    calc(100% - 2px) calc(100% - 6px),
-    calc(100% - 4px) calc(100% - 6px),
-    calc(100% - 4px) calc(100% - 4px),
-    calc(100% - 6px) calc(100% - 4px),
-    calc(100% - 6px) calc(100% - 2px),
-    calc(100% - 8px) calc(100% - 2px),
-    calc(100% - 8px) 100%,
-    8px 100%,
-    8px calc(100% - 2px),
-    6px calc(100% - 2px),
-    6px calc(100% - 4px),
-    4px calc(100% - 4px),
-    4px calc(100% - 6px),
-    2px calc(100% - 6px),
-    2px calc(100% - 8px),
-    0 calc(100% - 8px)
-  );
-}
-
-.pixel-corners-6 {
-  clip-path: polygon(
-    0 6px,
-    2px 6px,
-    2px 4px,
-    4px 4px,
-    4px 2px,
-    6px 2px,
-    6px 0,
-    calc(100% - 6px) 0,
-    calc(100% - 6px) 2px,
-    calc(100% - 4px) 2px,
-    calc(100% - 4px) 4px,
-    calc(100% - 2px) 4px,
-    calc(100% - 2px) 6px,
-    100% 6px,
-    100% calc(100% - 6px),
-    calc(100% - 2px) calc(100% - 6px),
-    calc(100% - 2px) calc(100% - 4px),
-    calc(100% - 4px) calc(100% - 4px),
-    calc(100% - 4px) calc(100% - 2px),
-    calc(100% - 6px) calc(100% - 2px),
-    calc(100% - 6px) 100%,
-    6px 100%,
-    6px calc(100% - 2px),
-    4px calc(100% - 2px),
-    4px calc(100% - 4px),
-    2px calc(100% - 4px),
-    2px calc(100% - 6px),
-    0 calc(100% - 6px)
+    0 12px,
+    4px 12px,
+    4px 8px,
+    8px 8px,
+    8px 4px,
+    12px 4px,
+    12px 0,
+    calc(100% - 12px) 0,
+    calc(100% - 12px) 4px,
+    calc(100% - 8px) 4px,
+    calc(100% - 8px) 8px,
+    calc(100% - 4px) 8px,
+    calc(100% - 4px) 12px,
+    100% 12px,
+    100% calc(100% - 12px),
+    calc(100% - 4px) calc(100% - 12px),
+    calc(100% - 4px) calc(100% - 8px),
+    calc(100% - 8px) calc(100% - 8px),
+    calc(100% - 8px) calc(100% - 4px),
+    calc(100% - 12px) calc(100% - 4px),
+    calc(100% - 12px) 100%,
+    12px 100%,
+    12px calc(100% - 4px),
+    8px calc(100% - 4px),
+    8px calc(100% - 8px),
+    4px calc(100% - 8px),
+    4px calc(100% - 12px),
+    0 calc(100% - 12px)
   );
 }
 
