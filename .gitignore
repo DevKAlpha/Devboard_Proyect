@@ -30,3 +30,5 @@ graphify-out/
 # Agent skills are vendored locally; reinstall from skills-lock.json
 .agents/
 .claude/skills/
+# GitHub sessions database of a local API (DATA_DIR)
+apps/api/data/

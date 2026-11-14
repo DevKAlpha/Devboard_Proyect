@@ -300,6 +300,16 @@ const ICONS = {
   undo: UNDO,
   redo: UNDO.map(([x, y, w, h]) => [16 - x - w, y, w, h] as const),
   /** A path between two stops: the board's journey diagram. */
+  /** Pull request: two branches joined by an arrow, as on GitHub. */
+  pr: [
+    [3, 2, 3, 3],
+    [4, 5, 1, 6],
+    [3, 11, 3, 3],
+    [10, 11, 3, 3],
+    [11, 6, 1, 5],
+    [7, 4, 5, 1],
+    [8, 3, 1, 3],
+  ],
   /** Plug: connections to other apps. */
   plug: [
     [5, 1, 2, 4],

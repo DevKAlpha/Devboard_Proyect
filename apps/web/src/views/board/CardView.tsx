@@ -6,6 +6,7 @@ import { Badge, PixelIcon, animateFlash, cx } from '../../design';
 import { CARD_TYPE_META, PRIORITY_META, describeDueDate, previewText } from './cardMeta';
 import type { CardMood } from './cardMood';
 import { MoodDecor } from './MoodDecor';
+import { GithubMeta, GithubRef } from '../connections/GithubCardChips';
 import { useIsSelected } from '../../controllers/selectionController';
 
 export interface CardViewProps {
@@ -62,11 +63,15 @@ export function CardFace({
       )}
     >
       <MoodDecor mood={mood} />
-      {showRef && (
-        <span className="flex items-center gap-1 text-[11px] text-muted">
-          <PixelIcon name="issue" size={12} style={{ color: 'var(--label-green-ink)' }} />#
-          {card.number}
-        </span>
+      {card.github ? (
+        <GithubRef github={card.github} />
+      ) : (
+        showRef && (
+          <span className="flex items-center gap-1 text-[11px] text-muted">
+            <PixelIcon name="issue" size={12} style={{ color: 'var(--label-green-ink)' }} />#
+            {card.number}
+          </span>
+        )
       )}
       {cardLabels.length > 0 && (
         <div className="flex flex-wrap gap-1">
@@ -83,6 +88,7 @@ export function CardFace({
           {previewText(card.description)}
         </p>
       )}
+      {card.github && <GithubMeta github={card.github} />}
       {showMeta && (
         <div className="mt-0.5 flex flex-wrap items-center gap-1.5 border-t border-line-soft pt-2 text-xs">
           {showPoints && (

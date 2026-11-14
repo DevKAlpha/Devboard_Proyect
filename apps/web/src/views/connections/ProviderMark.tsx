@@ -5,6 +5,7 @@ const COLOR: Record<LinkProvider, string> = {
   google: '#4285f4',
   microsoft: '#0078d4',
   slack: '#e01e5a',
+  github: '#8957e5',
   web: 'var(--faint)',
 };
 

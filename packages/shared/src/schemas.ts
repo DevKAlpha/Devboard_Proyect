@@ -6,6 +6,7 @@
  * the server without any mapping layer.
  */
 import { z } from 'zod';
+import { CardGithubSchema, GithubLinkSchema } from './github';
 
 /** Who the workspace is tuned for. Drives which card fields and wording the UI shows. */
 export const ProfileSchema = z.enum(['technical', 'simple']);
@@ -112,6 +113,8 @@ export const CardSchema = z.object({
   trail: z.array(TrailStepSchema).max(TRAIL_SIZE).default([]),
   /** Files and pages attached to the card (see CardLinkSchema). */
   links: z.array(CardLinkSchema).max(CARD_LINKS_SIZE).default([]),
+  /** The GitHub issue behind the card, on boards linked to a Project (see github.ts). */
+  github: CardGithubSchema.nullable().default(null),
   /** Board-scoped sequential number shown as "#12" (like a GitHub issue). Null on legacy cards. */
   number: z.number().int().positive().nullable().default(null),
   /** Iteration the card is planned for, e.g. "Sprint 1" (GitHub Projects "Iteration"). */
@@ -162,6 +165,8 @@ export const BoardSchema = z.object({
   cardTemplate: z.string().max(10_000).nullable().default(null),
   /** Next card number to hand out (#1, #2…). Only grows, so numbers are never reused. */
   nextNumber: z.number().int().positive().default(1),
+  /** GitHub Project this board mirrors (Zenhub-style). Null: a Devbord-only board. */
+  github: GithubLinkSchema.nullable().default(null),
   columns: z.array(ColumnSchema),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),

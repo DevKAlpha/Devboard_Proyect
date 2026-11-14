@@ -25,6 +25,11 @@ export interface ColumnViewProps {
   isLastColumn?: boolean;
   /** Shared clock (ms) for card moods; see useNow. */
   now: number;
+  /**
+   * Structure owned elsewhere (a GitHub Project's Status field): the column
+   * cannot be renamed, moved or deleted here. WIP and description stay editable.
+   */
+  locked?: boolean;
 }
 
 const WIP_OPTIONS = [1, 2, 3, 4, 5, 6, 8, 10];
@@ -86,6 +91,7 @@ export const ColumnView = memo(function ColumnView({
   onDescribe,
   isLastColumn = false,
   now,
+  locked = false,
 }: ColumnViewProps) {
   const {
     attributes,
@@ -95,7 +101,7 @@ export const ColumnView = memo(function ColumnView({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: column.id, data: { type: 'column' } });
+  } = useSortable({ id: column.id, data: { type: 'column' }, disabled: locked });
   const points = column.cards.reduce((sum, c) => sum + (c.storyPoints ?? 0), 0);
   const overWip = isOverWip(column);
   const kind = columnKind(column.title, isLastColumn);
@@ -126,23 +132,34 @@ export const ColumnView = memo(function ColumnView({
       {/* GitHub Projects-style header: status ring, name, count/WIP, estimate, then the column's sprite. */}
       <header ref={headerRef} className="flex flex-col gap-0.5 px-1">
         <div className="flex items-center gap-1.5">
-          <button
-            ref={setActivatorNodeRef}
-            {...attributes}
-            {...listeners}
-            aria-label={`Mover columna ${column.title}`}
-            className="-ml-1 cursor-grab rounded-md p-0.5 text-faint hover:text-ink"
-          >
-            <PixelIcon name="grip" size={12} />
-          </button>
+          {!locked && (
+            <button
+              ref={setActivatorNodeRef}
+              {...attributes}
+              {...listeners}
+              aria-label={`Mover columna ${column.title}`}
+              className="-ml-1 cursor-grab rounded-md p-0.5 text-faint hover:text-ink"
+            >
+              <PixelIcon name="grip" size={12} />
+            </button>
+          )}
           <StatusRing kind={kind} />
-          <InlineEdit
-            value={column.title}
-            label="Nombre de la columna"
-            maxLength={60}
-            onSave={(title) => onRename(column.id, title)}
-            className="min-w-0 font-pixel text-base"
-          />
+          {locked ? (
+            <span
+              className="min-w-0 truncate font-pixel text-base"
+              data-cursor-hint="Opción del campo Status: se edita en GitHub"
+            >
+              {column.title}
+            </span>
+          ) : (
+            <InlineEdit
+              value={column.title}
+              label="Nombre de la columna"
+              maxLength={60}
+              onSave={(title) => onRename(column.id, title)}
+              className="min-w-0 font-pixel text-base"
+            />
+          )}
           {features.agile ? (
             <WipChip column={column} onChange={(limit) => onWipLimit(column.id, limit)} />
           ) : (
@@ -161,21 +178,23 @@ export const ColumnView = memo(function ColumnView({
           )}
           <span className="flex-1" />
           <ColumnSprite kind={kind} />
-          <IconButton
-            icon="trash"
-            // Quiet until the column is hovered or focused: less noise, same reach.
-            // Hidden (no space taken) until the column is hovered or has focus inside.
-            className="hidden! group-focus-within/col:inline-flex! group-hover/col:inline-flex!"
-            label={`Eliminar columna ${column.title}`}
-            onClick={() => {
-              const msg = column.cards.length
-                ? `¿Eliminar "${column.title}" y sus ${column.cards.length} tarjetas?`
-                : `¿Eliminar "${column.title}"?`;
-              void confirm(msg, { confirmLabel: 'Eliminar', danger: true }).then(
-                (ok) => ok && onRemove(column.id),
-              );
-            }}
-          />
+          {!locked && (
+            <IconButton
+              icon="trash"
+              // Quiet until the column is hovered or focused: less noise, same reach.
+              // Hidden (no space taken) until the column is hovered or has focus inside.
+              className="hidden! group-focus-within/col:inline-flex! group-hover/col:inline-flex!"
+              label={`Eliminar columna ${column.title}`}
+              onClick={() => {
+                const msg = column.cards.length
+                  ? `¿Eliminar "${column.title}" y sus ${column.cards.length} tarjetas?`
+                  : `¿Eliminar "${column.title}"?`;
+                void confirm(msg, { confirmLabel: 'Eliminar', danger: true }).then(
+                  (ok) => ok && onRemove(column.id),
+                );
+              }}
+            />
+          )}
         </div>
         <InlineEdit
           value={column.description ?? ''}
