@@ -36,6 +36,8 @@ interface FakeItem {
 const OWNER = 'devbord-demo';
 const REPO = `${OWNER}/app`;
 const PROJECT_ID = 'PVT_fake1';
+/** A second, read-only Project (same items) to try picking several at once. */
+const ROADMAP_ID = 'PVT_fake2';
 const AVATAR = 'https://avatars.githubusercontent.com/u/583231';
 const T0 = '2026-11-01T10:00:00Z';
 
@@ -193,11 +195,22 @@ export class FakeGithub {
           viewer: {
             login: 'octocat',
             projectsV2: { nodes: [] },
-            organizations: { nodes: [{ login: OWNER, projectsV2: { nodes: [this.summary()] } }] },
+            organizations: {
+              nodes: [
+                { login: OWNER, projectsV2: { nodes: [this.summary(), this.roadmapSummary()] } },
+              ],
+            },
           },
         };
       case 'DevbordProject':
-        return { node: v.id === PROJECT_ID ? this.project() : null };
+        return {
+          node:
+            v.id === PROJECT_ID
+              ? this.project()
+              : v.id === ROADMAP_ID
+                ? { ...this.project(), ...this.roadmapSummary() }
+                : null,
+        };
       case 'DevbordCreateIssue': {
         const n = ++this.seq;
         const created: FakeIssue = {
@@ -298,6 +311,17 @@ export class FakeGithub {
       default:
         throw new Error(`FakeGithub: unknown operation ${name}`);
     }
+  }
+
+  private roadmapSummary() {
+    return {
+      id: ROADMAP_ID,
+      number: 2,
+      title: 'Roadmap',
+      url: `https://github.com/orgs/${OWNER}/projects/2`,
+      closed: false,
+      owner: { login: OWNER },
+    };
   }
 
   private summary() {

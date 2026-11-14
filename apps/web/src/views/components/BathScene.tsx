@@ -8,6 +8,7 @@
  * bathPhysics.ts. The pointer plays too, wherever the page has no control
  * under it: brushing the surface makes waves, a click in the water splashes,
  * and a duck can be grabbed, lifted and thrown (it falls back with a splash).
+ * Each duck wears the hat of its owner's last board theme (witch, Santa...).
  * In lite motion mode the scene is a still picture.
  */
 import { useEffect, useMemo, useRef } from 'react';
@@ -15,7 +16,8 @@ import { useLobby } from '../../controllers/lobbyController';
 import { useMotion } from '../../controllers/motionController';
 import { useThemeController } from '../../controllers/themeController';
 import { useCursorController } from '../../controllers/cursorController';
-import { DUCK_COLORS, DUCK_GRID } from '../../design/duck';
+import { DUCK_COLORS, DUCK_GRID, SKIN_HAT, hatRects, type DuckHat } from '../../design/duck';
+import { usePreferences } from '../../controllers/preferencesController';
 import {
   Bath,
   MAX_DUCKS,
@@ -100,6 +102,25 @@ function sprite(kind: DuckKind, facing: 1 | -1): HTMLCanvasElement {
   return canvas;
 }
 
+/** Cells a hat rises above the duck sprite's top edge. */
+const HAT_LIFT = 4;
+
+/**
+ * Pre-renders a hat on a canvas as wide as the duck sprite, with its brim on
+ * the head: drawn at the duck's position, HAT_LIFT cells higher.
+ */
+function hatSprite(hat: DuckHat, facing: 1 | -1): HTMLCanvasElement {
+  const canvas = document.createElement('canvas');
+  canvas.width = 16;
+  canvas.height = HAT_LIFT + 2;
+  const ctx = canvas.getContext('2d')!;
+  for (const r of hatRects(hat, facing)) {
+    ctx.fillStyle = r.fill;
+    ctx.fillRect(r.x, r.y + HAT_LIFT, 1, 1);
+  }
+  return canvas;
+}
+
 /** The still part of the scene (tiled wall and tub), drawn once per size. */
 function backdrop(
   w: number,
@@ -132,14 +153,15 @@ function backdrop(
 function useDucks() {
   const selfId = useLobby((s) => s.selfId);
   const peers = useLobby((s) => s.peers);
+  const lastSkin = usePreferences((s) => s.lastSkin);
   return useMemo<DuckSeed[]>(
     () => [
-      { id: SELF, kind: 'user', self: true },
+      { id: SELF, kind: 'user', hat: SKIN_HAT[lastSkin], self: true },
       ...Object.entries(peers)
         .filter(([id]) => id !== selfId)
-        .map(([id, kind]) => ({ id, kind, self: false })),
+        .map(([id, peer]) => ({ id, kind: peer.kind, hat: SKIN_HAT[peer.skin], self: false })),
     ],
-    [peers, selfId],
+    [peers, selfId, lastSkin],
   );
 }
 
@@ -192,6 +214,10 @@ export function BathScene() {
       user: { 1: sprite('user', 1), [-1]: sprite('user', -1) },
       agent: { 1: sprite('agent', 1), [-1]: sprite('agent', -1) },
     };
+    const hats = {
+      witch: { 1: hatSprite('witch', 1), [-1]: hatSprite('witch', -1) },
+      santa: { 1: hatSprite('santa', 1), [-1]: hatSprite('santa', -1) },
+    };
     const accent = getComputedStyle(canvas).getPropertyValue('--accent').trim() || '#7d7aff';
 
     const build = () => {
@@ -213,12 +239,15 @@ export function BathScene() {
           const x = Math.round(d.x - 8);
           const y = Math.round(d.y - 12);
           ctx.drawImage(sprites[d.kind][d.facing], x, y);
+          if (d.hat) ctx.drawImage(hats[d.hat][d.facing], x, y - HAT_LIFT);
           if (d.self) {
             // A small marker over our own duck: "this one is you".
+            // It floats higher over a hat.
+            const my = y - (d.hat ? 6 + HAT_LIFT : 6);
             ctx.fillStyle = accent;
-            ctx.fillRect(x + 6, y - 6, 5, 1);
-            ctx.fillRect(x + 7, y - 5, 3, 1);
-            ctx.fillRect(x + 8, y - 4, 1, 1);
+            ctx.fillRect(x + 6, my, 5, 1);
+            ctx.fillRect(x + 7, my + 1, 3, 1);
+            ctx.fillRect(x + 8, my + 2, 1, 1);
           }
         }
         ctx.fillStyle = COLORS.bubble;

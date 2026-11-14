@@ -6,6 +6,7 @@
  * Legend: `o` outline · `y` body · `s` wing shade · `w` shine · `e` eye ·
  * `b` beak · `.` transparent. 16×16, drawn as text so it is easy to retouch.
  */
+import type { BoardSkin } from '@devbord/shared';
 export const DUCK_GRID = [
   '................',
   '........oooo....',
@@ -68,7 +69,7 @@ export function duckSvg(): string {
  * is 8 wide; its last row is the brim, which sits on the head's top outline
  * (row 1, columns 6 to 13).
  */
-const HATS = {
+export const DUCK_HATS = {
   witch: {
     pal: { k: '#2a1438', K: '#4b2466', o: '#ff7a1a' },
     grid: ['....kk..', '...kKk..', '..kKKk..', '.koooook', 'kkKKKKkk'],
@@ -79,24 +80,45 @@ const HATS = {
   },
 } as const;
 
-export type DuckHat = keyof typeof HATS;
+export type DuckHat = keyof typeof DUCK_HATS;
+
+/** The hat a duck wears for each board theme (the favicon and the bath ducks). */
+export const SKIN_HAT: Record<BoardSkin, DuckHat | null> = {
+  default: null,
+  halloween: 'witch',
+  christmas: 'santa',
+};
+
+/**
+ * A hat as rects in duck-sprite cells (the brim on the head's top outline,
+ * row 1 from column 6; upper rows go negative). `facing` -1 mirrors it for
+ * a duck looking left, like the 16-cell sprite.
+ */
+export function hatRects(hat: DuckHat, facing: 1 | -1 = 1) {
+  const { pal, grid } = DUCK_HATS[hat];
+  const top = 1 - (grid.length - 1);
+  return grid.flatMap((row, y) =>
+    [...row].flatMap((ch, x) => {
+      const fill = (pal as Record<string, string>)[ch];
+      const col = 6 + x;
+      return fill ? [{ x: facing === 1 ? col : 15 - col, y: top + y, fill }] : [];
+    }),
+  );
+}
 
 /**
  * The favicon duck wearing a hat, as a data URI. The view box grows upwards
  * (and stays square) to make room for the hat above the head.
  */
 export function duckFaviconUri(hat: DuckHat): string {
-  const { pal, grid } = HATS[hat];
+  const { grid } = DUCK_HATS[hat];
   const top = 1 - (grid.length - 1); // brim on row 1
   let rects = duckRects()
     .map((r) => `<rect x='${r.x}' y='${r.y}' width='${r.w}' height='1' fill='${r.fill}'/>`)
     .join('');
-  grid.forEach((row, y) => {
-    [...row].forEach((ch, x) => {
-      const fill = (pal as Record<string, string>)[ch];
-      if (fill) rects += `<rect x='${6 + x}' y='${top + y}' width='1' height='1' fill='${fill}'/>`;
-    });
-  });
+  for (const r of hatRects(hat)) {
+    rects += `<rect x='${r.x}' y='${r.y}' width='1' height='1' fill='${r.fill}'/>`;
+  }
   const size = Math.ceil((16 - top) / 2) * 2; // even, so the duck stays on whole pixels
   const pad = (size - 16) / 2;
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='${-pad} ${top} ${size} ${size}' shape-rendering='crispEdges'>${rects}</svg>`;

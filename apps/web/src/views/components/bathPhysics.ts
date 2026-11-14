@@ -17,9 +17,13 @@
 
 export type DuckKind = 'user' | 'agent';
 
+/** Costume of a duck: the hat of its owner's board theme (see design/duck.ts). */
+export type DuckHatName = 'witch' | 'santa' | null;
+
 export interface BathDuck {
   id: string;
   kind: DuckKind;
+  hat: DuckHatName;
   /** Our own duck (marked in the scene). */
   self: boolean;
   /** Center of the duck's waterline, in cells. */
@@ -46,6 +50,8 @@ export interface Particle {
 export interface DuckSeed {
   id: string;
   kind: DuckKind;
+  /** No hat when absent. */
+  hat?: DuckHatName;
   self: boolean;
 }
 
@@ -133,13 +139,18 @@ export class Bath {
       }
     }
     this.ducks = this.ducks.filter((d) => wanted.has(d.id));
-    for (const duck of this.ducks) duck.kind = wanted.get(duck.id)!.kind;
+    for (const duck of this.ducks) {
+      const seed = wanted.get(duck.id)!;
+      duck.kind = seed.kind;
+      duck.hat = seed.hat ?? null;
+    }
     const known = new Set(this.ducks.map((d) => d.id));
     for (const seed of seeds) {
       if (known.has(seed.id)) continue;
       const paddle = this.rand() < 0.5 ? 1 : -1;
       this.ducks.push({
         ...seed,
+        hat: seed.hat ?? null,
         x: this.freeX(),
         y: this.level - 30 - this.rand() * 20,
         vx: 0,

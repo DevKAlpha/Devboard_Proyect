@@ -20,7 +20,7 @@ export function BoardSwitcher({ currentId }: { currentId: string }) {
   const navigate = useNavigate();
 
   return (
-    <span className="relative inline-flex h-6 w-fit items-center gap-1 rounded-md px-1.5 text-xs text-muted hover:bg-surface-3/70 hover:text-ink">
+    <span className="relative -ml-1.5 inline-flex h-6 w-fit items-center gap-1 rounded-md px-1.5 text-xs text-muted hover:bg-surface-3/70 hover:text-ink">
       <PixelIcon name="board" size={12} />
       Cambiar tablero
       <PixelIcon name="chevron" size={12} />
