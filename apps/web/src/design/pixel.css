@@ -1,0 +1,90 @@
+/*
+ * Pixel-art shapes shared by the design components: stepped corners and the
+ * DOM scrollbar of PixelScroll.
+ */
+
+/*
+ * Stepped corners: three 4px stairs per corner. A frame is two layers with
+ * this same shape: the outer one in the border color, the inner one (the
+ * surface) inset 2px, so the border stays 2px thick along the stairs too.
+ */
+.pixel-corners {
+  clip-path: polygon(
+    0 12px,
+    4px 12px,
+    4px 8px,
+    8px 8px,
+    8px 4px,
+    12px 4px,
+    12px 0,
+    calc(100% - 12px) 0,
+    calc(100% - 12px) 4px,
+    calc(100% - 8px) 4px,
+    calc(100% - 8px) 8px,
+    calc(100% - 4px) 8px,
+    calc(100% - 4px) 12px,
+    100% 12px,
+    100% calc(100% - 12px),
+    calc(100% - 4px) calc(100% - 12px),
+    calc(100% - 4px) calc(100% - 8px),
+    calc(100% - 8px) calc(100% - 8px),
+    calc(100% - 8px) calc(100% - 4px),
+    calc(100% - 12px) calc(100% - 4px),
+    calc(100% - 12px) 100%,
+    12px 100%,
+    12px calc(100% - 4px),
+    8px calc(100% - 4px),
+    8px calc(100% - 8px),
+    4px calc(100% - 8px),
+    4px calc(100% - 12px),
+    0 calc(100% - 12px)
+  );
+}
+
+/*
+ * Hard pixel shadow of a clipped frame: clip-path cuts box-shadow, so the
+ * shadow is a drop-shadow on the parent. Lite mode drops it (no filters there).
+ */
+.pixel-drop {
+  filter: drop-shadow(var(--shadow-lift-v));
+}
+html[data-motion='lite'] .pixel-drop {
+  filter: none;
+}
+
+/* ── PixelScroll ─────────────────────────────────────────────────────────── */
+
+/* The native scrollbar is hidden; PixelScroll draws its own. */
+.pixel-scroll {
+  scrollbar-width: none;
+}
+.pixel-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.pixel-scroll-track {
+  position: absolute;
+  top: 0;
+  right: 4px;
+  bottom: 0;
+  width: 6px;
+}
+
+/* Thumb: a 6px block with a hard inner shade on its right and bottom edges. */
+.pixel-scroll-thumb {
+  position: absolute;
+  left: 0;
+  width: 6px;
+  background: var(--faint);
+  box-shadow:
+    inset -2px 0 0 rgb(0 0 0 / 0.18),
+    inset 0 -2px 0 rgb(0 0 0 / 0.18);
+  opacity: 0.7;
+  transition: opacity 120ms steps(2, end);
+  touch-action: none;
+}
+.pixel-scroll-track:hover .pixel-scroll-thumb,
+.pixel-scroll-thumb:active {
+  opacity: 1;
+  background: var(--muted);
+}

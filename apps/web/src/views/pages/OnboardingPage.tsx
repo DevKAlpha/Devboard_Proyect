@@ -25,11 +25,7 @@ export function OnboardingPage() {
   const [name, setName] = useState('');
   const [mode, setMode] = useState<BoardMode>('personal');
   const [skin, setSkin] = useState<BoardSkin>('default');
-  // A seasonal template brings its look; it can still be changed.
-  const pickTemplate = (id: string) => {
-    setTemplateId(id);
-    setSkin(getTemplate(id)?.skin ?? 'default');
-  };
+  const pickTemplate = setTemplateId;
   const template = getTemplate(templateId);
 
   const changeProfile = (p: Profile) => {
