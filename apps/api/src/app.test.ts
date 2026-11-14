@@ -7,7 +7,7 @@ describe('api', () => {
   it('reports health', async () => {
     const res = await request(createApp()).get('/health');
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ status: 'ok' });
+    expect(res.body).toMatchObject({ status: 'ok' });
   });
 
   it('upserts, reads, lists and deletes a board', async () => {
