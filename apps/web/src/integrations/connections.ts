@@ -10,10 +10,12 @@
  * GitHub: its OAuth App flow needs a client secret, so the token exchange must
  * go through apps/api.
  */
+import type { GithubOp, StoryPoints } from '@devbord/shared';
 import { ACCOUNTS, createCalendarEvent, type AccountId } from './accounts';
 import { postToSlack, readSlack } from './slack';
+import { githubApi } from './github/client';
 
-export type ConnectionId = AccountId | 'slack';
+export type ConnectionId = AccountId | 'slack' | 'github';
 
 /** One action a connection offers (MCP "tool"). */
 export interface ConnectionTool {
@@ -44,6 +46,35 @@ const str = (input: Record<string, unknown>, key: string) => {
   return v;
 };
 
+/** A GitHub tool: every input is a string, plus the Project it acts on. */
+function githubTool(
+  name: string,
+  description: string,
+  fields: Record<string, string>,
+  toOp: (input: Record<string, string | undefined>) => GithubOp,
+): ConnectionTool {
+  return {
+    name,
+    description,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        projectId: { type: 'string', description: 'Project de GitHub' },
+        ...Object.fromEntries(
+          Object.entries(fields).map(([k, d]) => [k, { type: 'string', description: d }]),
+        ),
+      },
+      required: ['projectId', ...Object.keys(fields)],
+    },
+    run: async (input) => {
+      const values: Record<string, string> = {};
+      for (const key of ['projectId', ...Object.keys(fields)]) values[key] = str(input, key);
+      await githubApi.op(values.projectId!, toOp(values));
+      return 'Hecho';
+    },
+  };
+}
+
 const calendarTool = (id: AccountId, calendar: string): ConnectionTool => ({
   name: 'create_calendar_event',
   description: `Crea un evento de día completo en ${calendar} (por ejemplo, la fecha límite de una tarjeta).`,
@@ -65,6 +96,81 @@ const calendarTool = (id: AccountId, calendar: string): ConnectionTool => ({
 });
 
 export const CONNECTIONS: readonly Connection[] = [
+  {
+    id: 'github',
+    name: 'GitHub',
+    description:
+      'El tablero refleja un Project de GitHub: lo que cambies aquí se ve allí y al revés (issues, Status, estimaciones, sprints, epics y PRs).',
+    tools: [
+      githubTool(
+        'create_issue',
+        'Crea un issue en el repo del Project y lo pone en una columna.',
+        {
+          columnId: 'Columna (opción de Status)',
+          title: 'Título',
+        },
+        (i) => ({ type: 'createCard', columnId: i.columnId!, title: i.title! }),
+      ),
+      githubTool(
+        'move_card',
+        'Mueve una tarjeta a otra columna (cambia su Status).',
+        {
+          cardId: 'Tarjeta (item del Project)',
+          columnId: 'Columna de destino',
+        },
+        (i) => ({ type: 'moveCard', cardId: i.cardId!, columnId: i.columnId!, afterCardId: null }),
+      ),
+      githubTool(
+        'set_estimate',
+        'Pone los story points (campo Estimate).',
+        {
+          cardId: 'Tarjeta',
+          points: 'Puntos: 1, 2, 3, 5, 8 o 13',
+        },
+        (i) => ({
+          type: 'updateCard',
+          cardId: i.cardId!,
+          patch: { storyPoints: Number(i.points) as StoryPoints },
+        }),
+      ),
+      githubTool(
+        'set_sprint',
+        'Pone la tarjeta en un sprint (campo Iteration).',
+        {
+          cardId: 'Tarjeta',
+          sprint: 'Nombre de la iteración',
+        },
+        (i) => ({ type: 'updateCard', cardId: i.cardId!, patch: { sprint: i.sprint! } }),
+      ),
+      githubTool(
+        'link_epic',
+        'Mete una tarjeta en una epic (sub-issue).',
+        {
+          cardId: 'Tarjeta',
+          epicCardId: 'Tarjeta de la epic',
+        },
+        (i) => ({ type: 'setParent', cardId: i.cardId!, parentCardId: i.epicCardId! }),
+      ),
+      {
+        name: 'list_pull_requests',
+        description: 'Lista los PRs enlazados a las tarjetas del Project.',
+        inputSchema: {
+          type: 'object',
+          properties: { projectId: { type: 'string', description: 'Project de GitHub' } },
+          required: ['projectId'],
+        },
+        run: async (input) => {
+          const board = await githubApi.board(str(input, 'projectId'));
+          const prs = board.columns.flatMap((c) =>
+            c.cards.flatMap((card) =>
+              (card.github?.pullRequests ?? []).map((pr) => ({ card: card.title, ...pr })),
+            ),
+          );
+          return JSON.stringify(prs);
+        },
+      },
+    ],
+  },
   {
     id: 'google',
     name: ACCOUNTS.google.name,

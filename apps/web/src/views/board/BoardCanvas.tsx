@@ -409,17 +409,30 @@ export function BoardCanvas({ board, team = false }: { board: Board; team?: bool
                 onSelectCard={onSelectCard}
                 onWipLimit={onWipLimit}
                 onDescribe={onDescribe}
+                locked={Boolean(board.github)}
               />
             ))}
           </SortableContext>
 
           <div className="w-[min(300px,85vw)] shrink-0 snap-start">
-            <Composer
-              triggerLabel="Añadir columna"
-              placeholder="Nombre de la columna"
-              submitLabel="Crear columna"
-              onSubmit={(title) => ctrl().addColumn(board.id, title)}
-            />
+            {board.github ? (
+              // Columns are the Project's Status options, edited on GitHub.
+              <a
+                href={board.github.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block rounded-xl border border-dashed border-line p-3 text-sm text-muted hover:text-ink"
+              >
+                Las columnas son el campo Status del Project. Añádelas o renómbralas en GitHub.
+              </a>
+            ) : (
+              <Composer
+                triggerLabel="Añadir columna"
+                placeholder="Nombre de la columna"
+                submitLabel="Crear columna"
+                onSubmit={(title) => ctrl().addColumn(board.id, title)}
+              />
+            )}
           </div>
         </div>
 
@@ -462,6 +475,7 @@ export function BoardCanvas({ board, team = false }: { board: Board; team?: bool
         columnTitle={openCard?.column.title}
         labels={board.labels}
         features={features}
+        board={board.github ? board : undefined}
         onClose={() => setOpenCardId(null)}
         onSave={(cardId, patch) => ctrl().updateCard(board.id, cardId, patch)}
         onDelete={(cardId) =>

@@ -5,7 +5,7 @@
  */
 
 /** Who a link belongs to. Drives the chip color; "web" is anything else. */
-export type LinkProvider = 'google' | 'microsoft' | 'slack' | 'web';
+export type LinkProvider = 'google' | 'microsoft' | 'slack' | 'github' | 'web';
 
 export interface LinkInfo {
   provider: LinkProvider;
@@ -73,6 +73,11 @@ export function describeLink(raw: string): LinkInfo {
   }
   if (host.startsWith('outlook.')) return { provider: 'microsoft', service: 'Outlook' };
 
+  if (host === 'github.com') {
+    const kind = url.pathname.split('/')[3];
+    const service = kind === 'pull' ? 'Pull request' : kind === 'issues' ? 'Issue' : 'GitHub';
+    return { provider: 'github', service };
+  }
   if (host === 'slack.com' || host.endsWith('.slack.com')) {
     return { provider: 'slack', service: 'Slack' };
   }

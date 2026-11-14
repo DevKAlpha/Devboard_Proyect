@@ -18,6 +18,8 @@ import {
   type SlackConfig,
 } from '../../integrations/slack';
 import { ProviderMark } from './ProviderMark';
+import { GithubProjectsModal } from './GithubProjectsModal';
+import { useGithub } from '../../controllers/githubController';
 
 export function ConnectionsModal({
   board,
@@ -51,7 +53,7 @@ function ConnectionList({ board }: { board: Board }) {
           <header className="mb-1 flex items-center gap-2">
             <ProviderMark provider={c.id} size={12} />
             <h3 className="font-pixel text-base">{c.name}</h3>
-            {c.id !== 'slack' && (
+            {(c.id === 'google' || c.id === 'microsoft') && (
               <span className="ml-auto">
                 <AccountStatus id={c.id} />
               </span>
@@ -59,7 +61,13 @@ function ConnectionList({ board }: { board: Board }) {
           </header>
           <p className="text-sm text-muted">{c.description}</p>
           <Tools connection={c} />
-          {c.id === 'slack' ? <SlackForm boardId={board.id} /> : <AccountActions id={c.id} />}
+          {c.id === 'slack' ? (
+            <SlackForm boardId={board.id} />
+          ) : c.id === 'github' ? (
+            <GithubSection board={board} />
+          ) : (
+            <AccountActions id={c.id} />
+          )}
         </section>
       ))}
       {error && (
@@ -215,5 +223,66 @@ function SlackForm({ boardId }: { boardId: string }) {
             : 'En Slack: Apps › Incoming Webhooks › Añadir a un canal. Se guarda solo en este navegador; no se comparte con el equipo.')}
       </p>
     </form>
+  );
+}
+
+/** GitHub account, and the Project this board mirrors (if any). */
+function GithubSection({ board }: { board: Board }) {
+  const { configured, user, busy } = useGithub();
+  const [picking, setPicking] = useState(false);
+  useEffect(() => void useGithub.getState().init(), []);
+
+  if (!configured) {
+    return (
+      <p className="mt-2 text-xs text-faint">
+        Necesita el servidor de Devbord con una GitHub App (VITE_GITHUB_API_URL, docs/github.md).
+      </p>
+    );
+  }
+  return (
+    <div className="mt-3 flex flex-col gap-2">
+      {board.github && (
+        <p className="text-xs text-muted">
+          Este tablero refleja{' '}
+          <a
+            href={board.github.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+          >
+            {board.github.owner} · Project #{board.github.number}
+          </a>
+          . Las columnas son su campo Status: se editan en GitHub.
+        </p>
+      )}
+      <div className="flex flex-wrap items-center gap-2">
+        {user ? (
+          <>
+            <span className="flex items-center gap-1.5 text-xs text-muted">
+              <img src={user.avatarUrl} alt="" className="size-4 rounded-sm" />
+              {user.login}
+            </span>
+            {!board.github && (
+              <Button size="sm" variant="primary" onClick={() => setPicking(true)}>
+                Abrir un Project como tablero
+              </Button>
+            )}
+            <Button size="sm" variant="ghost" onClick={() => void useGithub.getState().signOut()}>
+              Desconectar
+            </Button>
+          </>
+        ) : (
+          <Button
+            size="sm"
+            variant="primary"
+            disabled={busy}
+            onClick={() => void useGithub.getState().signIn()}
+          >
+            {busy ? 'Conectando…' : 'Conectar con GitHub'}
+          </Button>
+        )}
+      </div>
+      <GithubProjectsModal open={picking} onClose={() => setPicking(false)} />
+    </div>
   );
 }
