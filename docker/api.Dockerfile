@@ -18,9 +18,12 @@ RUN npm run build -w @devbord/api
 # ── Runtime stage ─────────────────────────────────────────────────────────────
 # The bundle includes all dependencies, so no node_modules are needed at runtime.
 FROM node:24-alpine AS runtime
-ENV NODE_ENV=production PORT=3000
+# DATA_DIR holds the GitHub sessions database (mount a volume there).
+ENV NODE_ENV=production PORT=3000 DATA_DIR=/data
 WORKDIR /app
 COPY --from=build /repo/apps/api/dist ./dist
+RUN mkdir -p /data && chown node:node /data
+VOLUME ["/data"]
 USER node
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s CMD wget -qO- http://127.0.0.1:3000/health >/dev/null || exit 1

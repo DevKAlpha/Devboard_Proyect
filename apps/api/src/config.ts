@@ -34,7 +34,7 @@ export const config = {
           clientSecret: env.GITHUB_CLIENT_SECRET ?? 'fake-secret',
           webhookSecret: env.GITHUB_WEBHOOK_SECRET ?? 'fake-webhook-secret',
           /** Public name of the App, for the "install" link (github.com/apps/<slug>). */
-          appSlug: env.GITHUB_APP_SLUG ?? 'devbord',
+          appSlug: env.GITHUB_APP_SLUG || 'devbord',
           /** Encrypts the GitHub tokens stored in the session database. */
           sessionSecret: env.SESSION_SECRET ?? 'fake-session-secret',
           /** Public URL of the web app, where sign-in popups land (…/oauth.html). */
