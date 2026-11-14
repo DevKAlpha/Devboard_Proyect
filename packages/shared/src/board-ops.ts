@@ -73,6 +73,7 @@ export function createBoard(input: NewBoardInput): Board {
     labels: (input.labels ?? []).map((l) => ({ ...l, id: newId() })),
     cardTemplate: input.cardTemplate ?? null,
     nextNumber: 1,
+    github: null,
     columns: (input.columnTitles ?? []).map((title, i) => ({
       id: newId(),
       title,
@@ -98,6 +99,7 @@ export function createCard(title: string, patch: CardPatch = {}): Card {
     moveLog: [],
     trail: [],
     links: [],
+    github: null,
     number: null,
     sprint: null,
     ...patch,
@@ -391,5 +393,59 @@ export function copyCardsInto(
     ),
     labels,
     nextNumber: target.nextNumber + copies.length,
+  };
+}
+
+/**
+ * Applies a GitHub Project snapshot to a linked board (see github.ts).
+ *
+ * GitHub is the source of truth for columns, cards and their fields; Devbord
+ * keeps what GitHub has no place for: the board's look and settings, column
+ * WIP limits and descriptions, and each card's links, type and journey. A card
+ * that shows up in another column than before (someone moved it on GitHub)
+ * gets that move recorded, so "Recorrido" and the card moods see it too.
+ */
+export function mergeSnapshot(local: Board | undefined, remote: Board): Board {
+  if (!local) return remote;
+  const at = nowIso();
+  const localColumns = new Map(local.columns.map((c) => [c.id, c]));
+  const localCards = new Map<string, { card: Card; columnId: string }>();
+  for (const col of local.columns) {
+    for (const card of col.cards) localCards.set(card.id, { card, columnId: col.id });
+  }
+
+  const columns = remote.columns.map((col) => {
+    const before = localColumns.get(col.id);
+    return {
+      ...col,
+      wipLimit: before?.wipLimit ?? col.wipLimit,
+      description: before?.description ?? col.description,
+      cards: col.cards.map((card) => {
+        const prev = localCards.get(card.id);
+        if (!prev) return { ...card, trail: [{ columnId: col.id, at: card.createdAt }] };
+        const kept: Card = {
+          ...card,
+          type: prev.card.type,
+          links: prev.card.links,
+          movedAt: prev.card.movedAt,
+          moveLog: prev.card.moveLog,
+          trail: prev.card.trail,
+        };
+        return prev.columnId === col.id ? kept : enter(kept, prev.columnId, col.id, at);
+      }),
+    };
+  });
+
+  return {
+    ...remote,
+    id: local.id,
+    profile: local.profile,
+    mode: local.mode,
+    skin: local.skin,
+    shareKey: local.shareKey,
+    templateId: local.templateId,
+    cardTemplate: local.cardTemplate,
+    createdAt: local.createdAt,
+    columns,
   };
 }

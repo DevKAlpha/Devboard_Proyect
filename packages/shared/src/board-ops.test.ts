@@ -19,6 +19,7 @@ import {
   moveCards,
   setBoardSkin,
   cardTrail,
+  mergeSnapshot,
 } from './board-ops';
 import { BoardSchema, CardSchema } from './schemas';
 
@@ -260,5 +261,40 @@ describe('card links', () => {
     expect(CardLinkSchema.safeParse({ ...ok, url: 'javascript:alert(1)' }).success).toBe(false);
     const legacy = { ...createCard('Vieja'), links: undefined };
     expect(CardSchema.parse(legacy).links).toEqual([]);
+  });
+});
+
+describe('mergeSnapshot', () => {
+  it('takes GitHub data but keeps Devbord-only settings and records remote moves', () => {
+    let local = createBoard({ name: 'L', profile: 'technical', columnTitles: ['Todo', 'Done'] });
+    const [todo, done] = local.columns.map((c) => c.id) as [string, string];
+    const card = createCard('Issue');
+    local = addCard(local, todo, card);
+    local = setColumnWipLimit(local, todo, 3);
+    local = { ...local, skin: 'halloween' };
+
+    // GitHub says: same card, now in Done, with a new title.
+    let remote = createBoard({
+      name: 'Project',
+      profile: 'simple',
+      columnTitles: ['Todo', 'Done'],
+    });
+    remote = {
+      ...remote,
+      columns: [
+        { ...remote.columns[0]!, id: todo, cards: [] },
+        { ...remote.columns[1]!, id: done, cards: [{ ...card, title: 'Renombrada', trail: [] }] },
+      ],
+    };
+
+    const merged = mergeSnapshot(local, remote);
+    expect(merged.id).toBe(local.id);
+    expect(merged.name).toBe('Project');
+    expect(merged.skin).toBe('halloween');
+    expect(merged.profile).toBe('technical');
+    expect(merged.columns[0]!.wipLimit).toBe(3);
+    const moved = merged.columns[1]!.cards[0]!;
+    expect(moved.title).toBe('Renombrada');
+    expect(moved.trail.map((s) => s.columnId)).toEqual([todo, done]);
   });
 });
