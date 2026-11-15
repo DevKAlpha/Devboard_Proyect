@@ -52,6 +52,88 @@ html[data-motion='lite'] .pixel-drop {
   filter: none;
 }
 
+/* ── Pixel box ───────────────────────────────────────────────────────────── */
+
+/*
+ * A pixel-art frame on a single element, for things there are many of (cards,
+ * columns): no wrapper, and both pseudo-elements stay free for decorations.
+ *
+ * The corner is two stairs of one "pixel" (`--pxb`). The border is one pixel
+ * thick. Where the stairs turn, one pixel of border is missing: the border
+ * runs along the box and the corner is cut. That pixel is drawn as a
+ * background dot in each corner of the padding box.
+ *
+ *   --pxb       size of a pixel (2px; columns use 3px)
+ *   --pxb-line  color of the border; `transparent` leaves only the shape
+ *   --pxb-fill  an optional picture over the background color (a tint)
+ *
+ * clip-path cuts box-shadow and anything drawn outside the box. The shadow
+ * is `.pixel-box-shadow` on the parent.
+ */
+.pixel-box {
+  --pxb: 2px;
+  --pxb-line: var(--line-soft);
+  --pxb-dot: linear-gradient(var(--pxb-line), var(--pxb-line));
+  border: var(--pxb) solid var(--pxb-line);
+  border-radius: 0;
+  background-image: var(--pxb-dot), var(--pxb-dot), var(--pxb-dot), var(--pxb-dot),
+    var(--pxb-fill, none);
+  background-position:
+    left top,
+    right top,
+    left bottom,
+    right bottom,
+    center;
+  background-size:
+    var(--pxb) var(--pxb),
+    var(--pxb) var(--pxb),
+    var(--pxb) var(--pxb),
+    var(--pxb) var(--pxb),
+    100% 100%;
+  background-repeat: no-repeat;
+  background-origin: padding-box;
+}
+.pixel-box,
+.pixel-box-shadow::before {
+  clip-path: polygon(
+    0 calc(var(--pxb) * 2),
+    var(--pxb) calc(var(--pxb) * 2),
+    var(--pxb) var(--pxb),
+    calc(var(--pxb) * 2) var(--pxb),
+    calc(var(--pxb) * 2) 0,
+    calc(100% - var(--pxb) * 2) 0,
+    calc(100% - var(--pxb) * 2) var(--pxb),
+    calc(100% - var(--pxb)) var(--pxb),
+    calc(100% - var(--pxb)) calc(var(--pxb) * 2),
+    100% calc(var(--pxb) * 2),
+    100% calc(100% - var(--pxb) * 2),
+    calc(100% - var(--pxb)) calc(100% - var(--pxb) * 2),
+    calc(100% - var(--pxb)) calc(100% - var(--pxb)),
+    calc(100% - var(--pxb) * 2) calc(100% - var(--pxb)),
+    calc(100% - var(--pxb) * 2) 100%,
+    calc(var(--pxb) * 2) 100%,
+    calc(var(--pxb) * 2) calc(100% - var(--pxb)),
+    var(--pxb) calc(100% - var(--pxb)),
+    var(--pxb) calc(100% - var(--pxb) * 2),
+    0 calc(100% - var(--pxb) * 2)
+  );
+}
+
+/*
+ * Hard shadow of a pixel box: the same shape, one pixel down and right,
+ * behind the box. A painted layer, not a filter: there can be hundreds of
+ * cards on screen. Goes on the positioned parent of the box.
+ */
+.pixel-box-shadow::before {
+  --pxb: 2px;
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--shadow-ink);
+  transform: translate(var(--pxb), var(--pxb));
+  pointer-events: none;
+}
+
 /* ── PixelScroll ─────────────────────────────────────────────────────────── */
 
 /* The native scrollbar is hidden; PixelScroll draws its own. */
