@@ -106,19 +106,14 @@ function CursorLayer() {
     element: null as Element | null,
     /** Ancestors of `element` that clip it (scrolling lists, columns, modals). */
     clips: [] as Element[],
+    /** Last box written to the selection, so unchanged frames write nothing. */
+    box: '',
   });
   useEffect(() => {
     // No highlight while dragging: the lifted card is the focus.
     const element = dragging || target.variant !== 'pointer' ? null : target.element;
     live.current.element = element;
     live.current.clips = element ? clippingAncestors(element) : [];
-    // Each new control replays the "lock on" of the corner brackets (cursor.css).
-    const halo = haloRef.current;
-    if (halo && element) {
-      halo.classList.remove('pc-lock');
-      void halo.offsetWidth;
-      halo.classList.add('pc-lock');
-    }
   }, [target.element, target.variant, dragging]);
 
   const sprite: SpriteName = dragging
@@ -221,13 +216,19 @@ function CursorLayer() {
         // The selection sits on the part of the control you can see: inside its
         // own box and cut by the list or column it scrolls in. Whole pixels only.
         const box = s.element?.isConnected ? visibleBox(s.element, s.clips) : null;
-        if (box) {
-          halo.style.transform = `translate3d(${box.left}px, ${box.top}px, 0)`;
-          halo.style.width = `${box.width}px`;
-          halo.style.height = `${box.height}px`;
-          if (!('on' in halo.dataset)) halo.dataset.on = '';
-        } else if ('on' in halo.dataset) {
-          delete halo.dataset.on;
+        // Snaps to the control in one frame (no tween: pixel art jumps), and
+        // only touches the DOM when the box really changed.
+        const key = box ? `${box.left},${box.top},${box.width},${box.height}` : '';
+        if (key !== s.box) {
+          s.box = key;
+          if (box) {
+            halo.style.transform = `translate3d(${box.left}px, ${box.top}px, 0)`;
+            halo.style.width = `${box.width}px`;
+            halo.style.height = `${box.height}px`;
+            halo.dataset.on = '';
+          } else {
+            delete halo.dataset.on;
+          }
         }
       }
       frame = requestAnimationFrame(tick);

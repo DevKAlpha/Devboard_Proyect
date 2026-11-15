@@ -88,48 +88,19 @@ html[data-pixel-cursor]
 }
 
 /*
- * Pixel selection on the hovered control: a soft tint with pixel corners and
- * four corner brackets, like a target in a pixel game. It is drawn inside the
- * control's visible box (PixelCursor cuts it by the list or column around it),
- * so it never spills out of a column. It hops between controls in steps.
+ * Pixel selection on the hovered control: a soft tint and four corner
+ * brackets, like a target in a pixel game. Drawn inside the control's visible
+ * box (PixelCursor cuts it by the list or column around it), so it never
+ * spills out of a column. It jumps to the control in one frame: only opacity
+ * fades (2 steps, compositor only); no size tween, no clip-path, no filter.
  */
 .pc-halo {
   --pc-px: 2px;
   --pc-arm: 8px;
-  --pc-ink: var(--accent);
+  --pc-h: linear-gradient(var(--accent), var(--accent));
   width: 0;
   height: 0;
   opacity: 0;
-  background: color-mix(in srgb, var(--accent) 9%, transparent);
-  clip-path: polygon(
-    0 var(--pc-px),
-    var(--pc-px) var(--pc-px),
-    var(--pc-px) 0,
-    calc(100% - var(--pc-px)) 0,
-    calc(100% - var(--pc-px)) var(--pc-px),
-    100% var(--pc-px),
-    100% calc(100% - var(--pc-px)),
-    calc(100% - var(--pc-px)) calc(100% - var(--pc-px)),
-    calc(100% - var(--pc-px)) 100%,
-    var(--pc-px) 100%,
-    var(--pc-px) calc(100% - var(--pc-px)),
-    0 calc(100% - var(--pc-px))
-  );
-  transition:
-    transform 120ms steps(3, end),
-    width 120ms steps(3, end),
-    height 120ms steps(3, end),
-    opacity 90ms steps(2, end);
-}
-.pc-halo[data-on] {
-  opacity: 1;
-}
-/* The four brackets: an L of 2px pixels in each corner. */
-.pc-halo::before {
-  --pc-h: linear-gradient(var(--pc-ink), var(--pc-ink));
-  content: '';
-  position: absolute;
-  inset: 0;
   background:
     var(--pc-h) left top / var(--pc-arm) var(--pc-px),
     var(--pc-h) left top / var(--pc-px) var(--pc-arm),
@@ -138,18 +109,13 @@ html[data-pixel-cursor]
     var(--pc-h) left bottom / var(--pc-arm) var(--pc-px),
     var(--pc-h) left bottom / var(--pc-px) var(--pc-arm),
     var(--pc-h) right bottom / var(--pc-arm) var(--pc-px),
-    var(--pc-h) right bottom / var(--pc-px) var(--pc-arm);
+    var(--pc-h) right bottom / var(--pc-px) var(--pc-arm),
+    color-mix(in srgb, var(--accent) 9%, transparent);
   background-repeat: no-repeat;
+  transition: opacity 60ms steps(2, end);
 }
-/* Lock on: the brackets close in from inside the box in 3 steps (never outside). */
-.pc-halo.pc-lock::before {
-  animation: pc-lock 150ms steps(3, end);
-}
-@keyframes pc-lock {
-  from {
-    inset: 6px;
-    opacity: 0.4;
-  }
+.pc-halo[data-on] {
+  opacity: 1;
 }
 
 /* Small inverted pixel pill next to the cursor (tooltips, drop target). */
@@ -197,7 +163,4 @@ html[data-motion='lite'] .pc-spark {
 }
 html[data-motion='lite'] .pc-halo {
   transition: none;
-}
-html[data-motion='lite'] .pc-halo.pc-lock::before {
-  animation: none;
 }
