@@ -1,11 +1,6 @@
 import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import {
-  MAX_ACTIVE_BOARDS,
-  MAX_ARCHIVED_BOARDS,
-  PROFILE_INFO,
-  type Board,
-} from '@devbord/shared';
+import { MAX_ACTIVE_BOARDS, MAX_ARCHIVED_BOARDS, PROFILE_INFO, type Board } from '@devbord/shared';
 import { Badge, Button, IconButton, PixelIcon, confirm } from '../../design';
 import {
   activeBoards,
@@ -88,8 +83,8 @@ export function BoardsPage() {
         />
         {full && (
           <p role="status" className="w-full text-sm text-muted">
-            Tienes {MAX_ACTIVE_BOARDS} de {MAX_ACTIVE_BOARDS} tableros activos. Archiva o elimina uno
-            para crear, importar o conectar otro.
+            Tienes {MAX_ACTIVE_BOARDS} de {MAX_ACTIVE_BOARDS} tableros activos. Archiva o elimina
+            uno para crear, importar o conectar otro.
           </p>
         )}
         {importError && (
@@ -129,7 +124,7 @@ export function BoardsPage() {
             <h2 className="flex items-center gap-2 text-sm text-muted">
               <PixelIcon name="archive" />
               Archivados
-              <span className="tabular-nums text-faint">
+              <span className="text-faint tabular-nums">
                 {archived.length}/{MAX_ARCHIVED_BOARDS}
               </span>
             </h2>
@@ -163,16 +158,22 @@ export function BoardsPage() {
 function BoardTile({ board: b }: { board: Board }) {
   const cards = b.columns.reduce((n, c) => n + c.cards.length, 0);
   return (
-    <li className="relative">
+    // Pixel-art frame like the board's cards: stepped corners and a hard shadow
+    // painted behind (design/pixel.css); hover lifts the tile off its shadow.
+    <li className="pixel-box-shadow relative">
       <SkinChip board={b} />
       <Link
         to={`/b/${b.id}`}
-        className="flex h-full flex-col gap-3 rounded-xl border border-line-soft bg-card p-4 shadow-card transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-lift"
+        className="pixel-box pixel-box-hover relative flex h-full flex-col gap-3 bg-card p-4 transition-transform duration-150 ease-[steps(2,end)] hover:-translate-y-0.5"
       >
         {/* Mini preview in the board's own colors: one bar per column, one block per card. */}
         <div
-          className="flex h-14 gap-1.5 rounded-lg p-1.5"
-          style={{ background: SKINS[b.skin].swatch.bg }}
+          className="pixel-box flex h-14 gap-1.5 p-1"
+          // No frame line: only the pixel shape (a utility class could not beat .pixel-box).
+          style={{
+            backgroundColor: SKINS[b.skin].swatch.bg,
+            ['--pxb-line' as string]: 'transparent',
+          }}
           aria-hidden
         >
           {b.columns.slice(0, 6).map((c) => (
@@ -180,7 +181,7 @@ function BoardTile({ board: b }: { board: Board }) {
               {Array.from({ length: Math.min(4, c.cards.length) }, (_, i) => (
                 <span
                   key={i}
-                  className="h-2 rounded-[2px] shadow-card"
+                  className="h-2"
                   style={{
                     background: SKINS[b.skin].swatch.card,
                     boxShadow: `inset 2px 0 0 ${SKINS[b.skin].swatch.accent}`,
@@ -211,7 +212,7 @@ function BoardTile({ board: b }: { board: Board }) {
 function ArchivedTile({ board: b }: { board: Board }) {
   const cards = b.columns.reduce((n, c) => n + c.cards.length, 0);
   return (
-    <li className="flex flex-col gap-3 rounded-xl border border-dashed border-line bg-surface-2 p-4">
+    <li className="pixel-box flex flex-col gap-3 bg-surface-2 p-4">
       <div className="flex items-start gap-2">
         <h3 className="min-w-0 flex-1 truncate text-lg text-muted">{b.name}</h3>
         <IconButton
@@ -236,7 +237,8 @@ function ArchivedTile({ board: b }: { board: Board }) {
           {PROFILE_INFO[b.profile].title}
         </Badge>
         <span>
-          {cards} tarjetas · archivado el {updatedFormat.format(new Date(b.archivedAt ?? b.updatedAt))}
+          {cards} tarjetas · archivado el{' '}
+          {updatedFormat.format(new Date(b.archivedAt ?? b.updatedAt))}
         </span>
       </div>
     </li>
