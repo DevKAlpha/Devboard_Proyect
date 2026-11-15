@@ -74,6 +74,7 @@ export function createBoard(input: NewBoardInput): Board {
     cardTemplate: input.cardTemplate ?? null,
     nextNumber: 1,
     github: null,
+    archivedAt: null,
     columns: (input.columnTitles ?? []).map((title, i) => ({
       id: newId(),
       title,
@@ -120,6 +121,13 @@ export function setBoardProfile(board: Board, profile: Profile): Board {
 
 export function setBoardSkin(board: Board, skin: BoardSkin): Board {
   return { ...touch(board), skin };
+}
+
+/** Archives a board: from now on it is read-only (download or delete only). */
+export function archiveBoard(board: Board): Board {
+  if (board.archivedAt) return board;
+  const at = nowIso();
+  return { ...board, archivedAt: at, updatedAt: at };
 }
 
 // ─── Columns ────────────────────────────────────────────────────────────────
