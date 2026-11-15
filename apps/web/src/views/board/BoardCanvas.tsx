@@ -449,19 +449,19 @@ export function BoardCanvas({ board, team = false }: { board: Board; team?: bool
               {group && group.length > 1 && (
                 <>
                   <div
-                    className="drag-stack"
+                    className="drag-stack pixel-box"
                     style={{ transform: 'translate(8px, 8px) rotate(5deg)' }}
                   />
                   {group.length > 2 && (
                     <div
-                      className="drag-stack"
+                      className="drag-stack pixel-box"
                       style={{ transform: 'translate(4px, 4px) rotate(3.5deg)' }}
                     />
                   )}
                   <span className="drag-count">{group.length}</span>
                 </>
               )}
-              <div className="relative">
+              <div className="kb-card-lifted relative">
                 <CardFace card={activeCard} labels={board.labels} features={features} overlay />
               </div>
             </div>

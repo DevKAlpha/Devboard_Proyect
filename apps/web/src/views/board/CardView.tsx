@@ -6,6 +6,7 @@ import { Badge, PixelIcon, animateFlash, cx } from '../../design';
 import { CARD_TYPE_META, PRIORITY_META, describeDueDate, previewText } from './cardMeta';
 import type { CardMood } from './cardMood';
 import { MoodDecor } from './MoodDecor';
+import './frames.css';
 import { GithubMeta, GithubRef } from '../connections/GithubCardChips';
 import { useIsSelected } from '../../controllers/selectionController';
 
@@ -53,13 +54,13 @@ export function CardFace({
   return (
     <div
       className={cx(
-        'kb-card relative flex flex-col gap-2 rounded-lg border border-line-soft bg-card p-3 text-left shadow-card',
-        // Hover: lift 1px over a hard pixel shadow (small enough to stay inside the
-        // list's padding); press: sink back. Stepped, like a sprite.
-        'transition-[box-shadow,border-color,transform] duration-150 ease-[steps(2,end)] group-hover/card:-translate-y-px group-hover/card:border-line group-hover/card:shadow-pixel group-active/card:translate-y-0',
+        'kb-card pixel-box relative flex flex-col gap-2 bg-card p-3 text-left',
+        // Hover: lift 1px off the hard pixel shadow painted behind (frames.css);
+        // press: sink back. Stepped, like a sprite.
+        'transition-transform duration-150 ease-[steps(2,end)] group-hover/card:-translate-y-px group-active/card:translate-y-0',
         mood && `card-mood-${mood}`,
         // Lifted card: tilted and floating, like picking up a paper card.
-        overlay && 'scale-[1.02] rotate-[2.5deg] shadow-lift',
+        overlay && 'scale-[1.02] rotate-[2.5deg]',
       )}
     >
       <MoodDecor mood={mood} />
@@ -197,7 +198,9 @@ export const CardView = memo(function CardView({
           } else listeners?.onKeyDown?.(e);
         }}
         className={cx(
-          'relative cursor-grab touch-manipulation rounded-lg',
+          'kb-card-slot relative cursor-grab touch-manipulation',
+          // The hard shadow belongs to the card, not to the gap it leaves.
+          !isDragging && 'pixel-box-shadow',
           // Selected: accent ring around the card, like a selected file in Finder.
           selected && 'card-selected',
         )}
@@ -207,10 +210,7 @@ export const CardView = memo(function CardView({
           <CardFace card={card} labels={labels} features={features} mood={mood} />
         </div>
         {isDragging && (
-          <div
-            aria-hidden
-            className="absolute inset-0 rounded-lg border-2 border-dashed border-line bg-surface-3/60"
-          />
+          <div aria-hidden className="kb-card-gap" />
         )}
       </div>
     </li>

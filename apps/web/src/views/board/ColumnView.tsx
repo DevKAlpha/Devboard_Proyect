@@ -119,12 +119,12 @@ export const ColumnView = memo(function ColumnView({
       ref={setNodeRef}
       data-flip-id={`col:${column.id}`}
       aria-label={`Columna ${column.title}`}
+      // Over the WIP limit the frame turns red (frames.css).
+      data-over-wip={overWip || undefined}
       style={{ transform: CSS.Translate.toString(transform), transition }}
       className={cx(
         // *:relative keeps the content above decorative layers (icebox snowfall).
-        'kb-col group/col relative flex max-h-full w-[min(320px,85vw)] shrink-0 snap-start flex-col gap-3 rounded-xl bg-surface-2 p-2.5 *:relative',
-        // Over the WIP limit: a visible but calm signal to finish before starting more.
-        overWip && 'shadow-[inset_0_0_0_2px_var(--label-red-ink)]',
+        'kb-col group/col relative flex max-h-full w-[min(320px,85vw)] shrink-0 snap-start flex-col gap-3 pixel-box bg-surface-2 p-[7px] *:relative',
         isDragging && 'opacity-50',
       )}
     >

@@ -26,11 +26,10 @@ html[data-motion='lite'] .drag-jitter {
   animation: none;
 }
 
-/* Selected card (multi-select): accent ring and a pixel check in the corner. */
-.card-selected {
-  /* Offset stays within the list padding, so it never causes a scrollbar. */
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
+/* Selected card (multi-select): the pixel frame turns accent (inside the card,
+   so nothing leaves the column) and a pixel check sits in the corner. */
+.kb-card-slot.card-selected .kb-card.pixel-box {
+  --pxb-line: var(--accent);
 }
 .card-selected::after {
   content: '';
@@ -40,7 +39,6 @@ html[data-motion='lite'] .drag-jitter {
   z-index: 3;
   width: 16px;
   height: 16px;
-  border-radius: 4px;
   background: var(--accent)
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white' shape-rendering='crispEdges'%3E%3Crect x='3' y='8' width='2' height='2'/%3E%3Crect x='5' y='10' width='2' height='2'/%3E%3Crect x='7' y='8' width='2' height='2'/%3E%3Crect x='9' y='6' width='2' height='2'/%3E%3Crect x='11' y='4' width='2' height='2'/%3E%3C/svg%3E")
     center / 12px no-repeat;
@@ -52,19 +50,16 @@ html[data-motion='lite'] .drag-jitter {
   position: absolute;
   z-index: 15;
   pointer-events: none;
-  border: 1.5px dashed var(--accent);
-  border-radius: 4px;
+  border: 2px dashed var(--accent);
   background: color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
 /* Several cards lifted together: paper sheets fanned out behind the top one. */
 .drag-stack {
+  --pxb-line: var(--line);
   position: absolute;
   inset: 0;
-  border: 1px solid var(--line);
-  border-radius: 0.5rem;
-  background: var(--card);
-  box-shadow: var(--shadow-card-v);
+  background-color: var(--card);
 }
 .drag-count {
   position: absolute;
