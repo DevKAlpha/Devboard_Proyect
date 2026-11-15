@@ -1,8 +1,20 @@
 import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { PROFILE_INFO, type Board } from '@devbord/shared';
-import { Badge, Button, PixelIcon } from '../../design';
-import { useBoardController } from '../../controllers/boardController';
+import {
+  MAX_ACTIVE_BOARDS,
+  MAX_ARCHIVED_BOARDS,
+  PROFILE_INFO,
+  type Board,
+} from '@devbord/shared';
+import { Badge, Button, IconButton, PixelIcon, confirm } from '../../design';
+import {
+  activeBoards,
+  archivedBoards,
+  BoardLimitError,
+  useBoardController,
+} from '../../controllers/boardController';
+import { removeBoard } from '../../controllers/boardLifecycle';
+import { downloadBoardJson } from '../board/downloadBoard';
 import { AppShell } from '../components/AppShell';
 import { NewBoardModal } from '../components/NewBoardModal';
 import { GithubProjectsModal } from '../connections/GithubProjectsModal';
@@ -15,6 +27,10 @@ const updatedFormat = new Intl.DateTimeFormat('es', { day: 'numeric', month: 'sh
 /** Home: grid of the user's boards plus a "new board" entry point. */
 export function BoardsPage() {
   const boards = useBoardController((s) => s.boards);
+  const active = activeBoards(boards);
+  const archived = archivedBoards(boards);
+  /** At MAX_ACTIVE_BOARDS nothing new comes in: create, import and GitHub wait. */
+  const full = active.length >= MAX_ACTIVE_BOARDS;
   const [creating, setCreating] = useState(false);
   const [fromGithub, setFromGithub] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
@@ -32,15 +48,15 @@ export function BoardsPage() {
           <BathCaption />
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button onClick={() => setFromGithub(true)}>
+          <Button disabled={full} onClick={() => setFromGithub(true)}>
             <PixelIcon name="issue" />
             Conectar Project de GitHub
           </Button>
-          <Button onClick={() => fileRef.current?.click()}>
+          <Button disabled={full} onClick={() => fileRef.current?.click()}>
             <PixelIcon name="upload" />
             Importar JSON
           </Button>
-          <Button variant="primary" onClick={() => setCreating(true)}>
+          <Button variant="primary" disabled={full} onClick={() => setCreating(true)}>
             <PixelIcon name="plus" />
             Nuevo tablero
           </Button>
@@ -63,11 +79,19 @@ export function BoardsPage() {
               navigate(`/b/${board.id}`);
             } catch (err) {
               setImportError(
-                err instanceof BoardFileError ? err.message : 'No se pudo importar el archivo.',
+                err instanceof BoardFileError || err instanceof BoardLimitError
+                  ? err.message
+                  : 'No se pudo importar el archivo.',
               );
             }
           }}
         />
+        {full && (
+          <p role="status" className="w-full text-sm text-muted">
+            Tienes {MAX_ACTIVE_BOARDS} de {MAX_ACTIVE_BOARDS} tableros activos. Archiva o elimina uno
+            para crear, importar o conectar otro.
+          </p>
+        )}
         {importError && (
           <p
             role="alert"
@@ -81,7 +105,7 @@ export function BoardsPage() {
 
       <main className="min-h-0 flex-1 overflow-y-auto">
         {(['personal', 'team'] as const).map((mode) => {
-          const list = boards.filter((b) => b.mode === mode);
+          const list = active.filter((b) => b.mode === mode);
           if (!list.length) return null;
           return (
             <section key={mode} className="mx-auto flex max-w-5xl flex-col gap-3 px-4 pb-8">
@@ -99,7 +123,25 @@ export function BoardsPage() {
           );
         })}
 
-        {boards.length === 0 && (
+        {archived.length > 0 && (
+          <section className="mx-auto flex max-w-5xl flex-col gap-3 px-4 pb-8">
+            {/* Read-only boards: download (JSON) or delete, never opened for editing. */}
+            <h2 className="flex items-center gap-2 text-sm text-muted">
+              <PixelIcon name="archive" />
+              Archivados
+              <span className="tabular-nums text-faint">
+                {archived.length}/{MAX_ARCHIVED_BOARDS}
+              </span>
+            </h2>
+            <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {archived.map((b) => (
+                <ArchivedTile key={b.id} board={b} />
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {active.length === 0 && (
           <div className="flex flex-col items-center gap-3 py-16 text-center text-muted">
             <PixelIcon name="board" size={48} />
             <p>Aún no tienes tableros. Crea el primero en segundos.</p>
@@ -158,6 +200,45 @@ function BoardTile({ board: b }: { board: Board }) {
           </span>
         </div>
       </Link>
+    </li>
+  );
+}
+
+/**
+ * An archived board: read-only, so the tile is not a link. It can only be
+ * downloaded as JSON (everything: columns, cards, labels, connections) or deleted.
+ */
+function ArchivedTile({ board: b }: { board: Board }) {
+  const cards = b.columns.reduce((n, c) => n + c.cards.length, 0);
+  return (
+    <li className="flex flex-col gap-3 rounded-xl border border-dashed border-line bg-surface-2 p-4">
+      <div className="flex items-start gap-2">
+        <h3 className="min-w-0 flex-1 truncate text-lg text-muted">{b.name}</h3>
+        <IconButton
+          icon="download"
+          label={`Descargar "${b.name}" en JSON`}
+          onClick={() => downloadBoardJson(b)}
+        />
+        <IconButton
+          icon="trash"
+          label={`Eliminar "${b.name}"`}
+          onClick={async () => {
+            const ok = await confirm(
+              `¿Eliminar el tablero archivado "${b.name}"? No se puede deshacer. Descárgalo antes si quieres conservarlo.`,
+              { confirmLabel: 'Eliminar', danger: true },
+            );
+            if (ok) await removeBoard(b);
+          }}
+        />
+      </div>
+      <div className="mt-auto flex items-center justify-between text-xs text-muted">
+        <Badge color={b.profile === 'technical' ? 'blue' : 'green'}>
+          {PROFILE_INFO[b.profile].title}
+        </Badge>
+        <span>
+          {cards} tarjetas · archivado el {updatedFormat.format(new Date(b.archivedAt ?? b.updatedAt))}
+        </span>
+      </div>
     </li>
   );
 }

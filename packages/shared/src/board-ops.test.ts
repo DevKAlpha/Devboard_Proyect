@@ -20,6 +20,7 @@ import {
   setBoardSkin,
   cardTrail,
   mergeSnapshot,
+  archiveBoard,
 } from './board-ops';
 import { BoardSchema, CardSchema } from './schemas';
 
@@ -296,5 +297,18 @@ describe('mergeSnapshot', () => {
     const moved = merged.columns[1]!.cards[0]!;
     expect(moved.title).toBe('Renombrada');
     expect(moved.trail.map((s) => s.columnId)).toEqual([todo, done]);
+  });
+});
+
+describe('archive', () => {
+  it('archives once, and old boards parse as active', () => {
+    const board = createBoard({ name: 'A', profile: 'technical', columnTitles: ['X'] });
+    expect(board.archivedAt).toBeNull();
+    const archived = archiveBoard(board);
+    expect(archived.archivedAt).not.toBeNull();
+    expect(archiveBoard(archived)).toBe(archived);
+    const legacy: Record<string, unknown> = { ...board };
+    delete legacy.archivedAt;
+    expect(BoardSchema.parse(legacy).archivedAt).toBeNull();
   });
 });

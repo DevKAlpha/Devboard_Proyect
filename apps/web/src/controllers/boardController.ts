@@ -23,6 +23,23 @@ import { announceMove } from './connectionsController';
 
 type Status = 'idle' | 'loading' | 'ready' | 'error';
 
+/** Boards in use (shown on home, editable). */
+export const activeBoards = (boards: Board[]) => boards.filter((b) => !b.archivedAt);
+/** Archived boards: read-only, download or delete only. */
+export const archivedBoards = (boards: Board[]) => boards.filter((b) => b.archivedAt);
+/** True while there is room for one more active board. */
+export const canAddBoard = (boards: Board[]) =>
+  activeBoards(boards).length < ops.MAX_ACTIVE_BOARDS;
+
+/** Thrown when adding a board past MAX_ACTIVE_BOARDS. The message is shown as is. */
+export class BoardLimitError extends Error {
+  constructor() {
+    super(
+      `Tienes ${ops.MAX_ACTIVE_BOARDS} tableros activos, el máximo. Archiva o elimina uno para añadir otro.`,
+    );
+  }
+}
+
 /**
  * Receives the GitHub ops of boards linked to a Project (set by
  * githubController, which owns the API calls; a callback avoids an import cycle).
@@ -76,6 +93,11 @@ export interface BoardState {
   /** Adds an already-built board (e.g. one created from a template). */
   addBoard: (board: Board) => Promise<Board>;
   deleteBoard: (boardId: string) => Promise<void>;
+  /**
+   * Archives a board: it becomes read-only. Returns false (and changes nothing)
+   * when MAX_ARCHIVED_BOARDS are already archived: one must be deleted first.
+   */
+  archiveBoard: (boardId: string) => boolean;
   renameBoard: (boardId: string, name: string) => void;
   setProfile: (boardId: string, profile: Profile) => void;
   /** Seasonal look of the board (columns, cards, cursor, backdrop). */
@@ -129,7 +151,8 @@ export function createBoardController(repo: BoardRepository) {
       toGithub?: (next: Board) => GithubOp[],
     ) => {
       const current = get().boards.find((b) => b.id === boardId);
-      if (!current) return;
+      // Archived boards are read-only: every edit stops here.
+      if (!current || current.archivedAt) return;
       const next = op(current);
       if (next === current) return; // no-op operations return the same reference
       set({ boards: get().boards.map((b) => (b.id === boardId ? next : b)) });
@@ -165,13 +188,19 @@ export function createBoardController(repo: BoardRepository) {
       createBoard: (input) => get().addBoard(ops.createBoard(input)),
 
       addBoard: async (board) => {
+        if (!canAddBoard(get().boards)) throw new BoardLimitError();
         set({ boards: [board, ...get().boards] });
         await persist(board);
         return board;
       },
 
       receiveBoard: (board) => {
-        const exists = get().boards.some((b) => b.id === board.id);
+        const local = get().boards.find((b) => b.id === board.id);
+        // Archived: nothing from a teammate or GitHub changes it any more.
+        if (local?.archivedAt) return;
+        // A new board (team invite) needs room under MAX_ACTIVE_BOARDS.
+        if (!local && !canAddBoard(get().boards)) return;
+        const exists = Boolean(local);
         set({
           boards: exists
             ? get().boards.map((b) => (b.id === board.id ? board : b))
@@ -183,6 +212,12 @@ export function createBoardController(repo: BoardRepository) {
       deleteBoard: async (boardId) => {
         set({ boards: get().boards.filter((b) => b.id !== boardId) });
         await repo.remove(boardId);
+      },
+
+      archiveBoard: (boardId) => {
+        if (archivedBoards(get().boards).length >= ops.MAX_ARCHIVED_BOARDS) return false;
+        mutate(boardId, ops.archiveBoard);
+        return true;
       },
 
       renameBoard: (id, name) =>

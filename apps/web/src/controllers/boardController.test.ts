@@ -6,9 +6,11 @@ import {
   createCard,
   findCard,
   type GithubOp,
+  MAX_ACTIVE_BOARDS,
+  MAX_ARCHIVED_BOARDS,
 } from '@devbord/shared';
 import { IndexedDbBoardRepository } from '../models/repositories';
-import { createBoardController, setGithubSink } from './boardController';
+import { BoardLimitError, createBoardController, setGithubSink } from './boardController';
 
 let n = 0;
 const setup = () => {
@@ -130,5 +132,40 @@ describe('boardController on boards linked to GitHub', () => {
       { type: 'moveCard', cardId: a.id, columnId: done, afterCardId: b.id },
     ]);
     expect(store.getState().boards[0]!.columns).toHaveLength(2);
+  });
+});
+
+describe('archive and limits', () => {
+  const make = (store: ReturnType<typeof setup>['store'], name = 'B') =>
+    store.getState().createBoard({ name, profile: 'simple', columnTitles: ['A'] });
+
+  it('an archived board is read-only and frees an active slot', async () => {
+    const { store } = setup();
+    for (let i = 0; i < MAX_ACTIVE_BOARDS; i++) await make(store, 'B' + i);
+    await expect(make(store)).rejects.toBeInstanceOf(BoardLimitError);
+
+    const first = store.getState().boards.at(-1)!;
+    expect(store.getState().archiveBoard(first.id)).toBe(true);
+    store.getState().renameBoard(first.id, 'Changed');
+    store.getState().addCard(first.id, first.columns[0]!.id, 'Nope');
+    const archived = store.getState().boards.find((b) => b.id === first.id)!;
+    expect(archived.archivedAt).not.toBeNull();
+    expect(archived.name).toBe(first.name);
+    expect(archived.columns[0]!.cards).toHaveLength(0);
+    // Room again for one more active board.
+    await expect(make(store, 'New')).resolves.toBeTruthy();
+  });
+
+  it('refuses to archive past the archived limit', async () => {
+    const { store } = setup();
+    const ids: string[] = [];
+    for (let i = 0; i <= MAX_ARCHIVED_BOARDS; i++) {
+      const b = await make(store, 'B' + i);
+      ids.push(b.id);
+      if (i < MAX_ARCHIVED_BOARDS) expect(store.getState().archiveBoard(b.id)).toBe(true);
+    }
+    const last = ids.at(-1)!;
+    expect(store.getState().archiveBoard(last)).toBe(false);
+    expect(store.getState().boards.find((b) => b.id === last)!.archivedAt).toBeNull();
   });
 });
