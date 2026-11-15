@@ -167,11 +167,21 @@ export const BoardSchema = z.object({
   nextNumber: z.number().int().positive().default(1),
   /** GitHub Project this board mirrors (Zenhub-style). Null: a Devbord-only board. */
   github: GithubLinkSchema.nullable().default(null),
+  /**
+   * When the board was archived. An archived board is read-only: it can only be
+   * downloaded (JSON) or deleted. Null: an active board.
+   */
+  archivedAt: z.iso.datetime().nullable().default(null),
   columns: z.array(ColumnSchema),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
 });
 export type Board = z.infer<typeof BoardSchema>;
+
+/** Most active boards a person can have (create, import or bring from GitHub). */
+export const MAX_ACTIVE_BOARDS = 9;
+/** Most archived boards kept; at the limit, one must be deleted to archive another. */
+export const MAX_ARCHIVED_BOARDS = 9;
 
 /** Editable card fields (everything except identity and timestamps). */
 export const CardPatchSchema = CardSchema.omit({
