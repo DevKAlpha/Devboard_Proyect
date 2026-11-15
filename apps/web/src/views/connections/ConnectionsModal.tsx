@@ -40,7 +40,9 @@ export function ConnectionsModal({
 function ConnectionList({ board }: { board: Board }) {
   const error = useConnections((s) => s.error);
   // Tokens expire; re-check each time the panel opens.
-  useEffect(() => useConnections.getState().refresh(), []);
+  useEffect(() => {
+    useConnections.getState().refresh();
+  }, []);
 
   return (
     <div className="flex flex-col gap-3">

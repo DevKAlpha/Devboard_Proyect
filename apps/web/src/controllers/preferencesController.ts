@@ -57,6 +57,8 @@ export const usePreferences = create<PreferencesState>((set, get) => {
     ...read(),
     completeOnboarding: (profile) => save({ onboarded: true, profile }),
     setProfile: (profile) => save({ profile }),
-    setLastSkin: (lastSkin) => get().lastSkin !== lastSkin && save({ lastSkin }),
+    setLastSkin: (lastSkin) => {
+      if (get().lastSkin !== lastSkin) save({ lastSkin });
+    },
   };
 });
