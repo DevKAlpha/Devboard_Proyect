@@ -52,9 +52,15 @@ export function BoardPage() {
 
   // The board's skin dresses the whole page while it is open; leaving restores the app look.
   const skin = board?.skin ?? 'default';
-  useEffect(() => useThemeController.getState().setSkin(skin), [skin]);
+  // Effects use a block body: an effect that returns a value React cannot call
+  // as a clean-up crashes the whole app when the page unmounts.
+  useEffect(() => {
+    useThemeController.getState().setSkin(skin);
+  }, [skin]);
   // Our duck in the home bath dresses up for the last board we opened.
-  useEffect(() => usePreferences.getState().setLastSkin(skin), [skin]);
+  useEffect(() => {
+    usePreferences.getState().setLastSkin(skin);
+  }, [skin]);
   useEffect(() => () => useThemeController.getState().setSkin('default'), []);
 
   // Leaving the board (or switching to another) closes its whiteboard.
