@@ -31,7 +31,8 @@ export function BoardSwitcher({ currentId }: { currentId: string }) {
         onChange={(e) => navigate(e.target.value === ALL_BOARDS ? '/' : `/b/${e.target.value}`)}
       >
         {GROUPS.map(({ mode, label }) => {
-          const list = boards.filter((b) => b.mode === mode);
+          // Archived boards are not opened: they live on home.
+          const list = boards.filter((b) => b.mode === mode && !b.archivedAt);
           return list.length ? (
             <optgroup key={mode} label={label}>
               {list.map((b) => (

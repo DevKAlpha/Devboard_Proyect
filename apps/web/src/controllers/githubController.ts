@@ -135,7 +135,8 @@ export const useGithub = create<GithubState>((set, get) => {
     listProjects: () => githubApi.projects(),
 
     openProject: async (projectId) => {
-      const existing = boards().find((b) => b.github?.projectId === projectId);
+      // An archived copy does not count: bringing the Project again makes a new board.
+      const existing = boards().find((b) => b.github?.projectId === projectId && !b.archivedAt);
       if (existing) {
         void get().refresh(existing.id);
         return existing.id;

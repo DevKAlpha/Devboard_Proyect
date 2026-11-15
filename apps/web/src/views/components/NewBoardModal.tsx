@@ -33,6 +33,7 @@ function NewBoardForm({ onClose, onCreated }: Omit<NewBoardModalProps, 'open'>) 
   const [name, setName] = useState('');
   const [mode, setMode] = useState<BoardMode>('personal');
   const [skin, setSkin] = useState<BoardSkin>('default');
+  const [error, setError] = useState<string | null>(null);
   const pickTemplate = setTemplateId;
 
   const changeProfile = (p: Profile) => {
@@ -47,11 +48,16 @@ function NewBoardForm({ onClose, onCreated }: Omit<NewBoardModalProps, 'open'>) 
       onSubmit={async (e) => {
         e.preventDefault();
         if (!template || !name.trim()) return;
-        const board = await addBoard(
-          buildBoardFromTemplate(template, { name, profile, mode, skin }),
-        );
-        onClose();
-        onCreated(board.id);
+        try {
+          const board = await addBoard(
+            buildBoardFromTemplate(template, { name, profile, mode, skin }),
+          );
+          onClose();
+          onCreated(board.id);
+        } catch (err) {
+          // e.g. BoardLimitError: its message says what to do.
+          setError(err instanceof Error ? err.message : 'No se pudo crear el tablero.');
+        }
       }}
     >
       <h3 className="-mb-3 text-xs font-semibold tracking-wide text-muted uppercase">
@@ -78,6 +84,11 @@ function NewBoardForm({ onClose, onCreated }: Omit<NewBoardModalProps, 'open'>) 
           onChange={(e) => setName(e.target.value)}
         />
       </Field>
+      {error && (
+        <p role="alert" className="text-sm text-danger">
+          {error}
+        </p>
+      )}
       <div className="flex justify-end gap-2">
         <Button onClick={onClose}>Cancelar</Button>
         <Button type="submit" variant="primary" disabled={!name.trim()}>

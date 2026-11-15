@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Board } from '@devbord/shared';
 import { Button, PixelIcon } from '../../design';
-import { boardFileName, serializeBoard } from '../../models/boardFile';
+import { boardFileName } from '../../models/boardFile';
+import { downloadBoardJson } from './downloadBoard';
 import { downloadBlob, renderBoardPng } from './exportPng';
 
 /** "Exportar" button with a small menu: JSON (re-importable) or PNG (image). */
@@ -26,8 +27,7 @@ export function ExportMenu({ board }: { board: Board }) {
   }, [open]);
 
   const exportJson = () => {
-    const blob = new Blob([serializeBoard(board)], { type: 'application/json' });
-    downloadBlob(blob, boardFileName(board, 'json'));
+    downloadBoardJson(board);
     setOpen(false);
   };
 

@@ -44,7 +44,6 @@ export function App() {
     <HashRouter>
       <PixelCursor />
       <ConfirmHost />
-      <ConfirmHost />
       {error && (
         <div role="alert" className="bg-danger px-4 py-2 text-center text-sm text-white">
           {error}

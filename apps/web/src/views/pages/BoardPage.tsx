@@ -2,6 +2,8 @@ import { Suspense, lazy, useEffect, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router';
 import { Button, IconButton, PixelIcon, confirm } from '../../design';
 import { useBoard, useBoardController } from '../../controllers/boardController';
+import { removeBoard } from '../../controllers/boardLifecycle';
+import { ArchiveFullModal } from '../components/ArchiveFullModal';
 import { BoardCanvas } from '../board/BoardCanvas';
 import { ExportMenu } from '../board/ExportMenu';
 import { ImportCardsModal } from '../board/ImportCardsModal';
@@ -28,7 +30,9 @@ export function BoardPage() {
   const { boardId } = useParams();
   const board = useBoard(boardId);
   const navigate = useNavigate();
-  const { renameBoard, deleteBoard } = useBoardController.getState();
+  const { renameBoard, archiveBoard } = useBoardController.getState();
+  /** Archiving with the archive full: pick an archived board to delete first. */
+  const [archiveFull, setArchiveFull] = useState(false);
   const [importing, setImporting] = useState(false);
   const [journey, setJourney] = useState(false);
   const [connections, setConnections] = useState(false);
@@ -66,7 +70,8 @@ export function BoardPage() {
   // Leaving the board (or switching to another) closes its whiteboard.
   useEffect(() => () => useSketch.getState().hide(), [boardId]);
 
-  if (!board) return <Navigate to="/" replace />;
+  // Archived boards are read-only: they live on home (download or delete), never here.
+  if (!board || board.archivedAt) return <Navigate to="/" replace />;
   const cardCount = board.columns.reduce((n, c) => n + c.cards.length, 0);
 
   return (
@@ -112,6 +117,24 @@ export function BoardPage() {
             </Button>
           )}
           <IconButton
+            icon="archive"
+            label="Archivar tablero"
+            onClick={async () => {
+              const ok = await confirm(
+                `¿Archivar el tablero "${board.name}"? Pasará a Archivados: solo podrás descargarlo en JSON o eliminarlo, ya no editarlo.` +
+                  (team
+                    ? ' Se archiva solo en este navegador; tu equipo lo conserva.'
+                    : board.github
+                      ? ' El Project sigue en GitHub; Devbord deja de sincronizarlo.'
+                      : ''),
+                { confirmLabel: 'Archivar' },
+              );
+              if (!ok) return;
+              if (archiveBoard(board.id)) navigate('/', { replace: true });
+              else setArchiveFull(true);
+            }}
+          />
+          <IconButton
             icon="trash"
             label="Eliminar tablero"
             onClick={async () => {
@@ -124,9 +147,7 @@ export function BoardPage() {
                 { confirmLabel: 'Eliminar', danger: true },
               );
               if (!ok) return;
-              if (team) await useCollab.getState().forget(board.id);
-              else await useSketch.getState().forget(board.id);
-              await deleteBoard(board.id);
+              await removeBoard(board);
               navigate('/', { replace: true });
             }}
           />
@@ -138,6 +159,16 @@ export function BoardPage() {
         <BoardCanvas key={board.id} board={board} team={team} />
       </main>
       {team && <NamePrompt />}
+      <ArchiveFullModal
+        open={archiveFull}
+        boardName={board.name}
+        onClose={() => setArchiveFull(false)}
+        onFreed={() => {
+          setArchiveFull(false);
+          archiveBoard(board.id);
+          navigate('/', { replace: true });
+        }}
+      />
       {sketchOpen && (
         <Suspense fallback={null}>
           <Whiteboard boardName={board.name} team={team} />
