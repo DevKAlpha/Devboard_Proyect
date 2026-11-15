@@ -33,6 +33,40 @@ const subscribeFine = (cb: () => void) => {
 };
 const isFinePointer = () => window.matchMedia?.(FINE_POINTER).matches ?? false;
 
+/** Ancestors that cut what overflows them: the selection must not leave them. */
+function clippingAncestors(el: Element): Element[] {
+  const out: Element[] = [];
+  for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+    const cs = getComputedStyle(p);
+    if (cs.overflowX !== 'visible' || cs.overflowY !== 'visible' || cs.clipPath !== 'none') {
+      out.push(p);
+    }
+  }
+  return out;
+}
+
+/** The visible part of `el`, in whole pixels, or null when none of it shows. */
+function visibleBox(el: Element, clips: Element[]) {
+  const r = el.getBoundingClientRect();
+  let left = r.left;
+  let top = r.top;
+  let right = r.right;
+  let bottom = r.bottom;
+  for (const c of clips) {
+    const k = c.getBoundingClientRect();
+    left = Math.max(left, k.left);
+    top = Math.max(top, k.top);
+    right = Math.min(right, k.right);
+    bottom = Math.min(bottom, k.bottom);
+  }
+  left = Math.round(left);
+  top = Math.round(top);
+  const width = Math.round(right) - left;
+  const height = Math.round(bottom) - top;
+  // Too small to frame (a sliver at the edge of a scrolling list).
+  return width < 8 || height < 8 ? null : { left, top, width, height };
+}
+
 /** Mount point. Always on with a mouse or trackpad; renders nothing on touch devices. */
 export function PixelCursor() {
   const fine = useSyncExternalStore(subscribeFine, isFinePointer, () => false);
@@ -41,7 +75,6 @@ export function PixelCursor() {
 
 /** Hover hints wait a moment so they don't flash while the pointer travels. */
 const HINT_DELAY_MS = 350;
-const HALO_PAD = 4;
 const MAX_TILT_DEG = 14;
 
 function CursorLayer() {
@@ -65,10 +98,27 @@ function CursorLayer() {
   }, [dragging]);
 
   // Mutable per-frame state lives in a ref (no re-render on mouse move).
-  const live = useRef({ x: -100, y: -100, prevX: -100, tilt: 0, element: null as Element | null });
+  const live = useRef({
+    x: -100,
+    y: -100,
+    prevX: -100,
+    tilt: 0,
+    element: null as Element | null,
+    /** Ancestors of `element` that clip it (scrolling lists, columns, modals). */
+    clips: [] as Element[],
+  });
   useEffect(() => {
     // No highlight while dragging: the lifted card is the focus.
-    live.current.element = dragging || target.variant !== 'pointer' ? null : target.element;
+    const element = dragging || target.variant !== 'pointer' ? null : target.element;
+    live.current.element = element;
+    live.current.clips = element ? clippingAncestors(element) : [];
+    // Each new control replays the "lock on" of the corner brackets (cursor.css).
+    const halo = haloRef.current;
+    if (halo && element) {
+      halo.classList.remove('pc-lock');
+      void halo.offsetWidth;
+      halo.classList.add('pc-lock');
+    }
   }, [target.element, target.variant, dragging]);
 
   const sprite: SpriteName = dragging
@@ -168,19 +218,15 @@ function CursorLayer() {
 
       const halo = haloRef.current;
       if (halo) {
-        if (s.element?.isConnected) {
-          const r = s.element.getBoundingClientRect();
-          // Parallax: the highlight leans a few px toward the pointer.
-          const ox = ((s.x - (r.left + r.width / 2)) / Math.max(r.width, 1)) * 4;
-          const oy = ((s.y - (r.top + r.height / 2)) / Math.max(r.height, 1)) * 4;
-          halo.style.transform = `translate3d(${r.left - HALO_PAD + ox}px, ${r.top - HALO_PAD + oy}px, 0)`;
-          halo.style.width = `${r.width + HALO_PAD * 2}px`;
-          halo.style.height = `${r.height + HALO_PAD * 2}px`;
-          halo.dataset.on = '';
-        } else {
-          halo.style.transform = `translate3d(${s.x - 6}px, ${s.y - 6}px, 0)`;
-          halo.style.width = '12px';
-          halo.style.height = '12px';
+        // The selection sits on the part of the control you can see: inside its
+        // own box and cut by the list or column it scrolls in. Whole pixels only.
+        const box = s.element?.isConnected ? visibleBox(s.element, s.clips) : null;
+        if (box) {
+          halo.style.transform = `translate3d(${box.left}px, ${box.top}px, 0)`;
+          halo.style.width = `${box.width}px`;
+          halo.style.height = `${box.height}px`;
+          if (!('on' in halo.dataset)) halo.dataset.on = '';
+        } else if ('on' in halo.dataset) {
           delete halo.dataset.on;
         }
       }
@@ -202,15 +248,6 @@ function CursorLayer() {
       document.documentElement.removeEventListener('mouseleave', onLeave);
     };
   }, []);
-
-  // Highlight shape follows the control's own corner radius.
-  useEffect(() => {
-    const el = target.element;
-    const halo = haloRef.current;
-    if (!el || !halo) return;
-    const radius = parseFloat(getComputedStyle(el).borderTopLeftRadius) || 6;
-    halo.style.borderRadius = `${radius + HALO_PAD}px`;
-  }, [target.element, dragging]);
 
   // Delayed hover hint. The native `title` tooltip is parked meanwhile so the
   // two do not stack; it is restored when the pointer leaves the control.
