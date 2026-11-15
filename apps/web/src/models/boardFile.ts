@@ -67,6 +67,8 @@ export function parseBoardFile(text: string): Board {
     id: newId(),
     // An imported team board starts its own room (new link), it never joins the original one.
     shareKey: board.mode === 'team' ? newShareKey() : null,
+    // A downloaded archived board comes back as a new, editable board.
+    archivedAt: null,
     createdAt: now,
     updatedAt: now,
   };

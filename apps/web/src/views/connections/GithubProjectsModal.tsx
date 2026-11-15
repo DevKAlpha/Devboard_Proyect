@@ -7,7 +7,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Button, Modal, PixelIcon } from '../../design';
 import { useGithub } from '../../controllers/githubController';
-import { useBoardController } from '../../controllers/boardController';
+import { MAX_ACTIVE_BOARDS } from '@devbord/shared';
+import { activeBoards, useBoardController } from '../../controllers/boardController';
 import type { GithubProjectSummary } from '../../integrations/github/client';
 
 export function GithubProjectsModal({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -30,9 +31,12 @@ function ProjectPicker({ onClose }: { onClose: () => void }) {
   // Projects that already have a board here: they are only refreshed.
   const boards = useBoardController((st) => st.boards);
   const linked = useMemo(
-    () => new Set(boards.flatMap((b) => (b.github ? [b.github.projectId] : []))),
+    () => new Set(activeBoards(boards).flatMap((b) => (b.github ? [b.github.projectId] : []))),
     [boards],
   );
+  // New boards fit under MAX_ACTIVE_BOARDS; Projects already here are only refreshed.
+  const room = MAX_ACTIVE_BOARDS - activeBoards(boards).length;
+  const newPicked = [...selected].filter((id) => !linked.has(id)).length;
   const [listError, setListError] = useState<string | null>(null);
   const loading = Boolean(user) && !list && !listError;
 
@@ -111,17 +115,29 @@ function ProjectPicker({ onClose }: { onClose: () => void }) {
             <button
               type="button"
               className="underline hover:text-ink"
-              onClick={() =>
+              onClick={() => {
+                if (selected.size === list.projects.length) return setSelected(new Set());
+                // All that fit: every Project already here, then new ones while there is room.
+                let left = room;
                 setSelected(
-                  selected.size === list.projects.length
-                    ? new Set()
-                    : new Set(list.projects.map((p) => p.id)),
-                )
-              }
+                  new Set(
+                    list.projects
+                      .filter((p) => linked.has(p.id) || left-- > 0)
+                      .map((p) => p.id),
+                  ),
+                );
+              }}
             >
               {selected.size === list.projects.length ? 'Quitar todos' : 'Seleccionar todos'}
             </button>
           </div>
+          {newPicked >= room && (
+            <p className="text-xs text-muted">
+              {room > 0
+                ? `Caben ${room} tableros nuevos (máximo ${MAX_ACTIVE_BOARDS} activos).`
+                : `Tienes ${MAX_ACTIVE_BOARDS} tableros activos. Archiva o elimina uno para traer otro Project.`}
+            </p>
+          )}
           <ul className="flex flex-col gap-1.5">
             {list.projects.map((p) => {
               const on = selected.has(p.id);
@@ -131,7 +147,9 @@ function ProjectPicker({ onClose }: { onClose: () => void }) {
                     <input
                       type="checkbox"
                       checked={on}
-                      disabled={progress !== null}
+                      disabled={
+                        progress !== null || (!on && !linked.has(p.id) && newPicked >= room)
+                      }
                       className="accent-[var(--accent)]"
                       onChange={() => {
                         const next = new Set(selected);

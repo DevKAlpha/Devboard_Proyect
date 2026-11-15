@@ -28,7 +28,8 @@ function ImportForm({ board, onClose }: Omit<ImportCardsModalProps, 'open'>) {
   // Select the stable array, then filter: a filtering selector would return a
   // new array on every store read and loop the render.
   const boards = useBoardController((s) => s.boards);
-  const others = boards.filter((b) => b.id !== board.id);
+  // Archived boards are read-only: nothing is taken from them.
+  const others = boards.filter((b) => b.id !== board.id && !b.archivedAt);
   const [sourceId, setSourceId] = useState(others[0]?.id ?? '');
   const [columnId, setColumnId] = useState(board.columns[0]?.id ?? '');
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
