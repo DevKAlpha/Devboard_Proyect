@@ -63,6 +63,8 @@
   /* Pixel shadows: hard offsets, no blur (the brand look; nothing bleeds out of a box). */
   --shadow-lift-v: 4px 4px 0 rgb(16 16 24 / 0.12);
   --shadow-pixel-v: 2px 2px 0 rgb(16 16 24 / 0.14);
+  /* Color of the hard shadow painted behind pixel boxes (cards). */
+  --shadow-ink: rgb(16 16 24 / 0.14);
 
   /* Pixel step for pixel-art details (icons, progress blocks, cursor). */
   --px: 2px;
@@ -106,6 +108,7 @@
   --shadow-card-v: 0 1px 2px rgb(0 0 0 / 0.4);
   --shadow-lift-v: 4px 4px 0 rgb(0 0 0 / 0.55);
   --shadow-pixel-v: 2px 2px 0 rgb(0 0 0 / 0.55);
+  --shadow-ink: rgb(0 0 0 / 0.55);
 
   color-scheme: dark;
 }

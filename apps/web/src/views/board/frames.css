@@ -1,0 +1,40 @@
+/*
+ * Pixel-art frames of the board: cards and columns are pixel boxes (see
+ * design/pixel.css). Colors go through `--pxb-line`, never `border-color`:
+ * the corner pixels of the frame are drawn from that variable.
+ *
+ * Plain CSS on purpose: design/pixel.css is not in a Tailwind layer, so a
+ * utility class could not override what `.pixel-box` sets.
+ */
+
+/* ── Columns: bigger pixels for the bigger box, and no line by default. ── */
+.kb-col.pixel-box {
+  --pxb: 3px;
+  --pxb-line: transparent;
+}
+/* Over the WIP limit: a visible but calm signal to finish before starting more. */
+.kb-col.pixel-box[data-over-wip] {
+  --pxb-line: var(--label-red-ink);
+}
+
+/* ── Cards ── */
+/* Hover: the line darkens and the card lifts 1px off its hard shadow. */
+.kb-card-slot:not(.card-selected):hover .kb-card.pixel-box {
+  --pxb-line: var(--line);
+}
+
+/* Lifted card (drag overlay): the shadow of the whole shape, further away. */
+.kb-card-lifted {
+  filter: drop-shadow(var(--shadow-lift-v));
+}
+html[data-motion='lite'] .kb-card-lifted {
+  filter: none;
+}
+
+/* The empty "drop here" shape a lifted card leaves behind. */
+.kb-card-gap {
+  position: absolute;
+  inset: 0;
+  border: 2px dashed var(--line);
+  background: color-mix(in srgb, var(--surface-3) 60%, transparent);
+}

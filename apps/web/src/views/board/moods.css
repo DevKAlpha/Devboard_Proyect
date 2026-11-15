@@ -74,12 +74,11 @@
 }
 
 /* ── Hot: warm glow, flickering pixel flames on the top edge. ── */
-.card-mood-hot {
-  border-color: color-mix(in srgb, var(--mood-hot) 70%, transparent) !important;
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--mood-hot) 35%, transparent),
-    0 6px 18px -8px color-mix(in srgb, var(--mood-hot) 70%, transparent);
-  background-image: linear-gradient(
+/* Colors go through the pixel box variables (design/pixel.css): a plain
+   border-color or background-image would drop the corner pixels. */
+.card-mood-hot.pixel-box {
+  --pxb-line: color-mix(in srgb, var(--mood-hot) 70%, transparent);
+  --pxb-fill: linear-gradient(
     to bottom,
     color-mix(in srgb, var(--mood-hot) 10%, transparent),
     transparent 45%
@@ -123,9 +122,9 @@
 }
 
 /* ── Frozen: icy tint, frost crystals, slow twinkles. ── */
-.card-mood-frozen {
-  border-color: color-mix(in srgb, var(--mood-ice-ink) 55%, transparent) !important;
-  background-image: linear-gradient(
+.card-mood-frozen.pixel-box {
+  --pxb-line: color-mix(in srgb, var(--mood-ice-ink) 55%, transparent);
+  --pxb-fill: linear-gradient(
     135deg,
     color-mix(in srgb, var(--mood-ice) 30%, transparent),
     transparent 60%
@@ -134,7 +133,6 @@
 .mood-frost {
   position: absolute;
   inset: 0;
-  border-radius: inherit;
   box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--mood-ice) 45%, transparent);
 }
 .mood-flake {
