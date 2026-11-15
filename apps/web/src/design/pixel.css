@@ -119,6 +119,11 @@ html[data-motion='lite'] .pixel-drop {
   );
 }
 
+/* Hover: the frame line darkens (for pixel boxes that are links or buttons). */
+.pixel-box.pixel-box-hover:hover {
+  --pxb-line: var(--line);
+}
+
 /*
  * Hard shadow of a pixel box: the same shape, one pixel down and right,
  * behind the box. A painted layer, not a filter: there can be hundreds of
