@@ -3,7 +3,7 @@ export { Button, type ButtonProps } from './components/Button';
 export { IconButton } from './components/IconButton';
 export { PixelIcon, type IconName } from './components/PixelIcon';
 export { PixelDuck } from './components/PixelDuck';
-export { installSkinSprites } from './skinSprites';
+export { installSkinSprites, skinHatRects } from './skinSprites';
 export { SKIN_HAT, duckFaviconUri, hatRects, type DuckHat } from './duck';
 export { Input, Textarea, Select, Field } from './components/Field';
 export { Modal } from './components/Modal';
@@ -25,4 +25,9 @@ export {
   initMotion,
   isMotionLite,
   setMotionLite,
+  holdLoops,
+  pauseLoopsOffscreen,
+  sampleFrames,
+  motionChosen,
+  setMotionLiteForSession,
 } from './motion';

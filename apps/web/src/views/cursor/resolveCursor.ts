@@ -20,6 +20,11 @@ export interface CursorTarget {
   element: Element | null;
   /** Label for icon-only controls, shown next to the cursor. */
   hint: string | null;
+  /**
+   * The element whose rule decided the variant. PixelCursor marks it with
+   * `data-pc` and its subtree inherits that cursor (see cursor.css).
+   */
+  owner: Element | null;
 }
 
 const TEXT_INPUT_TYPES = new Set([
@@ -50,21 +55,34 @@ const hintFor = (el: Element): string | null => {
   return label && !el.textContent?.trim() ? label : null;
 };
 
-const NONE: CursorTarget = { variant: 'default', element: null, hint: null };
+const NONE: CursorTarget = { variant: 'default', element: null, hint: null, owner: null };
 
 export function resolveCursor(start: Element | null): CursorTarget {
   for (let el = start; el; el = el.parentElement) {
     const forced = el.getAttribute('data-cursor') as CursorVariant | null;
     if (forced) {
-      return { variant: forced, element: forced === 'pointer' ? el : null, hint: hintFor(el) };
+      return {
+        variant: forced,
+        element: forced === 'pointer' ? el : null,
+        hint: hintFor(el),
+        owner: el,
+      };
     }
-    if (isTextField(el)) return { variant: 'text', element: null, hint: null };
+    // Text fields get the I-beam from cursor.css directly: no owner to mark.
+    if (isTextField(el)) return { variant: 'text', element: null, hint: null, owner: null };
     if (el.hasAttribute('aria-roledescription')) {
       // element is kept for the hint; the highlight is only drawn for 'pointer'.
-      return { variant: 'grab', element: el, hint: el.getAttribute('data-cursor-hint') };
+      return {
+        variant: 'grab',
+        element: el,
+        hint: el.getAttribute('data-cursor-hint'),
+        owner: el,
+      };
     }
     if (el.matches(INTERACTIVE)) {
-      return isDisabled(el) ? NONE : { variant: 'pointer', element: el, hint: hintFor(el) };
+      return isDisabled(el)
+        ? { ...NONE, owner: el }
+        : { variant: 'pointer', element: el, hint: hintFor(el), owner: el };
     }
   }
   return NONE;
