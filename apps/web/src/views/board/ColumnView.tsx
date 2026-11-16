@@ -2,7 +2,14 @@ import { memo, useEffect, useRef } from 'react';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { isOverWip, type Column, type Label, type ProfileFeatures } from '@devbord/shared';
-import { IconButton, PixelIcon, animateShake, confirm, cx } from '../../design';
+import {
+  IconButton,
+  PixelIcon,
+  animateShake,
+  confirm,
+  cx,
+  pauseLoopsOffscreen,
+} from '../../design';
 import { cardMood, describeMood } from './cardMood';
 import { CardView } from './CardView';
 import { ColumnSprite, Snowfall, StatusRing } from './ColumnDecor';
@@ -113,6 +120,13 @@ export const ColumnView = memo(function ColumnView({
     if (overWip && !wasOver.current) animateShake(headerRef.current);
     wasOver.current = overWip;
   }, [overWip]);
+
+  // Wide boards: the decorations of columns out of view stop ticking.
+  useEffect(() => {
+    const section = headerRef.current?.parentElement;
+    if (!section) return;
+    return pauseLoopsOffscreen(section);
+  }, []);
 
   return (
     <section

@@ -1,6 +1,7 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { IconButton } from './IconButton';
 import { PixelScroll } from './PixelScroll';
+import { holdLoops } from '../motion';
 
 export interface ModalProps {
   open: boolean;
@@ -33,6 +34,13 @@ export function Modal({ open, title, onClose, children, size = 'md' }: ModalProp
       dialog.querySelector<HTMLElement>('[data-autofocus]')?.focus();
     }
     if (!open && dialog.open) dialog.close?.();
+  }, [open]);
+
+  // Decorations behind the dim backdrop are not seen: pause them while open,
+  // so the page behind (and its blur) stops repainting.
+  useEffect(() => {
+    if (!open) return;
+    return holdLoops();
   }, [open]);
 
   return (

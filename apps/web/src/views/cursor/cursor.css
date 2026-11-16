@@ -1,6 +1,6 @@
 /*
- * Pixel cursor styles. Plain CSS (no Tailwind utilities) because everything
- * here is positioned per frame from JS and must not depend on class scanning.
+ * Pixel cursor styles. Plain CSS (no Tailwind utilities): the rules depend on
+ * attributes set by PixelCursor, not on class scanning.
  */
 
 /* Sprite colors: classic dark outline + white fill reads on any background. */
@@ -9,13 +9,44 @@
   --cursor-fill: #ffffff;
 }
 
-/* While the pixel cursor is active, hide the system one everywhere... */
-html[data-pixel-cursor],
+/*
+ * The pixel sprites as native cursors (PixelCursor puts each image in a
+ * --pc-* variable). The browser draws them: no lag behind the mouse.
+ *
+ * Kept cheap on purpose: every element inherits the cursor, and PixelCursor
+ * marks only the control under the pointer with data-pc (the variant from
+ * resolveCursor.ts). A hover then restyles that one subtree, never the page.
+ * (Matching descendant selectors like `button *` on every element tripled
+ * the cost of opening a card.)
+ */
+html[data-pixel-cursor] {
+  cursor: var(--pc-default) !important;
+}
 html[data-pixel-cursor] * {
+  cursor: inherit !important;
+}
+html[data-pixel-cursor] [data-pc='default'] {
+  cursor: var(--pc-default) !important;
+}
+html[data-pixel-cursor] [data-pc='pointer'] {
+  cursor: var(--pc-pointer) !important;
+}
+html[data-pixel-cursor] [data-pc='grab'] {
+  cursor: var(--pc-grab) !important;
+}
+html[data-pixel-cursor] [data-pc='text'] {
+  cursor: text !important;
+}
+/* Where a view draws its own cursor (the whiteboard brush). */
+html[data-pixel-cursor] [data-pc='none'] {
   cursor: none !important;
 }
+/* Closed fist everywhere while a card is carried (no control is marked then). */
+html[data-pixel-cursor][data-pc-dragging] {
+  cursor: var(--pc-grabbing) !important;
+}
 
-/* ...except in text fields: the native I-beam places the caret precisely. */
+/* Text fields keep the native I-beam: it places the caret precisely. */
 html[data-pixel-cursor]
   :is(
     textarea,
@@ -49,13 +80,11 @@ html[data-pixel-cursor]
   pointer-events: none;
   z-index: 2147483647;
 }
-.pc-layer[data-hidden] .pc-sprite,
 .pc-layer[data-hidden] .pc-halo,
 .pc-layer[data-hidden] .pc-hint {
   opacity: 0;
 }
 
-.pc-sprite,
 .pc-halo,
 .pc-hint,
 .pc-spark {
@@ -65,22 +94,7 @@ html[data-pixel-cursor]
   will-change: transform;
 }
 
-.pc-sprite {
-  filter: drop-shadow(1px 2px 0 rgb(0 0 0 / 0.18));
-  transition: opacity 120ms;
-}
-.pc-sprite > svg {
-  display: block;
-  transition: transform 90ms steps(2);
-}
-/* Press: a quick 2-step squash, like a pixel button. */
-.pc-layer[data-pressed] .pc-sprite > svg {
-  transform: scale(0.85);
-}
-/* Sprite swap "pop". */
-.pc-sprite > svg {
-  animation: pc-pop 150ms steps(3);
-}
+/* Hint "pop" in 3 steps. */
 @keyframes pc-pop {
   from {
     transform: scale(0.6);
@@ -88,29 +102,38 @@ html[data-pixel-cursor]
 }
 
 /*
- * Pixel selection on the hovered control: a soft tint and four corner
- * brackets, like a target in a pixel game. Drawn inside the control's visible
- * box (PixelCursor cuts it by the list or column around it), so it never
- * spills out of a column. It jumps to the control in one frame: only opacity
- * fades (2 steps, compositor only); no size tween, no clip-path, no filter.
+ * Pixel selection on the hovered control: four corner brackets, like a target
+ * in a pixel game. Two tones (ink outside, page background just inside) so it
+ * reads on any control, even one in the accent color. Drawn inside the
+ * control's visible box (PixelCursor cuts it by the list or column around
+ * it), so it never spills out of a column. It jumps to the control in one
+ * frame and only fades its opacity (compositor only).
  */
 .pc-halo {
   --pc-px: 2px;
-  --pc-arm: 8px;
-  --pc-h: linear-gradient(var(--accent), var(--accent));
+  --pc-arm: 10px;
+  --pc-ink: linear-gradient(var(--ink), var(--ink));
+  --pc-gap: linear-gradient(var(--bg), var(--bg));
   width: 0;
   height: 0;
   opacity: 0;
   background:
-    var(--pc-h) left top / var(--pc-arm) var(--pc-px),
-    var(--pc-h) left top / var(--pc-px) var(--pc-arm),
-    var(--pc-h) right top / var(--pc-arm) var(--pc-px),
-    var(--pc-h) right top / var(--pc-px) var(--pc-arm),
-    var(--pc-h) left bottom / var(--pc-arm) var(--pc-px),
-    var(--pc-h) left bottom / var(--pc-px) var(--pc-arm),
-    var(--pc-h) right bottom / var(--pc-arm) var(--pc-px),
-    var(--pc-h) right bottom / var(--pc-px) var(--pc-arm),
-    color-mix(in srgb, var(--accent) 9%, transparent);
+    var(--pc-ink) left top / var(--pc-arm) var(--pc-px),
+    var(--pc-ink) left top / var(--pc-px) var(--pc-arm),
+    var(--pc-ink) right top / var(--pc-arm) var(--pc-px),
+    var(--pc-ink) right top / var(--pc-px) var(--pc-arm),
+    var(--pc-ink) left bottom / var(--pc-arm) var(--pc-px),
+    var(--pc-ink) left bottom / var(--pc-px) var(--pc-arm),
+    var(--pc-ink) right bottom / var(--pc-arm) var(--pc-px),
+    var(--pc-ink) right bottom / var(--pc-px) var(--pc-arm),
+    var(--pc-gap) left var(--pc-px) top var(--pc-px) / calc(var(--pc-arm) - var(--pc-px)) var(--pc-px),
+    var(--pc-gap) left var(--pc-px) top var(--pc-px) / var(--pc-px) calc(var(--pc-arm) - var(--pc-px)),
+    var(--pc-gap) right var(--pc-px) top var(--pc-px) / calc(var(--pc-arm) - var(--pc-px)) var(--pc-px),
+    var(--pc-gap) right var(--pc-px) top var(--pc-px) / var(--pc-px) calc(var(--pc-arm) - var(--pc-px)),
+    var(--pc-gap) left var(--pc-px) bottom var(--pc-px) / calc(var(--pc-arm) - var(--pc-px)) var(--pc-px),
+    var(--pc-gap) left var(--pc-px) bottom var(--pc-px) / var(--pc-px) calc(var(--pc-arm) - var(--pc-px)),
+    var(--pc-gap) right var(--pc-px) bottom var(--pc-px) / calc(var(--pc-arm) - var(--pc-px)) var(--pc-px),
+    var(--pc-gap) right var(--pc-px) bottom var(--pc-px) / var(--pc-px) calc(var(--pc-arm) - var(--pc-px));
   background-repeat: no-repeat;
   transition: opacity 60ms steps(2, end);
 }

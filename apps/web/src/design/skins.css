@@ -146,25 +146,8 @@
   pointer-events: none;
 }
 
-/* ── Cursor: same pixel arrow, dressed for the season ─────────────────────── */
-:root[data-skin] .pc-sprite::after {
-  content: '';
-  position: absolute;
-  top: -13px;
-  left: 5px;
-  width: 24px;
-  height: 22px;
-  background: center / contain no-repeat;
-  pointer-events: none;
-}
-:root[data-skin='halloween'] .pc-sprite::after {
-  background-image: var(--sprite-witch-hat);
-  transform: rotate(-12deg);
-}
-:root[data-skin='christmas'] .pc-sprite::after {
-  background-image: var(--sprite-santa-hat);
-  transform: rotate(-10deg);
-}
+/* ── Cursor: the pixel arrow wears the season's hat (drawn into the cursor
+   image by views/cursor/PixelCursor). ─────────────────────────────────────── */
 /* Click sparks alternate between the accent and the skin's second color. */
 :root[data-skin] .pc-spark:nth-of-type(even) {
   background: var(--skin-spark-2);

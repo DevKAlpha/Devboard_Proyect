@@ -62,6 +62,102 @@ export function setMotionLite(lite: boolean) {
 /** True when animations should be minimal (see initMotion). */
 export const isMotionLite = () => document.documentElement.dataset.motion === 'lite';
 
+// ─── Decorative loops: run only where they are seen ──────────────────────────
+//
+// Infinite decorative animations (twinkles, snow, spiders…) cost main-thread
+// time every frame, even when nothing else moves. They are paused through the
+// Web Animations API (no style recalculation) while they cannot be enjoyed:
+// behind a modal, during a drag, or scrolled out of view.
+
+const isLoop = (a: Animation) => a.effect?.getTiming().iterations === Infinity;
+
+let holds = 0;
+const held = new Set<Animation>();
+
+/**
+ * Pauses every running decorative loop on the page (except inside an open
+ * dialog) until the returned function is called. Holds nest.
+ */
+export function holdLoops(): () => void {
+  if (holds++ === 0 && typeof document.getAnimations === 'function') {
+    for (const a of document.getAnimations()) {
+      const target = (a.effect as KeyframeEffect | null)?.target;
+      if (a.playState === 'running' && isLoop(a) && !target?.closest('dialog[open]')) {
+        a.pause();
+        held.add(a);
+      }
+    }
+  }
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    if (--holds > 0) return;
+    for (const a of held) a.play();
+    held.clear();
+  };
+}
+
+const offscreen = new WeakSet<Element>();
+const seen =
+  typeof IntersectionObserver === 'function'
+    ? new IntersectionObserver((entries) => {
+        for (const { target, isIntersecting } of entries) {
+          if (isIntersecting === !offscreen.has(target)) continue;
+          if (isIntersecting) offscreen.delete(target);
+          else offscreen.add(target);
+          for (const a of target.getAnimations({ subtree: true })) {
+            // A loop paused by holdLoops stays with it.
+            if (!isLoop(a) || held.has(a)) continue;
+            if (isIntersecting) a.play();
+            else a.pause();
+          }
+        }
+      })
+    : null;
+
+/** Pauses the decorative loops inside `el` while it is out of view (columns of a wide board). */
+export function pauseLoopsOffscreen(el: Element): () => void {
+  if (!seen) return () => {};
+  seen.observe(el);
+  return () => {
+    seen.unobserve(el);
+    offscreen.delete(el);
+  };
+}
+
+/**
+ * Measures the frame rate for `ms` and reports the median frame time, or null
+ * when the browser was throttling the page (hidden or covered window).
+ */
+export function sampleFrames(ms = 2000): Promise<number | null> {
+  return new Promise((resolve) => {
+    const deltas: number[] = [];
+    let last = performance.now();
+    const end = last + ms;
+    const tick = (now: number) => {
+      deltas.push(now - last);
+      last = now;
+      if (now < end) requestAnimationFrame(tick);
+      else {
+        deltas.sort((a, b) => a - b);
+        const median = deltas[Math.floor(deltas.length / 2)] ?? 0;
+        // ~1 frame per second: the browser throttles us, it says nothing about the device.
+        resolve(document.visibilityState !== 'visible' || median > 200 ? null : median);
+      }
+    };
+    requestAnimationFrame(tick);
+  });
+}
+
+/** True when the person chose a level in the top bar (then the device is not second-guessed). */
+export const motionChosen = () => storedMotion() !== null;
+
+/** Lite for this session only (a struggling device); not remembered. */
+export function setMotionLiteForSession() {
+  document.documentElement.dataset.motion = 'lite';
+}
+
 const canAnimate = (el: Element | null | undefined): el is HTMLElement =>
   !!el && typeof (el as HTMLElement).animate === 'function' && !isMotionLite();
 
