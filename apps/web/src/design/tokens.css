@@ -171,7 +171,14 @@
   html[data-motion='lite'] *::before,
   html[data-motion='lite'] *::after {
     animation-duration: 0.01ms !important;
+    /* One pass: an infinite loop at 0.01ms would still tick every frame. */
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    /* Frosted glass re-blurs on every change behind it: plain surfaces instead. */
+    backdrop-filter: none !important;
+  }
+  html[data-motion='lite'] dialog::backdrop {
+    backdrop-filter: none !important;
   }
 }
 
@@ -216,7 +223,8 @@ dialog[open]::backdrop {
   }
 }
 @utility animate-page-in {
-  animation: page-in 220ms steps(5, end) both;
+  /* backwards, not both: once done, nothing stays applied to the whole page. */
+  animation: page-in 220ms steps(5, end) backwards;
 }
 html[data-motion='lite'] .animate-page-in {
   animation: none;

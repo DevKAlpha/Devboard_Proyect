@@ -31,6 +31,8 @@ import './bath.css';
 /** Screen pixels per cell. */
 const CELL = 3;
 const STEP_MS = 1000 / 60;
+/** Drawing rate: 30 fps is plenty for pixel water and halves the canvas work. */
+const DRAW_MS = 1000 / 30;
 /** Our own duck has a fixed id: it exists before (and without) a connection. */
 const SELF = 'self';
 /** Size of a wall tile, in cells. */
@@ -292,6 +294,7 @@ export function BathScene() {
     let raf = 0;
     let last = performance.now();
     let pending = 0;
+    let drawn = 0;
     const tick = (now: number) => {
       // Cap the catch-up after a background tab, so the bath does not fast-forward.
       pending = Math.min(pending + (now - last), STEP_MS * 4);
@@ -302,7 +305,11 @@ export function BathScene() {
           bath.step();
           pending -= STEP_MS;
         }
-        drawRef.current();
+        // Small tolerance: frames do not land exactly every 33.3 ms.
+        if (now - drawn >= DRAW_MS - 4) {
+          drawn = now;
+          drawRef.current();
+        }
       }
       raf = requestAnimationFrame(tick);
     };

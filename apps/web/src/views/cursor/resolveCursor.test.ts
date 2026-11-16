@@ -9,7 +9,12 @@ const html = (markup: string) => {
 describe('resolveCursor', () => {
   it('falls back to the default arrow on plain content', () => {
     const $ = html('<p id="t">hola</p>');
-    expect(resolveCursor($('#t'))).toEqual({ variant: 'default', element: null, hint: null });
+    expect(resolveCursor($('#t'))).toEqual({
+      variant: 'default',
+      element: null,
+      hint: null,
+      owner: null,
+    });
   });
 
   it('highlights buttons and uses aria-label as hint for icon-only ones', () => {

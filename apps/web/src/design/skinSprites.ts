@@ -151,9 +151,12 @@ const SPRITES: Record<string, { pal: Record<string, string>; grid: readonly stri
   },
 };
 
-/** Grid to SVG data URI; horizontal runs of one color become one rect. */
-export function spriteUri({ pal, grid }: { pal: Record<string, string>; grid: readonly string[] }) {
-  const w = Math.max(...grid.map((r) => r.length));
+/** SVG rects of a sprite grid, shifted by (dx, dy); runs of one color become one rect. */
+function gridRects(
+  { pal, grid }: { pal: Record<string, string>; grid: readonly string[] },
+  dx = 0,
+  dy = 0,
+) {
   let rects = '';
   grid.forEach((row, y) => {
     for (let x = 0; x < row.length;) {
@@ -161,10 +164,22 @@ export function spriteUri({ pal, grid }: { pal: Record<string, string>; grid: re
       let end = x + 1;
       while (row[end] === ch) end++;
       const fill = pal[ch];
-      if (fill) rects += `<rect x='${x}' y='${y}' width='${end - x}' height='1' fill='${fill}'/>`;
+      if (fill)
+        rects += `<rect x='${x + dx}' y='${y + dy}' width='${end - x}' height='1' fill='${fill}'/>`;
       x = end;
     }
   });
+  return rects;
+}
+
+/** A seasonal hat as SVG rects at (dx, dy), to dress the pixel cursor (PixelCursor). */
+export const skinHatRects = (hat: 'witchHat' | 'santaHat', dx: number, dy: number) =>
+  gridRects(SPRITES[hat]!, dx, dy);
+
+/** Grid to SVG data URI; horizontal runs of one color become one rect. */
+export function spriteUri({ pal, grid }: { pal: Record<string, string>; grid: readonly string[] }) {
+  const w = Math.max(...grid.map((r) => r.length));
+  const rects = gridRects({ pal, grid });
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${w} ${grid.length}' shape-rendering='crispEdges'>${rects}</svg>`;
   return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
 }
