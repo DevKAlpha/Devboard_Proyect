@@ -1,5 +1,5 @@
 /**
- * Devbord's pixel cursor: the pointer as part of the app's identity.
+ * DuckBord's pixel cursor: the pointer as part of the app's identity.
  *
  * The cursor itself is the browser's own (CSS `cursor: url(...)`), drawn from
  * the pixel sprites in sprites.ts: arrow, pointing hand, open hand over
@@ -20,7 +20,14 @@
  *
  * Only mounted for fine pointers (mouse / trackpad). Touch is unchanged.
  */
-import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import { PixelIcon, isMotionLite, skinHatRects } from '../../design';
 import { useCursorController } from '../../controllers/cursorController';
 import { useThemeController } from '../../controllers/themeController';
@@ -293,6 +300,17 @@ function CursorLayer() {
     };
   }, [target]);
 
+  // Stable ref: a new function each render made React detach and re-attach it,
+  // and every attach read offsetWidth (a forced layout) on each render.
+  const attachHint = useCallback((el: HTMLDivElement | null) => {
+    hintRef.current = el;
+    // Measure once, then place it before first paint; moves take over afterwards.
+    if (el) {
+      live.current.hintWidth = el.offsetWidth;
+      placeHint(el, live.current, draggingRef.current);
+    }
+  }, []);
+
   const hoverHint = shownHint && shownHint.el === target.element ? shownHint.text : null;
   const hint = dragging ? dragHint : hoverHint;
 
@@ -300,19 +318,7 @@ function CursorLayer() {
     <div ref={layerRef} popover="manual" className="pc-layer" aria-hidden data-hidden="">
       <div ref={haloRef} className="pc-halo" />
       {hint && (
-        <div
-          ref={(el) => {
-            hintRef.current = el;
-            // Measure once, then place it before first paint; moves take over afterwards.
-            if (el) {
-              live.current.hintWidth = el.offsetWidth;
-              placeHint(el, live.current, draggingRef.current);
-            }
-          }}
-          key={hint}
-          className="pc-hint"
-          data-drag={dragging ? '' : undefined}
-        >
+        <div ref={attachHint} key={hint} className="pc-hint" data-drag={dragging ? '' : undefined}>
           {dragging && <PixelIcon name="board" size={12} />}
           {hint}
         </div>
@@ -330,7 +336,9 @@ function placeHint(
   const x = p.x + 16 + p.hintWidth > window.innerWidth - 8 ? p.x - p.hintWidth - 8 : p.x + 16;
   // While dragging the card hangs below the hand: put the hint above it instead.
   const y = dragging ? p.y - 34 : p.y + 22;
-  hint.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+  // The translate property (not transform): the pop animation scales the hint
+  // in place, without scaling its position too.
+  hint.style.translate = `${x}px ${y}px`;
 }
 
 /** Spawns 8 pixel sparks around (x, y); each removes itself when its animation ends. */

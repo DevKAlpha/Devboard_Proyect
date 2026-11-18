@@ -50,10 +50,10 @@ export function parseBoardFile(text: string): Board {
       ? (data as { format: unknown; version?: unknown; board?: unknown })
       : null;
   if (wrapped && wrapped.format !== BOARD_FILE_FORMAT) {
-    throw new BoardFileError('El archivo no es un tablero de Devbord.');
+    throw new BoardFileError('El archivo no es un tablero de DuckBord.');
   }
   if (wrapped && typeof wrapped.version === 'number' && wrapped.version > BOARD_FILE_VERSION) {
-    throw new BoardFileError('El archivo viene de una versión más nueva de Devbord.');
+    throw new BoardFileError('El archivo viene de una versión más nueva de DuckBord.');
   }
 
   const result = BoardSchema.safeParse(wrapped ? wrapped.board : data);
@@ -74,7 +74,7 @@ export function parseBoardFile(text: string): Board {
   };
 }
 
-/** File name for a board export: "mi-tablero.devbord.json". */
+/** File name for a board export: "mi-tablero.duckbord.json". */
 export const boardFileName = (board: Board, extension: 'json' | 'png') => {
   const slug =
     board.name
@@ -83,5 +83,5 @@ export const boardFileName = (board: Board, extension: 'json' | 'png') => {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '') || 'tablero';
-  return extension === 'json' ? `${slug}.devbord.json` : `${slug}.png`;
+  return extension === 'json' ? `${slug}.duckbord.json` : `${slug}.png`;
 };

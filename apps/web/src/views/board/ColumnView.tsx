@@ -12,6 +12,7 @@ import {
 } from '../../design';
 import { cardMood, describeMood } from './cardMood';
 import { CardView } from './CardView';
+import { SHIFT } from './cardMeta';
 import { ColumnSprite, Snowfall, StatusRing } from './ColumnDecor';
 import { columnKind } from './columnKind';
 import { Composer } from './Composer';
@@ -108,7 +109,12 @@ export const ColumnView = memo(function ColumnView({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: column.id, data: { type: 'column' }, disabled: locked });
+  } = useSortable({
+    id: column.id,
+    data: { type: 'column' },
+    disabled: locked,
+    transition: SHIFT,
+  });
   const points = column.cards.reduce((sum, c) => sum + (c.storyPoints ?? 0), 0);
   const overWip = isOverWip(column);
   const kind = columnKind(column.title, isLastColumn);

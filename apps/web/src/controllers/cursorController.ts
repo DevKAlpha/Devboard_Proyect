@@ -1,7 +1,7 @@
 /**
  * Cursor controller: state for the pixel cursor (views/cursor/PixelCursor).
  *
- * The pixel cursor is always on (with a mouse): it is part of Devbord's identity.
+ * The pixel cursor is always on (with a mouse): it is part of DuckBord's identity.
  * - `dragging` + `hint`: set by the board while a card is dragged, so the
  *   cursor can switch to the "grabbing" sprite and show where the card will land.
  */

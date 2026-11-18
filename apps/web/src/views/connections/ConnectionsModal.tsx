@@ -115,7 +115,7 @@ function AccountActions({ id }: { id: AccountId }) {
   if (!isConfigured(id)) {
     return (
       <p className="mt-2 text-xs text-faint">
-        Falta el Client ID de esta app en la configuración de Devbord (docs/integraciones.md).
+        Falta el Client ID de esta app en la configuración de DuckBord (docs/integraciones.md).
       </p>
     );
   }
@@ -196,7 +196,7 @@ function SlackForm({ boardId }: { boardId: string }) {
           size="sm"
           disabled={!valid}
           onClick={() =>
-            void postToSlack(webhook.trim(), ':wave: Devbord está conectado a este canal.')
+            void postToSlack(webhook.trim(), ':wave: DuckBord está conectado a este canal.')
               .then(() => setNote('Mensaje de prueba enviado. Revisa el canal.'))
               .catch(() => setNote('No se pudo enviar. Revisa tu conexión.'))
           }
@@ -237,7 +237,7 @@ function GithubSection({ board }: { board: Board }) {
   if (!configured) {
     return (
       <p className="mt-2 text-xs text-faint">
-        Necesita el servidor de Devbord con una GitHub App (VITE_GITHUB_API_URL, docs/github.md).
+        Necesita el servidor de DuckBord con una GitHub App (VITE_GITHUB_API_URL, docs/github.md).
       </p>
     );
   }

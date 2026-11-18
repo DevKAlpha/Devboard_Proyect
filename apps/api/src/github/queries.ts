@@ -1,10 +1,10 @@
 /**
  * GraphQL documents for GitHub Projects (v2). Every operation is named
- * `Devbord<Something>`: the fake GitHub (GITHUB_FAKE) dispatches on that name.
+ * `DuckBord<Something>`: the fake GitHub (GITHUB_FAKE) dispatches on that name.
  */
 
 export const VIEWER = /* GraphQL */ `
-  query DevbordViewer {
+  query DuckBordViewer {
     viewer {
       login
       avatarUrl
@@ -16,7 +16,7 @@ const PROJECT_SUMMARY = `id number title url closed owner { ... on Organization 
 
 /** Projects the user can open: their own and their organizations'. */
 export const PROJECTS = /* GraphQL */ `
-  query DevbordProjects {
+  query DuckBordProjects {
     viewer {
       login
       projectsV2(first: 50) { nodes { ${PROJECT_SUMMARY} } }
@@ -31,7 +31,7 @@ const FIELD_ID = `field { ... on ProjectV2FieldCommon { id } }`;
 
 /** One page of a Project: fields, linked repos and items in board order. */
 export const PROJECT = /* GraphQL */ `
-  query DevbordProject($id: ID!, $after: String) {
+  query DuckBordProject($id: ID!, $after: String) {
     node(id: $id) {
       ... on ProjectV2 {
         id
@@ -106,7 +106,7 @@ export const PROJECT = /* GraphQL */ `
 // ── Mutations ────────────────────────────────────────────────────────────────
 
 export const CREATE_ISSUE = /* GraphQL */ `
-  mutation DevbordCreateIssue($repositoryId: ID!, $title: String!, $body: String) {
+  mutation DuckBordCreateIssue($repositoryId: ID!, $title: String!, $body: String) {
     createIssue(input: { repositoryId: $repositoryId, title: $title, body: $body }) {
       issue {
         id
@@ -116,7 +116,7 @@ export const CREATE_ISSUE = /* GraphQL */ `
 `;
 
 export const ADD_ITEM = /* GraphQL */ `
-  mutation DevbordAddItem($projectId: ID!, $contentId: ID!) {
+  mutation DuckBordAddItem($projectId: ID!, $contentId: ID!) {
     addProjectV2ItemById(input: { projectId: $projectId, contentId: $contentId }) {
       item {
         id
@@ -126,7 +126,7 @@ export const ADD_ITEM = /* GraphQL */ `
 `;
 
 export const ADD_DRAFT = /* GraphQL */ `
-  mutation DevbordAddDraft($projectId: ID!, $title: String!, $body: String) {
+  mutation DuckBordAddDraft($projectId: ID!, $title: String!, $body: String) {
     addProjectV2DraftIssue(input: { projectId: $projectId, title: $title, body: $body }) {
       projectItem {
         id
@@ -136,7 +136,7 @@ export const ADD_DRAFT = /* GraphQL */ `
 `;
 
 export const SET_FIELD = /* GraphQL */ `
-  mutation DevbordSetField(
+  mutation DuckBordSetField(
     $projectId: ID!
     $itemId: ID!
     $fieldId: ID!
@@ -153,7 +153,7 @@ export const SET_FIELD = /* GraphQL */ `
 `;
 
 export const CLEAR_FIELD = /* GraphQL */ `
-  mutation DevbordClearField($projectId: ID!, $itemId: ID!, $fieldId: ID!) {
+  mutation DuckBordClearField($projectId: ID!, $itemId: ID!, $fieldId: ID!) {
     clearProjectV2ItemFieldValue(
       input: { projectId: $projectId, itemId: $itemId, fieldId: $fieldId }
     ) {
@@ -165,7 +165,7 @@ export const CLEAR_FIELD = /* GraphQL */ `
 `;
 
 export const POSITION = /* GraphQL */ `
-  mutation DevbordPosition($projectId: ID!, $itemId: ID!, $afterId: ID) {
+  mutation DuckBordPosition($projectId: ID!, $itemId: ID!, $afterId: ID) {
     updateProjectV2ItemPosition(
       input: { projectId: $projectId, itemId: $itemId, afterId: $afterId }
     ) {
@@ -175,7 +175,7 @@ export const POSITION = /* GraphQL */ `
 `;
 
 export const UPDATE_ISSUE = /* GraphQL */ `
-  mutation DevbordUpdateIssue($id: ID!, $title: String, $body: String, $labelIds: [ID!]) {
+  mutation DuckBordUpdateIssue($id: ID!, $title: String, $body: String, $labelIds: [ID!]) {
     updateIssue(input: { id: $id, title: $title, body: $body, labelIds: $labelIds }) {
       issue {
         id
@@ -185,7 +185,7 @@ export const UPDATE_ISSUE = /* GraphQL */ `
 `;
 
 export const UPDATE_PULL_REQUEST = /* GraphQL */ `
-  mutation DevbordUpdatePullRequest($id: ID!, $title: String, $body: String, $labelIds: [ID!]) {
+  mutation DuckBordUpdatePullRequest($id: ID!, $title: String, $body: String, $labelIds: [ID!]) {
     updatePullRequest(
       input: { pullRequestId: $id, title: $title, body: $body, labelIds: $labelIds }
     ) {
@@ -197,7 +197,7 @@ export const UPDATE_PULL_REQUEST = /* GraphQL */ `
 `;
 
 export const UPDATE_DRAFT = /* GraphQL */ `
-  mutation DevbordUpdateDraft($id: ID!, $title: String, $body: String) {
+  mutation DuckBordUpdateDraft($id: ID!, $title: String, $body: String) {
     updateProjectV2DraftIssue(input: { draftIssueId: $id, title: $title, body: $body }) {
       draftIssue {
         id
@@ -207,7 +207,7 @@ export const UPDATE_DRAFT = /* GraphQL */ `
 `;
 
 export const CLOSE_ISSUE = /* GraphQL */ `
-  mutation DevbordCloseIssue($id: ID!) {
+  mutation DuckBordCloseIssue($id: ID!) {
     closeIssue(input: { issueId: $id, stateReason: COMPLETED }) {
       issue {
         id
@@ -217,7 +217,7 @@ export const CLOSE_ISSUE = /* GraphQL */ `
 `;
 
 export const REOPEN_ISSUE = /* GraphQL */ `
-  mutation DevbordReopenIssue($id: ID!) {
+  mutation DuckBordReopenIssue($id: ID!) {
     reopenIssue(input: { issueId: $id }) {
       issue {
         id
@@ -227,7 +227,7 @@ export const REOPEN_ISSUE = /* GraphQL */ `
 `;
 
 export const DELETE_ITEM = /* GraphQL */ `
-  mutation DevbordDeleteItem($projectId: ID!, $itemId: ID!) {
+  mutation DuckBordDeleteItem($projectId: ID!, $itemId: ID!) {
     deleteProjectV2Item(input: { projectId: $projectId, itemId: $itemId }) {
       deletedItemId
     }
@@ -235,7 +235,7 @@ export const DELETE_ITEM = /* GraphQL */ `
 `;
 
 export const ADD_SUB_ISSUE = /* GraphQL */ `
-  mutation DevbordAddSubIssue($issueId: ID!, $subIssueId: ID!) {
+  mutation DuckBordAddSubIssue($issueId: ID!, $subIssueId: ID!) {
     addSubIssue(input: { issueId: $issueId, subIssueId: $subIssueId, replaceParent: true }) {
       issue {
         id
@@ -245,7 +245,7 @@ export const ADD_SUB_ISSUE = /* GraphQL */ `
 `;
 
 export const REMOVE_SUB_ISSUE = /* GraphQL */ `
-  mutation DevbordRemoveSubIssue($issueId: ID!, $subIssueId: ID!) {
+  mutation DuckBordRemoveSubIssue($issueId: ID!, $subIssueId: ID!) {
     removeSubIssue(input: { issueId: $issueId, subIssueId: $subIssueId }) {
       issue {
         id
@@ -255,7 +255,7 @@ export const REMOVE_SUB_ISSUE = /* GraphQL */ `
 `;
 
 export const RENAME_PROJECT = /* GraphQL */ `
-  mutation DevbordRenameProject($projectId: ID!, $title: String!) {
+  mutation DuckBordRenameProject($projectId: ID!, $title: String!) {
     updateProjectV2(input: { projectId: $projectId, title: $title }) {
       projectV2 {
         id

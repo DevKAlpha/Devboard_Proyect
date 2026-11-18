@@ -31,7 +31,7 @@ export const GithubUserSchema = z.object({
 export type GithubUser = z.infer<typeof GithubUserSchema>;
 
 /**
- * Optional Project fields Devbord found and maps (by name, see the API
+ * Optional Project fields DuckBord found and maps (by name, see the API
  * mapper). A missing field turns its feature off in the UI.
  */
 export const GithubFieldsSchema = z.object({
@@ -98,7 +98,7 @@ export const CardGithubSchema = z.object({
 });
 export type CardGithub = z.infer<typeof CardGithubSchema>;
 
-/** Card fields a GitHub Project holds (the rest, like links and type, stay in Devbord). */
+/** Card fields a GitHub Project holds (the rest, like links and type, stay in DuckBord). */
 export const GITHUB_CARD_FIELDS = [
   'title',
   'description',

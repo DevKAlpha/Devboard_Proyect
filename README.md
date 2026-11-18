@@ -1,4 +1,4 @@
-# Devbord
+# DuckBord
 
 Tableros Kanban para equipos técnicos y no técnicos. Estética pixel art moderna con alma minimalista.
 

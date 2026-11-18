@@ -1,6 +1,6 @@
 # Conexiones: Google, Microsoft y Slack
 
-El panel **Conexiones** del tablero conecta Devbord con herramientas de trabajo. Todo corre en el navegador: funciona en GitHub Pages y no necesita servidor.
+El panel **Conexiones** del tablero conecta DuckBord con herramientas de trabajo. Todo corre en el navegador: funciona en GitHub Pages y no necesita servidor.
 
 | Qué                                                           | Necesita configuración                      | Dónde vive                                                                 |
 | ------------------------------------------------------------- | ------------------------------------------- | -------------------------------------------------------------------------- |
@@ -15,7 +15,7 @@ Cada conexión declara sus **herramientas** con la forma de las de MCP (nombre, 
 
 Hay que registrar las dos URLs:
 
-- Producción: `https://devkalpha.github.io/Devboard_Proyect/oauth.html`
+- Producción: `https://devkalpha.github.io/DuckBord/oauth.html`
 - Desarrollo: `http://localhost:5173/oauth.html`
 
 Si publicas en otro dominio (Docker o Dokploy), añade también `https://<tu-dominio>/oauth.html`.
@@ -38,12 +38,12 @@ Si publicas en otro dominio (Docker o Dokploy), añade también `https://<tu-dom
 ## Microsoft (Outlook / Microsoft 365)
 
 1. Entra en el [Centro de administración de Microsoft Entra](https://entra.microsoft.com/) y abre **Aplicaciones › Registros de aplicaciones › Nuevo registro**.
-2. En _Tipos de cuenta_, elige **cuentas de cualquier directorio organizativo y cuentas personales de Microsoft**. Devbord usa el endpoint `common`.
+2. En _Tipos de cuenta_, elige **cuentas de cualquier directorio organizativo y cuentas personales de Microsoft**. DuckBord usa el endpoint `common`.
 3. En _URI de redirección_, elige la plataforma **Aplicación de página única (SPA)** y añade las dos URLs de retorno de arriba. Tiene que ser SPA: así el flujo PKCE funciona sin secreto.
 4. En **Permisos de API**, añade **Microsoft Graph › Permisos delegados › `Calendars.ReadWrite`**.
 5. Copia el **Id. de aplicación (cliente)**. Ese es `VITE_MS_CLIENT_ID`.
 
-## Poner los IDs en Devbord
+## Poner los IDs en DuckBord
 
 Los Client ID son públicos (van dentro de la web), no son secretos.
 
@@ -57,7 +57,7 @@ Sin IDs, el panel muestra la cuenta como _Sin configurar_, y los botones de cale
 
 1. En Slack, ve a **Apps › Incoming Webhooks** (o crea una app en <https://api.slack.com/apps> y activa _Incoming Webhooks_).
 2. Elige **Añadir a un canal** y copia la URL (`https://hooks.slack.com/services/…`).
-3. En Devbord, abre el tablero y ve a **Conexiones › Slack**:
+3. En DuckBord, abre el tablero y ve a **Conexiones › Slack**:
    - Pega la URL.
    - Elige cuándo avisar: cada cambio de columna o solo al terminar, es decir, al llegar a la última columna.
    - Pulsa **Probar**.

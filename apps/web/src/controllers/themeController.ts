@@ -26,7 +26,7 @@ export interface SkinInfo {
 /** Skin catalog: what the pickers show and the color base each skin is drawn on. */
 export const SKINS: Record<BoardSkin, SkinInfo> = {
   default: {
-    title: 'Devbord',
+    title: 'DuckBord',
     description: 'El aspecto de siempre: sobrio, claro u oscuro.',
     base: 'dark',
     swatch: { bg: '#161618', column: '#1c1c1f', card: '#2a2a2e', accent: '#7d7aff' },

@@ -8,7 +8,7 @@ import Dexie, { type EntityTable } from 'dexie';
 import { BoardSchema, type Board } from '@devbord/shared';
 import type { BoardRepository } from './BoardRepository';
 
-class DevbordDb extends Dexie {
+class DuckBordDb extends Dexie {
   boards!: EntityTable<Board, 'id'>;
 
   constructor(name: string) {
@@ -29,11 +29,11 @@ const parse = (raw: unknown): Board | null => {
 };
 
 export class IndexedDbBoardRepository implements BoardRepository {
-  private readonly db: DevbordDb;
+  private readonly db: DuckBordDb;
 
   /** @param dbName Override in tests to get an isolated database. */
   constructor(dbName = 'devbord') {
-    this.db = new DevbordDb(dbName);
+    this.db = new DuckBordDb(dbName);
   }
 
   async list(): Promise<Board[]> {

@@ -3,7 +3,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Card, Label, ProfileFeatures } from '@devbord/shared';
 import { Badge, PixelIcon, animateFlash, cx } from '../../design';
-import { CARD_TYPE_META, PRIORITY_META, describeDueDate, previewText } from './cardMeta';
+import { CARD_TYPE_META, PRIORITY_META, SHIFT, describeDueDate, previewText } from './cardMeta';
 import type { CardMood } from './cardMood';
 import { MoodDecor } from './MoodDecor';
 import './frames.css';
@@ -32,8 +32,11 @@ export interface CardViewProps {
  * Visual body of a card, shared by the sortable item and the drag overlay.
  * Layout follows the mockups: labels, title, two-line description, then a
  * meta row (type, priority, due date).
+ *
+ * Memoized: while dragging, dnd-kit re-renders every sortable card (and the
+ * overlay) on each pointer move; with stable props React skips the body.
  */
-export function CardFace({
+export const CardFace = memo(function CardFace({
   card,
   labels,
   features,
@@ -140,7 +143,7 @@ export function CardFace({
       )}
     </div>
   );
-}
+});
 
 /**
  * Sortable card. The whole card is the drag handle for pointer users.
@@ -159,6 +162,7 @@ export const CardView = memo(function CardView({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: card.id,
     data: { type: 'card' },
+    transition: SHIFT,
   });
 
   // Flash when the card's content changes (local edit or a teammate's), not on mount.

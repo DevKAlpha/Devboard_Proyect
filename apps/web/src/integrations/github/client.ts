@@ -1,5 +1,5 @@
 /**
- * Client of the Devbord API's GitHub module (apps/api/src/github). GitHub
+ * Client of the DuckBord API's GitHub module (apps/api/src/github). GitHub
  * itself is never called from the browser: the API holds the GitHub App
  * tokens and writes to the Project as the signed-in user.
  *
@@ -48,7 +48,7 @@ export class GithubApiError extends Error {
 }
 
 async function call<T>(method: string, path: string, body?: unknown): Promise<T> {
-  if (!GITHUB_API) throw new GithubApiError(503, 'GitHub no está configurado en Devbord.');
+  if (!GITHUB_API) throw new GithubApiError(503, 'GitHub no está configurado en DuckBord.');
   const session = githubSession();
   if (!session) throw new GithubApiError(401, 'Conecta tu cuenta de GitHub.');
   let res: Response;
@@ -62,7 +62,7 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<T>
       body: body === undefined ? undefined : JSON.stringify(body),
     });
   } catch {
-    throw new GithubApiError(0, 'No hay conexión con el servidor de Devbord.');
+    throw new GithubApiError(0, 'No hay conexión con el servidor de DuckBord.');
   }
   if (res.status === 401) setSession(null);
   if (!res.ok) {
@@ -83,7 +83,7 @@ export interface GithubProjectSummary {
 export const githubApi = {
   /** Signs in through the GitHub App (popup) and keeps the session id. */
   async signIn() {
-    if (!GITHUB_API) throw new GithubApiError(503, 'GitHub no está configurado en Devbord.');
+    if (!GITHUB_API) throw new GithubApiError(503, 'GitHub no está configurado en DuckBord.');
     const state = randomString(16);
     const params = await popupSignIn(
       `${GITHUB_API}/api/github/login?state=${encodeURIComponent(state)}`,

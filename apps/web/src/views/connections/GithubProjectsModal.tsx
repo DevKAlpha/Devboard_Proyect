@@ -1,6 +1,6 @@
 /**
  * "Conectar Project de GitHub": sign in with GitHub, tick the Projects (v2) you
- * want and bring them all at once. Each one becomes a Devbord board with all
+ * want and bring them all at once. Each one becomes a DuckBord board with all
  * its content, kept in sync both ways with GitHub (see githubController).
  */
 import { useEffect, useMemo, useState } from 'react';
@@ -57,8 +57,9 @@ function ProjectPicker({ onClose }: { onClose: () => void }) {
   if (!configured) {
     return (
       <p className="text-sm text-muted">
-        Esta instalación de Devbord no tiene servidor de GitHub configurado. Hace falta desplegar la
-        API con una GitHub App y definir <code>VITE_GITHUB_API_URL</code> (guía en docs/github.md).
+        Esta instalación de DuckBord no tiene servidor de GitHub configurado. Hace falta desplegar
+        la API con una GitHub App y definir <code>VITE_GITHUB_API_URL</code> (guía en
+        docs/github.md).
       </p>
     );
   }
@@ -68,7 +69,7 @@ function ProjectPicker({ onClose }: { onClose: () => void }) {
       <div className="flex flex-col items-start gap-3">
         <p className="text-sm text-muted">
           Conecta tu cuenta y elige los Projects que quieras traer. Llegan con todo su contenido y
-          quedan conectados: lo que cambies en Devbord se verá en GitHub y al revés (columnas,
+          quedan conectados: lo que cambies en DuckBord se verá en GitHub y al revés (columnas,
           issues, estimaciones, sprints, epics y PRs).
         </p>
         <Button
@@ -102,7 +103,7 @@ function ProjectPicker({ onClose }: { onClose: () => void }) {
       )}
       {list && list.projects.length === 0 && (
         <p className="rounded-xl border border-dashed border-line p-4 text-sm text-muted">
-          No hay Projects visibles. Instala la App de Devbord en tu organización o repositorio y
+          No hay Projects visibles. Instala la App de DuckBord en tu organización o repositorio y
           vuelve a abrir esta ventana.
         </p>
       )}
@@ -121,9 +122,7 @@ function ProjectPicker({ onClose }: { onClose: () => void }) {
                 let left = room;
                 setSelected(
                   new Set(
-                    list.projects
-                      .filter((p) => linked.has(p.id) || left-- > 0)
-                      .map((p) => p.id),
+                    list.projects.filter((p) => linked.has(p.id) || left-- > 0).map((p) => p.id),
                   ),
                 );
               }}
@@ -160,7 +159,7 @@ function ProjectPicker({ onClose }: { onClose: () => void }) {
                     />
                     <span className="min-w-0 flex-1 truncate font-semibold">{p.title}</span>
                     {linked.has(p.id) && (
-                      <span className="shrink-0 text-xs text-accent">Ya en Devbord</span>
+                      <span className="shrink-0 text-xs text-accent">Ya en DuckBord</span>
                     )}
                     <span className="shrink-0 text-xs text-faint">
                       {p.owner} · #{p.number}

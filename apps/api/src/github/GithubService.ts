@@ -181,7 +181,7 @@ export class GithubService {
     return (await this.load(token, projectId)).board;
   }
 
-  /** Applies a Devbord op to the Project and returns the fresh board. */
+  /** Applies a DuckBord op to the Project and returns the fresh board. */
   async op(sessionId: string, projectId: string, body: unknown) {
     const { token } = await this.token(sessionId);
     const { meta }: { meta: ProjectMeta } = await this.load(token, projectId);
