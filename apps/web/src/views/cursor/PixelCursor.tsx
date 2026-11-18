@@ -1,5 +1,5 @@
 /**
- * Devbord's pixel cursor: the pointer as part of the app's identity.
+ * DuckBord's pixel cursor: the pointer as part of the app's identity.
  *
  * The cursor itself is the browser's own (CSS `cursor: url(...)`), drawn from
  * the pixel sprites in sprites.ts: arrow, pointing hand, open hand over
@@ -318,12 +318,7 @@ function CursorLayer() {
     <div ref={layerRef} popover="manual" className="pc-layer" aria-hidden data-hidden="">
       <div ref={haloRef} className="pc-halo" />
       {hint && (
-        <div
-          ref={attachHint}
-          key={hint}
-          className="pc-hint"
-          data-drag={dragging ? '' : undefined}
-        >
+        <div ref={attachHint} key={hint} className="pc-hint" data-drag={dragging ? '' : undefined}>
           {dragging && <PixelIcon name="board" size={12} />}
           {hint}
         </div>

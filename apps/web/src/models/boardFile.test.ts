@@ -31,7 +31,7 @@ describe('boardFile', () => {
   });
 
   it('builds safe file names', () => {
-    expect(boardFileName(sample(), 'json')).toBe('sprint-agil-1.devbord.json');
+    expect(boardFileName(sample(), 'json')).toBe('sprint-agil-1.duckbord.json');
     expect(boardFileName(sample(), 'png')).toBe('sprint-agil-1.png');
   });
 });

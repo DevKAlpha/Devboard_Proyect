@@ -1,7 +1,7 @@
 /**
- * Lobby controller: who is using Devbord right now (the rubber ducks on the home page).
+ * Lobby controller: who is using DuckBord right now (the rubber ducks on the home page).
  *
- * Every open Devbord joins one public room over the same real-time transport
+ * Every open DuckBord joins one public room over the same real-time transport
  * as team boards and announces only what kind of participant it is (person or
  * agent) and the theme of its last board (its duck's costume). No names, no
  * board data: strangers share this room, so it carries nothing personal. Each

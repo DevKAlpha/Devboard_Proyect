@@ -1,5 +1,5 @@
 /**
- * Board intents from Devbord, written to GitHub (the other half of the
+ * Board intents from DuckBord, written to GitHub (the other half of the
  * mirror). Each op is validated with zod, then turned into GraphQL mutations
  * against the Project, run as the signed-in user.
  *
@@ -22,7 +22,7 @@ import type { ItemMeta, ProjectMeta } from './ProjectMapper';
 import * as q from './queries';
 
 /**
- * Card fields GitHub can hold. The rest (type, links) stay in Devbord.
+ * Card fields GitHub can hold. The rest (type, links) stay in DuckBord.
  * Declared here, not picked from CardPatchSchema: that one has defaults, and a
  * default would overwrite on GitHub a field the user did not touch.
  */

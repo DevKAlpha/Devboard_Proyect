@@ -5,7 +5,7 @@
  *
  * It answers the operations in queries.ts by name, with the same shapes as
  * GitHub, and records every mutation so tests can assert on them. It is not a
- * GraphQL server: it only knows Devbord's own documents.
+ * GraphQL server: it only knows DuckBord's own documents.
  */
 import type { Fetch } from './GithubClient';
 
@@ -69,7 +69,7 @@ const LABELS = [
 export class FakeGithub {
   /** Every mutation received, in order: [operation name, variables]. */
   readonly calls: [string, Record<string, unknown>][] = [];
-  projectTitle = 'Devbord demo';
+  projectTitle = 'DuckBord demo';
   private seq = 100;
   private readonly issues = new Map<string, FakeIssue>();
   private items: FakeItem[] = [];
@@ -149,7 +149,7 @@ export class FakeGithub {
       });
     }
     if (url.endsWith('/graphql')) {
-      const name = /(?:query|mutation)\s+(Devbord\w+)/.exec(String(body.query))?.[1] ?? '';
+      const name = /(?:query|mutation)\s+(DuckBord\w+)/.exec(String(body.query))?.[1] ?? '';
       const vars = (body.variables ?? {}) as Record<string, unknown>;
       return json({ data: this.graphql(name, vars) });
     }
@@ -180,17 +180,17 @@ export class FakeGithub {
 
   private graphql(name: string, v: Record<string, unknown>): unknown {
     if (
-      name.startsWith('Devbord') &&
-      !['DevbordViewer', 'DevbordProjects', 'DevbordProject'].includes(name)
+      name.startsWith('DuckBord') &&
+      !['DuckBordViewer', 'DuckBordProjects', 'DuckBordProject'].includes(name)
     ) {
       this.calls.push([name, v]);
     }
     const item = (id: unknown) => this.items.find((i) => i.id === id);
     const issue = (id: unknown) => this.issues.get(String(id));
     switch (name) {
-      case 'DevbordViewer':
+      case 'DuckBordViewer':
         return { viewer: { login: 'octocat', avatarUrl: AVATAR } };
-      case 'DevbordProjects':
+      case 'DuckBordProjects':
         return {
           viewer: {
             login: 'octocat',
@@ -202,7 +202,7 @@ export class FakeGithub {
             },
           },
         };
-      case 'DevbordProject':
+      case 'DuckBordProject':
         return {
           node:
             v.id === PROJECT_ID
@@ -211,7 +211,7 @@ export class FakeGithub {
                 ? { ...this.project(), ...this.roadmapSummary() }
                 : null,
         };
-      case 'DevbordCreateIssue': {
+      case 'DuckBordCreateIssue': {
         const n = ++this.seq;
         const created: FakeIssue = {
           id: `I_${n}`,
@@ -229,12 +229,12 @@ export class FakeGithub {
         this.issues.set(created.id, created);
         return { createIssue: { issue: { id: created.id } } };
       }
-      case 'DevbordAddItem': {
+      case 'DuckBordAddItem': {
         const id = `PVTI_${++this.seq}`;
         this.items.push({ id, contentId: String(v.contentId), draft: null, values: {} });
         return { addProjectV2ItemById: { item: { id } } };
       }
-      case 'DevbordAddDraft': {
+      case 'DuckBordAddDraft': {
         const id = `PVTI_${++this.seq}`;
         this.items.push({
           id,
@@ -244,7 +244,7 @@ export class FakeGithub {
         });
         return { addProjectV2DraftIssue: { projectItem: { id } } };
       }
-      case 'DevbordSetField': {
+      case 'DuckBordSetField': {
         const it = item(v.itemId);
         // GitHub's input says singleSelectOptionId; its output says optionId.
         const { singleSelectOptionId, ...rest } = v.value as { singleSelectOptionId?: string };
@@ -255,12 +255,12 @@ export class FakeGithub {
         }
         return { updateProjectV2ItemFieldValue: { projectV2Item: { id: v.itemId } } };
       }
-      case 'DevbordClearField': {
+      case 'DuckBordClearField': {
         const it = item(v.itemId);
         if (it) delete it.values[String(v.fieldId)];
         return { clearProjectV2ItemFieldValue: { projectV2Item: { id: v.itemId } } };
       }
-      case 'DevbordPosition': {
+      case 'DuckBordPosition': {
         const it = item(v.itemId);
         if (it) {
           this.items = this.items.filter((i) => i !== it);
@@ -269,7 +269,7 @@ export class FakeGithub {
         }
         return { updateProjectV2ItemPosition: { clientMutationId: null } };
       }
-      case 'DevbordUpdateIssue': {
+      case 'DuckBordUpdateIssue': {
         const i = issue(v.id);
         if (i) {
           if (typeof v.title === 'string') i.title = v.title;
@@ -279,7 +279,7 @@ export class FakeGithub {
         }
         return { updateIssue: { issue: { id: v.id } } };
       }
-      case 'DevbordUpdateDraft': {
+      case 'DuckBordUpdateDraft': {
         const it = this.items.find((x) => x.contentId === v.id);
         if (it?.draft) {
           if (typeof v.title === 'string') it.draft.title = v.title;
@@ -287,25 +287,25 @@ export class FakeGithub {
         }
         return { updateProjectV2DraftIssue: { draftIssue: { id: v.id } } };
       }
-      case 'DevbordCloseIssue':
-      case 'DevbordReopenIssue': {
+      case 'DuckBordCloseIssue':
+      case 'DuckBordReopenIssue': {
         const i = issue(v.id);
         if (i) {
-          i.state = name === 'DevbordCloseIssue' ? 'CLOSED' : 'OPEN';
+          i.state = name === 'DuckBordCloseIssue' ? 'CLOSED' : 'OPEN';
           this.touch(i);
         }
         return { closeIssue: { issue: { id: v.id } } };
       }
-      case 'DevbordDeleteItem':
+      case 'DuckBordDeleteItem':
         this.items = this.items.filter((i) => i.id !== v.itemId);
         return { deleteProjectV2Item: { deletedItemId: v.itemId } };
-      case 'DevbordAddSubIssue':
-      case 'DevbordRemoveSubIssue': {
+      case 'DuckBordAddSubIssue':
+      case 'DuckBordRemoveSubIssue': {
         const child = issue(v.subIssueId);
-        if (child) child.parentId = name === 'DevbordAddSubIssue' ? String(v.issueId) : null;
+        if (child) child.parentId = name === 'DuckBordAddSubIssue' ? String(v.issueId) : null;
         return { addSubIssue: { issue: { id: v.issueId } } };
       }
-      case 'DevbordRenameProject':
+      case 'DuckBordRenameProject':
         this.projectTitle = String(v.title);
         return { updateProjectV2: { projectV2: { id: PROJECT_ID } } };
       default:

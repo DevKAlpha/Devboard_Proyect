@@ -105,7 +105,7 @@ describe('github api', () => {
     expect(b.labels.find((l) => l.name === 'bug')?.color).toBe('red');
   });
 
-  it('writes Devbord ops back to GitHub', async () => {
+  it('writes DuckBord ops back to GitHub', async () => {
     const { board, op, fake } = await setup();
     let b = await board();
     const todo = column(b, 'Todo').id;
@@ -114,10 +114,10 @@ describe('github api', () => {
     const created = await op({ type: 'createCard', columnId: done, title: 'Nueva' });
     expect(created.status).toBe(200);
     expect(fake.calls.map(([n]) => n)).toEqual([
-      'DevbordCreateIssue',
-      'DevbordAddItem',
-      'DevbordSetField',
-      'DevbordCloseIssue',
+      'DuckBordCreateIssue',
+      'DuckBordAddItem',
+      'DuckBordSetField',
+      'DuckBordCloseIssue',
     ]);
     b = created.body.board;
     expect(card(b, 'Nueva').github?.state).toBe('closed');

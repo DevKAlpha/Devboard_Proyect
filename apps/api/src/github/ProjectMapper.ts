@@ -1,5 +1,5 @@
 /**
- * Turns a GitHub Project (v2) into a Devbord Board, plus the ids the ops need
+ * Turns a GitHub Project (v2) into a DuckBord Board, plus the ids the ops need
  * to write back (field ids, options, issue ids). Pure: no I/O, tested with
  * fixtures.
  *
@@ -156,7 +156,7 @@ export interface ProjectMeta {
 const fieldOf = (fields: RawField[], type: string, name?: RegExp) =>
   fields.find((f) => f.dataType === type && (!name || name.test(f.name.trim()))) ?? null;
 
-/** Nearest Devbord palette key for a GitHub label color (hex, no #). */
+/** Nearest DuckBord palette key for a GitHub label color (hex, no #). */
 export function labelColor(hex: string): LabelColor {
   const n = Number.parseInt(hex, 16);
   if (Number.isNaN(n)) return 'gray';
@@ -181,13 +181,13 @@ export function labelColor(hex: string): LabelColor {
   return 'purple';
 }
 
-/** GitHub estimates are free numbers; Devbord uses Fibonacci. Round up to the scale. */
+/** GitHub estimates are free numbers; DuckBord uses Fibonacci. Round up to the scale. */
 export function snapPoints(value: number | undefined): StoryPoints | null {
   if (value === undefined || !(value > 0)) return null;
   return STORY_POINTS.find((p) => p >= value) ?? 13;
 }
 
-/** "High", "P0", "Alta"… to Devbord's priority. Unknown names: no priority. */
+/** "High", "P0", "Alta"… to DuckBord's priority. Unknown names: no priority. */
 export function priorityOf(name: string): Priority | null {
   const n = name.trim().toLowerCase();
   if (/^(p0|urgent|critical|high|alta|urgente)/.test(n)) return 'high';

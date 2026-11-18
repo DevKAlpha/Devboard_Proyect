@@ -2,7 +2,7 @@
   "name": "devbord",
   "private": true,
   "version": "0.1.0",
-  "description": "Devbord — Kanban boards for technical and non-technical teams.",
+  "description": "DuckBord — Kanban boards for technical and non-technical teams.",
   "type": "module",
   "workspaces": [
     "packages/*",

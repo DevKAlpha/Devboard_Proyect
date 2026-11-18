@@ -1,5 +1,5 @@
 /**
- * Board templates — the "easy door" into Devbord.
+ * Board templates — the "easy door" into DuckBord.
  *
  * A template is plain data (columns, labels, a few example cards), so adding
  * one is a data change only. Example cards teach the tool by example

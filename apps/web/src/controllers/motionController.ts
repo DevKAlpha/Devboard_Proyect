@@ -1,7 +1,7 @@
 /**
  * Motion controller: the animations switch in the top bar.
  *
- * Devbord picks a level from the device (design/motion.ts). People whose
+ * DuckBord picks a level from the device (design/motion.ts). People whose
  * machine still struggles can force lite mode, and the choice is remembered.
  */
 import { create } from 'zustand';

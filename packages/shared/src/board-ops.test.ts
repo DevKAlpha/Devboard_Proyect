@@ -266,7 +266,7 @@ describe('card links', () => {
 });
 
 describe('mergeSnapshot', () => {
-  it('takes GitHub data but keeps Devbord-only settings and records remote moves', () => {
+  it('takes GitHub data but keeps DuckBord-only settings and records remote moves', () => {
     let local = createBoard({ name: 'L', profile: 'technical', columnTitles: ['Todo', 'Done'] });
     const [todo, done] = local.columns.map((c) => c.id) as [string, string];
     const card = createCard('Issue');

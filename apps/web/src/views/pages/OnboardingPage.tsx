@@ -48,7 +48,7 @@ export function OnboardingPage() {
   return (
     <div className="flex min-h-full flex-col">
       <header className="mx-auto flex w-full max-w-3xl items-center justify-between px-4 py-5">
-        <Link to="/" aria-label="Devbord, ir al inicio">
+        <Link to="/" aria-label="DuckBord, ir al inicio">
           <Logo />
         </Link>
         <Button variant="ghost" size="sm" onClick={skip}>

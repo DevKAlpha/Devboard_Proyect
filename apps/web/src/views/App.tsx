@@ -29,7 +29,7 @@ export function App() {
 
   useEffect(() => {
     void useBoardController.getState().load();
-    // Say hello to the lobby: every open Devbord is a duck on the home page.
+    // Say hello to the lobby: every open DuckBord is a duck on the home page.
     void useLobby.getState().start();
     // Adapt animations to the machine, and keep drags smooth.
     return watchMotion();
