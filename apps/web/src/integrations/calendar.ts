@@ -56,7 +56,7 @@ export function icsFile(e: CalendarEvent, uid: string): string {
   return [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Devbord//ES',
+    'PRODID:-//DuckBord//ES',
     'BEGIN:VEVENT',
     `UID:${uid}@devbord`,
     `DTSTAMP:${stamp}`,

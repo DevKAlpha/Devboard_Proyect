@@ -1,13 +1,13 @@
 /**
  * GitHub controller: boards that mirror a GitHub Project (Zenhub-style).
  *
- * - Devbord to GitHub: boardController applies each intent at once
+ * - DuckBord to GitHub: boardController applies each intent at once
  *   (optimistic) and hands the matching ops here; they are sent in order, one
  *   at a time, and the snapshot the API answers with replaces the board.
- * - GitHub to Devbord: while a linked board is open, the API's live stream says
+ * - GitHub to DuckBord: while a linked board is open, the API's live stream says
  *   "changed" (webhook or polling) and the board reloads its snapshot.
  *
- * Snapshots go through mergeSnapshot, which keeps Devbord-only settings.
+ * Snapshots go through mergeSnapshot, which keeps DuckBord-only settings.
  */
 import { create } from 'zustand';
 import { mergeSnapshot, newId, type Board, type GithubOp } from '@devbord/shared';
@@ -58,7 +58,7 @@ const pending = new Map<string, number>();
 const queues = new Map<string, Promise<void>>();
 
 export const useGithub = create<GithubState>((set, get) => {
-  /** Replaces a linked board with GitHub's version, keeping Devbord-only data. */
+  /** Replaces a linked board with GitHub's version, keeping DuckBord-only data. */
   const apply = (boardId: string, remote: Board) => {
     if (pending.get(boardId)) return; // a newer local change is still on its way
     const local = boardById(boardId);

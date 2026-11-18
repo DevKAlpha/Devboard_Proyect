@@ -1,5 +1,5 @@
 /**
- * Domain schemas — the single source of truth for Devbord's data model.
+ * Domain schemas — the single source of truth for DuckBord's data model.
  *
  * Both the web app (IndexedDB persistence) and the API (request validation)
  * validate against these, so a board created offline can later be synced to
@@ -165,7 +165,7 @@ export const BoardSchema = z.object({
   cardTemplate: z.string().max(10_000).nullable().default(null),
   /** Next card number to hand out (#1, #2…). Only grows, so numbers are never reused. */
   nextNumber: z.number().int().positive().default(1),
-  /** GitHub Project this board mirrors (Zenhub-style). Null: a Devbord-only board. */
+  /** GitHub Project this board mirrors (Zenhub-style). Null: a DuckBord-only board. */
   github: GithubLinkSchema.nullable().default(null),
   /**
    * When the board was archived. An archived board is read-only: it can only be

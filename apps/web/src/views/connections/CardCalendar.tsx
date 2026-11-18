@@ -35,7 +35,7 @@ export function CardCalendar({
   const event: CalendarEvent = {
     title,
     date,
-    details: [description.slice(0, DETAILS_MAX), `Tarjeta en Devbord: ${window.location.href}`]
+    details: [description.slice(0, DETAILS_MAX), `Tarjeta en DuckBord: ${window.location.href}`]
       .filter(Boolean)
       .join('\n\n'),
   };

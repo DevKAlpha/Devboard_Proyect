@@ -6,7 +6,7 @@ import { useThemeController } from '../../controllers/themeController';
 import { Logo } from './Logo';
 
 /**
- * Animations on or reduced. For machines where Devbord feels heavy: lite mode
+ * Animations on or reduced. For machines where DuckBord feels heavy: lite mode
  * keeps every state visible but drops the decorative loops.
  */
 function MotionToggle() {
@@ -51,7 +51,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-20 shrink-0 border-b border-line-soft bg-surface/80 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-[1600px] items-center gap-3 px-4">
           {/* The logo is the way home: always back to the start screen (board list). */}
-          <NavLink to="/" aria-label="Devbord, ir al inicio">
+          <NavLink to="/" aria-label="DuckBord, ir al inicio">
             <Logo />
           </NavLink>
           <span className="flex-1" />

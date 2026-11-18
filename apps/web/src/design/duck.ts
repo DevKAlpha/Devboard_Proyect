@@ -1,5 +1,5 @@
 /**
- * Devbord's mascot: a pixel rubber duck, a nod to "rubber duck debugging"
+ * DuckBord's mascot: a pixel rubber duck, a nod to "rubber duck debugging"
  * (explain the problem to the duck, line by line, and the answer shows up).
  * Used for the logo and the favicon (public/favicon.svg, kept in sync by a test).
  *

@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# Devbord API: bundle to a single file with esbuild, run it on a slim Node image.
+# DuckBord API: bundle to a single file with esbuild, run it on a slim Node image.
 
 # ── Build stage ───────────────────────────────────────────────────────────────
 FROM node:24-alpine AS build

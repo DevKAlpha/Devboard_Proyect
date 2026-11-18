@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# Devbord web: build the static SPA, then serve it with nginx.
+# DuckBord web: build the static SPA, then serve it with nginx.
 
 # ── Build stage ───────────────────────────────────────────────────────────────
 FROM node:24-alpine AS build

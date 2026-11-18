@@ -160,7 +160,7 @@ export async function renderBoardPng(board: Board): Promise<Blob> {
   ctx.fillStyle = themeColor('muted');
   ctx.font = `400 12px ${FONT}`;
   const date = new Intl.DateTimeFormat('es', { dateStyle: 'long' }).format(new Date());
-  ctx.fillText(`Devbord · ${date}`, PAD, PAD + 48);
+  ctx.fillText(`DuckBord · ${date}`, PAD, PAD + 48);
 
   board.columns.forEach((column, i) => {
     const x = PAD + i * (COL_W + COL_GAP);

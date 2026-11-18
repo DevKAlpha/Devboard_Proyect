@@ -125,7 +125,7 @@ export function BoardPage() {
                   (team
                     ? ' Se archiva solo en este navegador; tu equipo lo conserva.'
                     : board.github
-                      ? ' El Project sigue en GitHub; Devbord deja de sincronizarlo.'
+                      ? ' El Project sigue en GitHub; DuckBord deja de sincronizarlo.'
                       : ''),
                 { confirmLabel: 'Archivar' },
               );
@@ -142,7 +142,7 @@ export function BoardPage() {
                 team
                   ? `¿Salir del tablero de equipo "${board.name}"? Se borra solo de este navegador; tu equipo lo conserva.`
                   : board.github
-                    ? `¿Quitar "${board.name}" de Devbord? El Project y sus issues siguen en GitHub.`
+                    ? `¿Quitar "${board.name}" de DuckBord? El Project y sus issues siguen en GitHub.`
                     : `¿Eliminar el tablero "${board.name}"? No se puede deshacer.`,
                 { confirmLabel: 'Eliminar', danger: true },
               );

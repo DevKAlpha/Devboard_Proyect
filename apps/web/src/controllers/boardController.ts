@@ -28,8 +28,7 @@ export const activeBoards = (boards: Board[]) => boards.filter((b) => !b.archive
 /** Archived boards: read-only, download or delete only. */
 export const archivedBoards = (boards: Board[]) => boards.filter((b) => b.archivedAt);
 /** True while there is room for one more active board. */
-export const canAddBoard = (boards: Board[]) =>
-  activeBoards(boards).length < ops.MAX_ACTIVE_BOARDS;
+export const canAddBoard = (boards: Board[]) => activeBoards(boards).length < ops.MAX_ACTIVE_BOARDS;
 
 /** Thrown when adding a board past MAX_ACTIVE_BOARDS. The message is shown as is. */
 export class BoardLimitError extends Error {
@@ -65,7 +64,7 @@ function moveOps(next: Board, cardIds: string[]): GithubOp[] {
 /**
  * The GitHub part of a card patch, only what really changed: the detail form
  * saves every field, and each one is a separate write on GitHub. Links, type
- * and the rest stay in Devbord.
+ * and the rest stay in DuckBord.
  */
 function githubPatch(card: Card | undefined, patch: CardPatch) {
   const out: Record<string, unknown> = {};

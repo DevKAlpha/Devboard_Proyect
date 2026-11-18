@@ -407,7 +407,7 @@ export function copyCardsInto(
 /**
  * Applies a GitHub Project snapshot to a linked board (see github.ts).
  *
- * GitHub is the source of truth for columns, cards and their fields; Devbord
+ * GitHub is the source of truth for columns, cards and their fields; DuckBord
  * keeps what GitHub has no place for: the board's look and settings, column
  * WIP limits and descriptions, and each card's links, type and journey. A card
  * that shows up in another column than before (someone moved it on GitHub)

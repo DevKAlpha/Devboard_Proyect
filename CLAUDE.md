@@ -1,6 +1,12 @@
-# Devbord — guía para Claude Code
+# DuckBord — guía para Claude Code
 
-Devbord es una app de tableros Kanban (tipo Trello o Jira) para usuarios **técnicos y no técnicos**. La entrada debe ser muy fácil: un onboarding por perfil y plantilla. La app debe sentirse bien de usar. Más adelante se integrará con agentes de IA, GitHub, suites de Google y Microsoft, y herramientas DevOps.
+DuckBord es una app de tableros Kanban (tipo Trello o Jira) para usuarios **técnicos y no técnicos**. La entrada debe ser muy fácil: un onboarding por perfil y plantilla. La app debe sentirse bien de usar. Más adelante se integrará con agentes de IA, GitHub, suites de Google y Microsoft, y herramientas DevOps.
+
+**Nombre**: el nombre oficial es **DuckBord** (repo `DevKAlpha/DuckBord`, web `https://devkalpha.github.io/DuckBord/`). Antes se llamaba Devbord. Los identificadores internos siguen como `devbord` a propósito y **no se renombran**:
+- los paquetes `@devbord/*`;
+- las claves `devbord:*` de localStorage y la base IndexedDB, porque cambiarlas pierde los tableros y preferencias guardados;
+- el formato de archivo `devbord.board`, para que se sigan importando las exportaciones viejas;
+- la sala del estanque y el canal OAuth `devbord-oauth`.
 
 ## Reglas de arquitectura (del usuario, no negociables)
 1. Stack: **React + Node.js + Tailwind CSS + TypeScript**.
@@ -48,9 +54,9 @@ docker/         Dockerfiles. docker-compose.yml en la raíz.
   - `LiveHub` avisa por SSE. Lo disparan los webhooks firmados y un sondeo de los Projects abiertos.
   - `GITHUB_FAKE=1` levanta un GitHub en memoria para tests y pruebas locales.
 - Web:
-  - `controllers/githubController` hace el sign-in en popup, encola las ops en orden y aplica los snapshots con `mergeSnapshot` (shared), que conserva lo que solo existe en Devbord.
+  - `controllers/githubController` hace el sign-in en popup, encola las ops en orden y aplica los snapshots con `mergeSnapshot` (shared), que conserva lo que solo existe en DuckBord.
   - `boardController` le pasa las ops de cada intent mediante `setGithubSink`. Solo manda los campos que cambiaron.
-  - Las columnas de un tablero vinculado no se editan en Devbord (son el campo Status y se editan en GitHub).
+  - Las columnas de un tablero vinculado no se editan en DuckBord (son el campo Status y se editan en GitHub).
 - Guía de configuración (GitHub App, variables, despliegue): `docs/github.md`.
 
 ## Git

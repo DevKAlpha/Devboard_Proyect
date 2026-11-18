@@ -25,7 +25,7 @@ const API = 'https://api.github.com';
 const HEADERS = {
   Accept: 'application/vnd.github+json',
   'X-GitHub-Api-Version': '2022-11-28',
-  'User-Agent': 'Devbord',
+  'User-Agent': 'DuckBord',
 };
 
 export class GithubClient {

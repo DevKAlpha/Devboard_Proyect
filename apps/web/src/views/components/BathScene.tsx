@@ -1,7 +1,7 @@
 /**
  * Home page background: a bathtub seen from the front, in pixel art. A tiled
  * wall, the tub, moving water, and one rubber duck per person or agent using
- * Devbord right now (controllers/lobbyController), floating on the surface.
+ * DuckBord right now (controllers/lobbyController), floating on the surface.
  *
  * The scene fills the page behind the content (a fixed canvas where one cell
  * is one pixel-art pixel, scaled up with crisp edges). Physics live in
