@@ -43,3 +43,9 @@ export function previewText(markdown: string): string {
     .filter((line) => line.trim())
     .join(' · ');
 }
+
+/**
+ * How cards and columns make room while one is dragged over them: 3 quick
+ * sprite steps (dnd-kit's default 200ms ease felt sluggish).
+ */
+export const SHIFT = { duration: 120, easing: 'steps(3, end)' };

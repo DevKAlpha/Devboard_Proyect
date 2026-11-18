@@ -15,10 +15,12 @@ import {
   TouchSensor,
   closestCenter,
   closestCorners,
+  defaultDropAnimationSideEffects,
   pointerWithin,
   useSensor,
   useSensors,
   type CollisionDetection,
+  type DropAnimation,
   type Modifier,
   type DragEndEvent,
   type DragOverEvent,
@@ -35,7 +37,14 @@ import { useBoardController } from '../../controllers/boardController';
 import { useCursorController } from '../../controllers/cursorController';
 import { useCollab } from '../../controllers/collabController';
 import { orderedSelection, useSelection } from '../../controllers/selectionController';
-import { animateLand, animateOut, flip, pixelBurst, type FlipPositions } from '../../design';
+import {
+  animateLand,
+  animateOut,
+  flip,
+  isMotionLite,
+  pixelBurst,
+  type FlipPositions,
+} from '../../design';
 import { RemoteCursors } from '../team/RemoteCursors';
 import { useNow } from './useNow';
 import './drag.css';
@@ -98,6 +107,16 @@ const holdByCorner: Modifier = ({ activatorEvent, draggingNodeRect, transform })
   };
 };
 
+/**
+ * Drop: the lifted card lands in its slot in 3 quick sprite steps (dnd-kit's
+ * default is a 250ms ease glide, which felt slow). None in lite mode.
+ */
+const DROP: DropAnimation = {
+  duration: 120,
+  easing: 'steps(3, end)',
+  sideEffects: defaultDropAnimationSideEffects({ styles: { active: { opacity: '0' } } }),
+};
+
 /** Finds a card or column element on the canvas by its FLIP id. */
 const flipNode = (id: string) => document.querySelector(`[data-flip-id="${CSS.escape(id)}"]`);
 
@@ -141,13 +160,19 @@ export function BoardCanvas({ board, team = false }: { board: Board; team?: bool
 
   // FLIP: after every render, cards/columns that moved glide to their new spot and
   // new ones pop in. This animates local actions and teammates' changes alike.
-  // Skipped mid-drag: dnd-kit animates the drag itself.
+  // Not measured mid-drag (dnd-kit animates the drag itself, and measuring ~100
+  // nodes forced a layout on every preview); the drop measures once instead.
   const scrollRef = useRef<HTMLDivElement>(null);
   const positions = useRef<FlipPositions>(new Map());
   useLayoutEffect(() => {
-    if (!scrollRef.current) return;
-    positions.current = flip(scrollRef.current, positions.current, { animate: activeId === null });
+    if (!scrollRef.current || activeId !== null) return;
+    positions.current = flip(scrollRef.current, positions.current, { animate: true });
   });
+  /** Where everything sits right now (the drag preview included): the FLIP starting point. */
+  const measure = () => {
+    if (scrollRef.current)
+      positions.current = flip(scrollRef.current, positions.current, { animate: false });
+  };
   const [openCardId, setOpenCardId] = useState<string | null>(null);
 
   const view = draft ?? board;
@@ -213,6 +238,7 @@ export function BoardCanvas({ board, team = false }: { board: Board; team?: bool
   };
 
   const reset = () => {
+    measure();
     setDraft(null);
     setActiveId(null);
     setGroup(null);
@@ -220,6 +246,7 @@ export function BoardCanvas({ board, team = false }: { board: Board; team?: bool
   };
 
   const onDragEnd = ({ active, over }: DragEndEvent) => {
+    measure();
     const id = String(active.id);
     if (!over) return reset();
 
@@ -436,7 +463,7 @@ export function BoardCanvas({ board, team = false }: { board: Board; team?: bool
           </div>
         </div>
 
-        <DragOverlay modifiers={[holdByCorner]}>
+        <DragOverlay modifiers={[holdByCorner]} dropAnimation={isMotionLite() ? null : DROP}>
           {activeCard && (
             <div
               className="drag-jitter relative"
