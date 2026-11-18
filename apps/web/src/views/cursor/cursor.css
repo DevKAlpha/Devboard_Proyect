@@ -94,10 +94,15 @@ html[data-pixel-cursor]
   will-change: transform;
 }
 
-/* Hint "pop" in 3 steps. */
+/*
+ * Hint "pop" in 3 steps, from the corner next to the pointer. The hint is
+ * placed with the translate property, and this animates scale only: before,
+ * the animation replaced the position and the hint flew in from the top-left
+ * corner of the screen every time the destination column changed.
+ */
 @keyframes pc-pop {
   from {
-    transform: scale(0.6);
+    scale: 0.6;
   }
 }
 
@@ -154,8 +159,9 @@ html[data-pixel-cursor]
   letter-spacing: 0.02em;
   white-space: nowrap;
   box-shadow: 2px 2px 0 color-mix(in srgb, var(--accent) 60%, transparent);
+  transform-origin: left top;
   transition: opacity 120ms;
-  animation: pc-pop 150ms steps(3);
+  animation: pc-pop 90ms steps(2);
 }
 .pc-hint[data-drag] {
   background: var(--accent);
