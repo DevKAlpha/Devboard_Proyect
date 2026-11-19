@@ -30,8 +30,17 @@ export interface BoardTemplate {
   labels: { name: string; color: LabelColor }[];
   /** Description pre-filled in every new card of the board. */
   cardTemplate?: string;
-  /** `column` is an index into `columns`; `labels` are label names. */
-  cards: { column: number; title: string; labels?: string[]; patch?: CardPatch }[];
+  /**
+   * `column` is an index into `columns`; `labels` are label names;
+   * `dueInDays` sets the due date relative to the day the board is created.
+   */
+  cards: {
+    column: number;
+    title: string;
+    labels?: string[];
+    patch?: CardPatch;
+    dueInDays?: number;
+  }[];
 }
 
 /**
@@ -120,6 +129,112 @@ ${c.checks.map((s) => `- [ ] ${s}`).join('\n')}
 
 ### Ventana de mantenimiento
 Por definir`;
+
+/**
+ * IT support ticket, shaped like a service desk request form (Jira Service
+ * Management style): request type, who asks, what is affected, impact and
+ * urgency (they set the priority), what was tried, and the resolution, which
+ * feeds the knowledge base when the ticket is closed.
+ */
+export const IT_TICKET_TEMPLATE = `**Tipo de solicitud:** Incidente / Solicitud de servicio / Acceso / Cambio
+**Solicitante:** [nombre, área y contacto]
+**Equipo o servicio afectado:** [hostname, activo o aplicación]
+**Impacto:** Alto (un área entera o un servicio crítico) / Medio / Bajo (una persona)
+**Urgencia:** Alta (no puede trabajar) / Media / Baja
+
+### Descripción
+[qué pasa, desde cuándo y el mensaje de error exacto]
+
+### Ya se ha intentado
+* [reiniciar, otro equipo, otra red…]
+
+### Resolución
+[causa y solución aplicada, para la base de conocimiento]`;
+
+/** Builds a filled-in IT ticket in the same format as the template. */
+const itTicket = (t: {
+  kind: string;
+  requester: string;
+  affected: string;
+  impact: string;
+  urgency: string;
+  description: string;
+  tried: string[];
+}) => `**Tipo de solicitud:** ${t.kind}
+**Solicitante:** ${t.requester}
+**Equipo o servicio afectado:** ${t.affected}
+**Impacto:** ${t.impact}
+**Urgencia:** ${t.urgency}
+
+### Descripción
+${t.description}
+
+### Ya se ha intentado
+${t.tried.map((s) => `* ${s}`).join('\n')}
+
+### Resolución
+Pendiente`;
+
+/**
+ * Content brief: one card per piece of content, from the idea to the results.
+ * The hook and the call to action are what creators most often forget.
+ */
+export const CONTENT_BRIEF_TEMPLATE = `**Plataforma y formato:** [vídeo largo, short, reel, podcast, post, newsletter…]
+**Para quién es:** [tu público y qué busca]
+**Gancho:** [la primera frase o los 3 primeros segundos]
+
+### Guion o puntos clave
+1. [idea principal]
+2. [ejemplo o historia]
+
+### Llamada a la acción
+[suscríbete, comenta, enlace en la bio…]
+
+### Antes de publicar
+- [ ] Título y miniatura
+- [ ] Descripción, hashtags y enlaces
+- [ ] Subtítulos
+- [ ] Música e imágenes con derechos de uso
+
+### Resultados (a los 7 días)
+Visualizaciones: · Retención: · Comentarios:`;
+
+/** Builds a filled-in content brief in the same format as the template. */
+const contentBrief = (c: {
+  format: string;
+  audience: string;
+  hook: string;
+  points: string[];
+  cta: string;
+}) => `**Plataforma y formato:** ${c.format}
+**Para quién es:** ${c.audience}
+**Gancho:** ${c.hook}
+
+### Guion o puntos clave
+${c.points.map((p, i) => `${i + 1}. ${p}`).join('\n')}
+
+### Llamada a la acción
+${c.cta}
+
+### Antes de publicar
+- [ ] Título y miniatura
+- [ ] Descripción, hashtags y enlaces
+- [ ] Subtítulos
+- [ ] Música e imágenes con derechos de uso
+
+### Resultados (a los 7 días)
+Visualizaciones: · Retención: · Comentarios:`;
+
+/**
+ * A date `days` from today (YYYY-MM-DD, local), for example due dates that
+ * stay meaningful whenever the board is created (SLA due, publish day).
+ */
+const inDays = (days: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
 
 /**
  * Column structure of a GitHub Projects board (agile-planning reference repos):
@@ -425,6 +540,140 @@ Consejos:
     ],
   },
   {
+    // IT service desk, inspired by the service request workflow of Jira Service
+    // Management: waiting for support → in progress → waiting for customer /
+    // escalated / pending (third parties) → resolved → closed. Request types are
+    // labels; priority comes from impact × urgency and sets the SLA.
+    id: 'it-support',
+    profile: 'technical',
+    name: 'Mesa de ayuda TI',
+    description:
+      'Tickets de soporte con tipos de solicitud, prioridad por impacto y urgencia, SLA y escalado a segundo nivel.',
+    columns: [
+      'Nuevos',
+      'En curso',
+      'Esperando al usuario',
+      'Escalado',
+      'En espera de terceros',
+      'Resuelto',
+      'Cerrado',
+    ],
+    columnDescriptions: [
+      'Esperando soporte: aún sin asignar ni responder',
+      'Un agente lo está atendiendo',
+      'Falta información o la confirmación del solicitante',
+      'Pasó a segundo nivel o a un especialista',
+      'Depende de un proveedor, una compra o una garantía',
+      'Solución aplicada; el usuario confirma',
+      'Confirmado y documentado',
+    ],
+    // Each agent works a few tickets at a time; escalations are watched closely.
+    wipLimits: [null, 5, null, 3, null, null, null],
+    labels: [
+      { name: 'Incidente', color: 'red' },
+      { name: 'Solicitud', color: 'blue' },
+      { name: 'Acceso', color: 'purple' },
+      { name: 'Hardware', color: 'orange' },
+      { name: 'Software', color: 'green' },
+      { name: 'Cambio', color: 'yellow' },
+    ],
+    cardTemplate: IT_TICKET_TEMPLATE,
+    cards: [
+      {
+        column: 0,
+        title: 'Cómo usar este tablero',
+        patch: {
+          description: `Flujo de la mesa de ayuda:
+* **Nuevos**: cada ticket entra aquí. Elige su tipo de solicitud con una etiqueta y su prioridad.
+* **En curso**: el agente lo toma (asígnatelo). Límite WIP 5 por columna.
+* **Esperando al usuario**: falta un dato o una prueba del solicitante. El SLA se pausa.
+* **Escalado**: segundo nivel (redes, sistemas, aplicaciones). Límite WIP 3.
+* **En espera de terceros**: proveedor, compra o garantía.
+* **Resuelto**: solución aplicada. Pasa a **Cerrado** cuando el usuario lo confirma.
+
+Prioridad = impacto × urgencia, y fija el SLA:
+* **Alta**: primera respuesta en 30 min, resolución en 4 h.
+* **Media**: primera respuesta en 4 h, resolución en 1 día hábil.
+* **Baja**: primera respuesta en 1 día hábil, resolución en 3 días hábiles.
+
+Consejos:
+* Pon la fecha límite del SLA en el ticket: se ve en rojo cuando vence.
+* Tipo de tarjeta: *bug* = incidente, *tarea* = solicitud, *feature* = cambio.
+* Rellena la resolución al cerrar: es la base de conocimiento del equipo.`,
+        },
+      },
+      {
+        column: 0,
+        title: 'No puedo imprimir en la impresora de la planta 3',
+        labels: ['Incidente', 'Hardware'],
+        patch: {
+          type: 'bug',
+          priority: 'medium',
+          description: itTicket({
+            kind: 'Incidente',
+            requester: 'Laura Gómez, Contabilidad, ext. 214',
+            affected: 'IMP-P3-01 (HP LaserJet)',
+            impact: 'Medio (toda la planta 3)',
+            urgency: 'Media',
+            description:
+              'Desde esta mañana los trabajos se quedan en cola con el error "Impresora sin conexión".',
+            tried: ['Apagar y encender la impresora', 'Imprimir desde otro equipo: mismo error'],
+          }),
+        },
+        dueInDays: 1,
+      },
+      {
+        column: 0,
+        title: 'Alta de usuario para la nueva incorporación de Ventas',
+        labels: ['Acceso'],
+        patch: { type: 'task', priority: 'medium' },
+        dueInDays: 2,
+      },
+      {
+        column: 1,
+        title: 'Outlook no sincroniza el correo',
+        labels: ['Incidente', 'Software'],
+        patch: { type: 'bug', priority: 'high' },
+        dueInDays: 0,
+      },
+      {
+        column: 2,
+        title: 'Instalar un editor de PDF en el portátil de Dirección',
+        labels: ['Solicitud', 'Software'],
+        patch: {
+          type: 'task',
+          priority: 'low',
+          description: 'Esperando la aprobación de la licencia por parte del responsable del área.',
+        },
+      },
+      {
+        column: 3,
+        title: 'La VPN se desconecta cada 10 minutos',
+        labels: ['Incidente'],
+        patch: { type: 'bug', priority: 'high', description: 'Escalado al equipo de redes.' },
+        dueInDays: 0,
+      },
+      {
+        column: 4,
+        title: 'Portátil con la pantalla rota: reparación en garantía',
+        labels: ['Hardware'],
+        patch: { type: 'task', priority: 'medium' },
+      },
+      {
+        column: 5,
+        title: 'Restablecer la contraseña del correo',
+        labels: ['Acceso'],
+        patch: { type: 'task', priority: 'low' },
+      },
+      {
+        column: 6,
+        title: 'Actualizar el antivirus en los equipos de Recepción',
+        labels: ['Cambio', 'Software'],
+        patch: { type: 'feature', priority: 'low' },
+      },
+    ],
+  },
+  {
     id: 'personal',
     profile: 'simple',
     name: 'Mis tareas',
@@ -474,6 +723,89 @@ Consejos:
     ],
   },
   {
+    // Content pipeline for creators: one card per piece, from the idea to the
+    // published post. The due date is the publish day, so it reaches the
+    // calendar (Conexiones). Editing is where the work piles up: WIP 2.
+    id: 'content',
+    profile: 'simple',
+    name: 'Creadores de contenido',
+    description:
+      'De la idea al post publicado: guion, grabación, edición y fecha de publicación para cada plataforma.',
+    columns: ['Ideas', 'Guion', 'Grabación', 'Edición', 'Programado', 'Publicado'],
+    columnDescriptions: [
+      'Todo lo que se te ocurra, sin filtro',
+      'Gancho, estructura y llamada a la acción',
+      'Listo para grabar o grabándose',
+      'Montaje, subtítulos y miniatura',
+      'Con fecha y hora de publicación',
+      'Ya está en línea: mira los resultados',
+    ],
+    wipLimits: [null, null, null, 2, null, null],
+    labels: [
+      { name: 'YouTube', color: 'red' },
+      { name: 'TikTok', color: 'purple' },
+      { name: 'Instagram', color: 'orange' },
+      { name: 'Podcast', color: 'green' },
+      { name: 'Blog / Newsletter', color: 'blue' },
+      { name: 'Colaboración', color: 'yellow' },
+    ],
+    cardTemplate: CONTENT_BRIEF_TEMPLATE,
+    cards: [
+      {
+        column: 0,
+        title: 'Cómo usar este tablero',
+        patch: {
+          description: `Una tarjeta por contenido, de la idea a la publicación:
+* **Ideas**: apunta todo, sin filtro. Las etiquetas dicen en qué plataforma va.
+* **Guion**: completa la ficha (gancho, puntos clave y llamada a la acción).
+* **Grabación** y **Edición**: en Edición, como mucho 2 a la vez.
+* **Programado**: pon la fecha de publicación como fecha límite de la tarjeta.
+* **Publicado**: a los 7 días, anota los resultados en la ficha.
+
+Consejos:
+* Adjunta el guion, los clips o la miniatura como enlaces (Drive, OneDrive…).
+* Desde Conexiones puedes llevar la fecha de publicación a tu calendario.
+* Un mismo contenido para varias plataformas: una tarjeta con varias etiquetas.`,
+        },
+      },
+      { column: 0, title: '10 errores que cometí al empezar', labels: ['YouTube'] },
+      {
+        column: 0,
+        title: 'Detrás de cámaras de mi espacio de trabajo',
+        labels: ['Instagram', 'TikTok'],
+      },
+      {
+        column: 1,
+        title: 'Episodio 12: entrevista sobre productividad',
+        labels: ['Podcast', 'Colaboración'],
+        patch: {
+          description: contentBrief({
+            format: 'Podcast, episodio de 40 min (y 3 clips cortos)',
+            audience: 'Personas que trabajan en remoto y se distraen fácil',
+            hook: '"Trabajo 4 horas al día y rindo más que antes. Te cuento cómo."',
+            points: [
+              'Presentación de la invitada',
+              'Su rutina de mañana',
+              'Las 3 herramientas que usa',
+              'Pregunta rápida final',
+            ],
+            cta: 'Suscríbete y cuéntanos tu truco en los comentarios',
+          }),
+        },
+        dueInDays: 9,
+      },
+      { column: 2, title: 'Tutorial: editar vídeos en el móvil', labels: ['TikTok'], dueInDays: 6 },
+      {
+        column: 3,
+        title: 'Reseña de auriculares (colaboración con una marca)',
+        labels: ['YouTube', 'Colaboración'],
+        dueInDays: 4,
+      },
+      { column: 4, title: 'Newsletter del mes', labels: ['Blog / Newsletter'], dueInDays: 2 },
+      { column: 5, title: 'Reel: mi rutina de mañana', labels: ['Instagram'] },
+    ],
+  },
+  {
     id: 'blank',
     profile: 'simple',
     name: 'En blanco',
@@ -519,7 +851,12 @@ export function buildBoardFromTemplate(
     const column = board.columns[seed.column];
     if (!column) continue;
     const labelIds = (seed.labels ?? []).flatMap((name) => labelId.get(name) ?? []);
-    board = addNewCard(board, column.id, createCard(seed.title, { ...seed.patch, labelIds }));
+    const dueDate = seed.dueInDays === undefined ? seed.patch?.dueDate : inDays(seed.dueInDays);
+    board = addNewCard(
+      board,
+      column.id,
+      createCard(seed.title, { ...seed.patch, labelIds, ...(dueDate ? { dueDate } : {}) }),
+    );
   }
   return board;
 }
