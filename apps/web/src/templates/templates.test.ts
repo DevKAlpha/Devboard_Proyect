@@ -3,6 +3,8 @@ import { BoardSchema } from '@devbord/shared';
 import {
   TEMPLATES,
   NETWORK_CHANGE_TEMPLATE,
+  IT_TICKET_TEMPLATE,
+  CONTENT_BRIEF_TEMPLATE,
   USER_STORY_TEMPLATE,
   buildBoardFromTemplate,
   getTemplate,
@@ -26,11 +28,19 @@ describe('templates', () => {
     }
   });
 
-  it('offers technical boards Scrum, incidents, networks and blank; the look is a separate choice', () => {
+  it('offers technical boards Scrum, incidents, networks, IT help desk and blank; the look is a separate choice', () => {
     expect(templatesFor('technical').map((t) => t.id)).toEqual([
       'scrum',
       'bug-tracker',
       'network',
+      'it-support',
+      'blank',
+    ]);
+    expect(templatesFor('simple').map((t) => t.id)).toEqual([
+      'personal',
+      'team-project',
+      'study',
+      'content',
       'blank',
     ]);
     expect(buildBoardFromTemplate(getTemplate('scrum')!).skin).toBe('default');
@@ -84,5 +94,69 @@ describe('scrum template', () => {
   it('previews the story without Markdown noise', () => {
     expect(previewText(USER_STORY_TEMPLATE)).toMatch(/^Como \[rol\] · Necesito \[función\]/);
     expect(previewText(USER_STORY_TEMPLATE)).not.toMatch(/\*\*|```|###/);
+  });
+});
+
+describe('IT help desk template', () => {
+  const board = buildBoardFromTemplate(getTemplate('it-support')!);
+
+  it('follows the service desk flow, with tickets as the card template', () => {
+    expect(board.profile).toBe('technical');
+    expect(board.cardTemplate).toBe(IT_TICKET_TEMPLATE);
+    expect(board.columns.map((c) => c.title)).toEqual([
+      'Nuevos',
+      'En curso',
+      'Esperando al usuario',
+      'Escalado',
+      'En espera de terceros',
+      'Resuelto',
+      'Cerrado',
+    ]);
+    expect(board.columns.find((c) => c.title === 'En curso')!.wipLimit).toBe(5);
+    expect(board.columns.find((c) => c.title === 'Escalado')!.wipLimit).toBe(3);
+    expect(board.labels.map((l) => l.name)).toEqual([
+      'Incidente',
+      'Solicitud',
+      'Acceso',
+      'Hardware',
+      'Software',
+      'Cambio',
+    ]);
+  });
+
+  it('gives example tickets an SLA due date counted from today', () => {
+    const today = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const iso = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+    const outlook = board.columns
+      .flatMap((c) => c.cards)
+      .find((c) => c.title.startsWith('Outlook'))!;
+    expect(outlook.dueDate).toBe(iso);
+    expect(outlook.priority).toBe('high');
+    expect(outlook.type).toBe('bug');
+  });
+});
+
+describe('content creators template', () => {
+  const board = buildBoardFromTemplate(getTemplate('content')!);
+
+  it('goes from the idea to the published post, with a content brief per card', () => {
+    expect(board.profile).toBe('simple');
+    expect(board.cardTemplate).toBe(CONTENT_BRIEF_TEMPLATE);
+    expect(board.columns.map((c) => c.title)).toEqual([
+      'Ideas',
+      'Guion',
+      'Grabación',
+      'Edición',
+      'Programado',
+      'Publicado',
+    ]);
+    expect(board.columns.find((c) => c.title === 'Edición')!.wipLimit).toBe(2);
+    // Scheduled content carries its publish day.
+    expect(board.columns.find((c) => c.title === 'Programado')!.cards[0]!.dueDate).not.toBeNull();
+  });
+
+  it('previews the brief without Markdown noise', () => {
+    expect(previewText(CONTENT_BRIEF_TEMPLATE)).not.toMatch(/\*\*|###/);
   });
 });
